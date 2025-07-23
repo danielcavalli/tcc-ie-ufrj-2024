@@ -1,0 +1,4 @@
+# Add any additional runtime dependencies here (one per line).
+basedosdados
+pandas
+pyarrow
