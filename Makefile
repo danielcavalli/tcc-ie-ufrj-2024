@@ -1,4 +1,4 @@
-.PHONY: help env lock install update-lock clean shell fetch
+.PHONY: help env lock install update-lock clean shell fetch renv-init renv-restore renv-snapshot renv-clean
 
 # -------- Configuration ------------------------------------------------------
 # Virtual-env directory
@@ -55,3 +55,37 @@ clean:  ## Remove venv and artefacts
 	rm -rf $(VENV)
 	rm -f *.pyc
 	@echo "Cleaned Python virtual environment" 
+
+# -----------------------------------------------------------------------------
+# R environment setup & dependency locking (renv)
+# -----------------------------------------------------------------------------
+
+# Directory where renv stores project libraries
+RENVDIR := renv
+
+R := Rscript
+
+# Initialise renv (creates renv/ and renv.lock if absent, or restores if lock exists)
+renv-init:  ## Create or restore renv-managed R environment
+	@if command -v $(R) >/dev/null 2>&1; then :; else echo "Rscript not found – install R first" && exit 1; fi
+	@$(R) -e "if (!require('renv')) install.packages('renv', repos = 'https://cloud.r-project.org')"
+	@if [ -f renv.lock ]; then \
+	  $(R) -e "renv::restore(prompt = FALSE)"; \
+	else \
+	  $(R) -e "renv::init(bare = TRUE, force = TRUE)"; \
+	fi
+	@echo "renv environment ready"
+
+# Install packages exactly as recorded in renv.lock
+renv-restore:  ## Install R packages from renv.lock
+	@$(R) -e "if (!require('renv')) install.packages('renv', repos = 'https://cloud.r-project.org'); renv::restore(prompt = FALSE)"
+
+# Snapshot current package versions into renv.lock
+renv-snapshot:  ## Update renv.lock with current package state
+	@$(R) -e "if (!require('renv')) install.packages('renv', repos = 'https://cloud.r-project.org'); renv::snapshot(prompt = FALSE)"
+	@echo "renv.lock updated"
+
+# Remove the local renv library cache (does NOT delete lock file)
+renv-clean:  ## Delete renv library directory
+	rm -rf $(RENVDIR)/library
+	@echo "Removed renv library directory" 
