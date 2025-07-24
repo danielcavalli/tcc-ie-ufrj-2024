@@ -34,13 +34,21 @@ for (p in pkgs) {
 # --------------------------------------------------------------------------- #
 
 # 1.1 Preparação de dados ---------------------------------------------------- #
-#   • Garantir que variáveis estejam no formato correto evita vieses de        #
-#     medição.                                                                 #
-#   • Transformação logarítmica reduz assimetria e permite interpretação       #
-#     dos coeficientes como variações percentuais aproximadas.                  #
-#   • Definir corretamente gname (= ano de tratamento) e identificar             #
-#     unidades never-treated (gname = Inf) é crucial para o estimador de DiD   #
-#     escalonado, pois o grupo de controle de referência será "never-treated". #
+#' prep_data()
+#' ---------------------------------------------------------------------------
+#' Lê arquivo CSV bruto e produz `df` pronto para a análise DiD escalonada.
+#' Principais transformações:
+#'   1. Converte variáveis numéricas; limpa espaços em branco de strings.
+#'   2. Aplica log(1+x) à produtividade – transformação monotônica que permite
+#'      interpretar coeficientes/ATT como variações percentuais aproximadas
+#'      (\(\Delta \log y \approx \%\)).
+#'   3. Cria `gname`: ano da PRIMEIRA estação instalada (grupo de adoção). Por
+#'      convenção exigida pelo pacote did, usa 0 para unidades nunca tratadas.
+#'   4. Flag `never_treated` facilita diagnósticos e construção do placebo.
+#'   5. Retorna tibble com colunas id, ano, outcome, covariáveis, gname.
+#' @param path_csv Caminho do arquivo CSV bruto.
+#' @return Tibble pronta para o estimador `did::att_gt()`.
+#' ---------------------------------------------------------------------------
 prep_data <- function(path_csv) {
   cli::cli_alert_info("Lendo dados de {path_csv} …")
 
@@ -66,13 +74,26 @@ prep_data <- function(path_csv) {
 }
 
 # 1.2 Estimação do ATT ------------------------------------------------------- #
-# Econometric rationale:                                                       #
-#   • Estimador Doubly Robust (DR) combina regressão e IPW → consiste em      #
-#     manter consistência se ao menos um modelo estiver corretamente          #
-#     especificado.                                                           #
-#   • Erros-padrão clusterizados por unidade controlam correlação serial.     #
-#   • Bootstrap melhora inferência para amostras moderadas.                   #
-#   • Guardar influence function (IF) permite diagnósticos adicionais.        #
+#' estimate_att()
+#' ---------------------------------------------------------------------------
+#' Envolve a chamada a `did::att_gt()` e posterior agregação com `aggte()`.
+#' Elementos econométricos chave:
+#'   • Para cada grupo g (ano de adoção) e tempo t, o estimador DR calcula
+#'     \(ATT_{g,t} = E[(Y_{1}-Y_{0})|G=g,T=t]\).
+#'   • DR (doubly robust) = combina regressão do desfecho + IPW; consistente se
+#'     ao menos um dos dois modelos for corretamente especificado.
+#'   • Cluster robust SE por unidade controla autocorrelação intra-microrregião.
+#'   • `agg_overall$overall.att` = média ponderada dos ATT(g,t) (peso = tamanho
+#'     de cada g) – interpreta-se como ‘average treatment effect on the treated’.
+#'   • `agg_event` fornece trajetória dinâmica (event time).
+#'   • Função inclui fallback (remover covariáveis ou trocar método) quando há
+#'     singularidade.
+#' @param df Tibble preparado (ver prep_data)
+#' @param method Estimador: "dr" (padrão), "ipw", "reg"
+#' @param control_grp Grupo de controle: "notyettreated" recomendado quando
+#'        praticamente todos tratam em algum momento.
+#' @return Lista com objetos att_gt, aggte (overall e dynamic) e ATT global.
+#' ---------------------------------------------------------------------------
 estimate_att <- function(df, method = "dr", seed = 42, control_grp = "notyettreated") {
   set.seed(seed)
   cli::cli_alert_info("Estimando ATT(g,t) com método {method} …")
@@ -142,13 +163,32 @@ estimate_att <- function(df, method = "dr", seed = 42, control_grp = "notyettrea
   att_global <- agg_overall$overall.att
   se_global <- agg_overall$overall.se
 
-  cli::cli_alert_success("Estimativa concluída. ATT médio global: {round(att_global, 4)}")
-  return(list(att = att_res, overall = agg_overall, event = agg_event, att_global = att_global, se_global = se_global))
+  # Métricas de significância
+  z_score <- att_global / se_global
+  p_value <- 2 * stats::pnorm(-abs(z_score))
+  ci_low <- att_global - 1.96 * se_global
+  ci_high <- att_global + 1.96 * se_global
+
+  cli::cli_alert_success("ATT = {round(att_global,4)}, SE = {round(se_global,4)}, z = {round(z_score,2)}, p = {round(p_value,4)}, IC95% = [{round(ci_low,4)}; {round(ci_high,4)}]")
+
+  return(list(
+    att = att_res, overall = agg_overall, event = agg_event,
+    att_global = att_global, se_global = se_global,
+    z = z_score, p = p_value, ci_low = ci_low, ci_high = ci_high
+  ))
 }
 
 # 1.3 Placebo Test ----------------------------------------------------------- #
-# Econometric rationale: atribuir falsamente o tratamento antes do período     #
-# real avalia se há efeitos espúrios, reforçando a validade da estratégia.    #
+#' placebo_test()
+#' ---------------------------------------------------------------------------
+#' Define um ano fictício de tratamento (`placebo_year`) para todas as
+#' unidades que de fato recebem estação. Se o modelo for bem especificado,
+#' espera-se ATT ≈ 0, pois nenhuma estação foi instalada nessa data.
+#' Usa grupo de controle "notyettreated" para manter coerência.
+#' @param df Dados preparados.
+#' @param placebo_year Ano fictício (default 2015).
+#' @return Lista com att_placebo, se_placebo e p_value, ou NA se falhar.
+#' ---------------------------------------------------------------------------
 placebo_test <- function(df, placebo_year = 2015) {
   cli::cli_alert_info("Executando placebo test fixo (ano fictício = {placebo_year})…")
 
@@ -159,11 +199,16 @@ placebo_test <- function(df, placebo_year = 2015) {
   out <- tryCatch(
     {
       res <- estimate_att(df_placebo, method = "dr", control_grp = "notyettreated")
-      res$att_global
+      att_p <- res$att_global
+      se_p <- res$se_global
+      p_val <- 2 * stats::pnorm(-abs(att_p / se_p))
+      ci_low <- att_p - 1.96 * se_p
+      ci_high <- att_p + 1.96 * se_p
+      list(att = att_p, se = se_p, p = p_val, ci_low = ci_low, ci_high = ci_high)
     },
     error = function(e) {
       cli::cli_alert_warning("Placebo test falhou: {e$message}")
-      NA_real_
+      NULL
     }
   )
 
@@ -171,6 +216,12 @@ placebo_test <- function(df, placebo_year = 2015) {
 }
 
 # 1.4 Robustez (métodos alternativos) --------------------------------------- #
+#' robust_specs()
+#' ---------------------------------------------------------------------------
+#' Executa rapidamente DR, IPW e REG para comparar magnitude dos efeitos.
+#' Captura erros (ex.: IPW singular) sem abortar o script.
+#' Escreve CSV para documentação reprodutível.
+#' ---------------------------------------------------------------------------
 robust_specs <- function(df) {
   methods <- c("dr", "ipw", "reg")
   out <- purrr::map_dfr(methods, function(m) {
@@ -178,19 +229,29 @@ robust_specs <- function(df) {
       estimate_att(df, method = m),
       error = function(e) {
         cli::cli_alert_warning("Método {m} falhou: {e$message}")
-        NULL
+        tibble::tibble(metodo = m, att_global = NA_real_, se_global = NA_real_, z = NA_real_, p = NA_real_, ci_low = NA_real_, ci_high = NA_real_)
       }
     )
     if (is.null(res)) {
-      tibble::tibble(metodo = m, att_global = NA_real_, se_global = NA_real_)
+      tibble::tibble(metodo = m, att_global = NA_real_, se_global = NA_real_, z = NA_real_, p = NA_real_, ci_low = NA_real_, ci_high = NA_real_)
     } else {
-      tibble::tibble(metodo = m, att_global = res$att_global, se_global = res$se_global)
+      tibble::tibble(
+        metodo = m, att_global = res$att_global, se_global = res$se_global,
+        z = res$z, p = res$p, ci_low = res$ci_low, ci_high = res$ci_high
+      )
     }
   })
   return(out)
 }
 
 # 1.5 Visualização ----------------------------------------------------------- #
+#' visualize_results()
+#' ---------------------------------------------------------------------------
+#' Cria gráfico Event Study com banda de 95% IC.
+#' Azul = estimativa, vermelho tracejado = 0 (referência), traço vertical =
+#' início do tratamento.
+#' Salva PNG e PDF em data/outputs.
+#' ---------------------------------------------------------------------------
 visualize_results <- function(att_event, output_prefix = "event_study") {
   cli::cli_alert_info("Gerando gráficos…")
   event_df <- tibble::tibble(
@@ -277,6 +338,14 @@ if (interactive() || sys.nframe() == 0) {
   # Estimação principal
   res_main <- estimate_att(df_clean, method = "dr")
 
+  # Export resumo ATT
+  summary_tbl <- tibble::tibble(
+    metodo = "dr", control = "notyettreated",
+    att = res_main$att_global, se = res_main$se_global, z = res_main$z,
+    p = res_main$p, ci_low = res_main$ci_low, ci_high = res_main$ci_high
+  )
+  readr::write_csv(summary_tbl, here::here("data", "outputs", "att_summary.csv"))
+
   # Teste de Tendências Paralelas (pré-tratamento)
   cli::cli_alert_info("Testando tendências paralelas…")
   att_df <- tibble::tibble(
@@ -292,9 +361,9 @@ if (interactive() || sys.nframe() == 0) {
   cli::cli_alert_success("Teste manual de tendências paralelas: média PRE = {round(pre_mean, 4)}, p-valor = {round(p_val, 4)}")
 
   # Placebo test
-  placebo_att <- placebo_test(df_clean, placebo_year = 2015)
-  if (!is.na(placebo_att)) {
-    cli::cli_alert_success("ATT placebo (esperado ≈ 0): {round(placebo_att, 4)}")
+  placebo_res <- placebo_test(df_clean, placebo_year = 2015)
+  if (!is.null(placebo_res)) {
+    cli::cli_alert_success("Placebo: ATT = {round(placebo_res$att,4)}, SE = {round(placebo_res$se,4)}, p = {round(placebo_res$p,4)}, IC95% = [{round(placebo_res$ci_low,4)}; {round(placebo_res$ci_high,4)}]")
   }
 
   # Robustez
