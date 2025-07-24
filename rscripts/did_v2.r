@@ -1,334 +1,308 @@
-library(did)
-library(dplyr)
-library(ggplot2)
+###############################################################################
+# Avaliação do Impacto da Implantação de Novas Estações Meteorológicas         #
+# na Produtividade da Cana-de-Açúcar no Brasil                                 #
+# Autor   : Daniel Cavalli                                                     #
+# Última modificação: 2024-12-08                                               #
+#                                                                              #
+# Objetivo:                                                                    #
+#   Estimar o efeito causal da instalação de estações de monitoramento         #
+#   meteorológico sobre a produtividade agrícola utilizando o framework        #
+#   Difference-in-Differences (DiD) com adoção escalonada de Callaway &        #
+#   Sant'Anna (2020).                                                          #
+#                                                                              #
+#   O script está organizado em funções para facilitar reprodutibilidade,      #
+#   testes de robustez e uso modular em notebooks.                             #
+###############################################################################
 
-# Leitura dos dados
-df <- read.csv("data/csv/WightedMethod/sugar_cane_treated.csv")
+# --------------------------------------------------------------------------- #
+# 0. Carregamento de Pacotes                                                  #
+# --------------------------------------------------------------------------- #
+# Justificativa: manter dependências explícitas e garantir que versões        #
+# coerentes sejam registradas no renv.lock; instalação automática aumenta     #
+# portabilidade do código.                                                    #
 
-# 1. Preparação dos dados ------------------------------
+pkgs <- c("did", "dplyr", "ggplot2", "readr", "here", "cli", "purrr", "tibble")
+for (p in pkgs) {
+  if (!requireNamespace(p, quietly = TRUE)) {
+    install.packages(p)
+  }
+  library(p, character.only = TRUE)
+}
 
-set.seed(42)
+# --------------------------------------------------------------------------- #
+# 1. Funções Auxiliares                                                       #
+# --------------------------------------------------------------------------- #
 
-# Transformar a variável produtividade em log
-df <- df %>%
-  mutate(log_produtividade = log(produtividade))
+# 1.1 Preparação de dados ---------------------------------------------------- #
+#   • Garantir que variáveis estejam no formato correto evita vieses de        #
+#     medição.                                                                 #
+#   • Transformação logarítmica reduz assimetria e permite interpretação       #
+#     dos coeficientes como variações percentuais aproximadas.                  #
+#   • Definir corretamente gname (= ano de tratamento) e identificar             #
+#     unidades never-treated (gname = Inf) é crucial para o estimador de DiD   #
+#     escalonado, pois o grupo de controle de referência será "never-treated". #
+prep_data <- function(path_csv) {
+  cli::cli_alert_info("Lendo dados de {path_csv} …")
 
-# Ajustar a variável gname: se a unidade nunca for tratada, colocar 0 ou NA.
-# Aqui assumimos que todas as unidades são tratadas em algum momento.
-df <- df %>%
-  group_by(id_microrregiao) %>%
-  mutate(gname = primeiro_ano_tratamento) %>%
-  ungroup()
+  df <- readr::read_csv(path_csv, show_col_types = FALSE) %>%
+    # Conversão explícita para evitar fatores escondidos
+    mutate(across(where(is.character), ~ trimws(.x))) %>%
+    mutate(across(c(
+      produtividade, total_area_plantada, precipitacao_por_area_plantada,
+      qtd_estacoes_ativas
+    ), as.numeric)) %>%
+    # Log(1+x) evita -Inf quando produtividade = 0
+    mutate(log_produtividade = log1p(produtividade)) %>%
+    # Definição do ano de tratamento (gname); 0 para nunca tratados (requerido pelo pacote did)
+    group_by(id_microrregiao) %>%
+    mutate(gname = ifelse(is.na(primeiro_ano_tratamento), 0, primeiro_ano_tratamento)) %>%
+    ungroup() %>%
+    # Indicador de nunca tratado (diagnóstico)
+    mutate(never_treated = gname == 0) %>%
+    rename(treated = tratado)
 
-df <- df %>%
-  rename(treated = tratado)
+  cli::cli_alert_success("Dados carregados: {nrow(df)} observações, {n_distinct(df$id_microrregiao)} unidades.")
+  return(df)
+}
 
-head(df)
+# 1.2 Estimação do ATT ------------------------------------------------------- #
+# Econometric rationale:                                                       #
+#   • Estimador Doubly Robust (DR) combina regressão e IPW → consiste em      #
+#     manter consistência se ao menos um modelo estiver corretamente          #
+#     especificado.                                                           #
+#   • Erros-padrão clusterizados por unidade controlam correlação serial.     #
+#   • Bootstrap melhora inferência para amostras moderadas.                   #
+#   • Guardar influence function (IF) permite diagnósticos adicionais.        #
+estimate_att <- function(df, method = "dr", seed = 42, control_grp = "notyettreated") {
+  set.seed(seed)
+  cli::cli_alert_info("Estimando ATT(g,t) com método {method} …")
 
-# 2. Estimação ATT(g,t) com att_gt() -------------------
+  # Seleção de covariáveis elegíveis
+  base_covars <- c("qtd_estacoes_ativas", "precipitacao_por_area_plantada")
+  covars_ok <- check_covariates(df, base_covars)
 
-# São incluídas as covariáveis total_area_plantada e precipitacao_por_area_plantada
-# Pelo método Doubly Robust (est_method = "dr")
-att_results <- att_gt(
-  yname = "log_produtividade",
-  tname = "ano",
-  idname = "id_microrregiao",
-  gname = "gname",
-  xformla = ~ qtd_estacoes_ativas + precipitacao_por_area_plantada,
-  data = df,
-  est_method = "dr"
-)
+  # Construção de fórmula
+  xform <- if (length(covars_ok) == 0) {
+    ~1
+  } else {
+    as.formula(paste("~", paste(covars_ok, collapse = "+")))
+  }
 
-# 3. Agregação dos Efeitos com aggte() -----------------
+  # Função auxiliar para chamada segura
+  safe_att <- function(met, form) {
+    cli::cli_alert_info("Tentando estimador {met} com fórmula: {deparse(form)}")
+    did::att_gt(
+      yname = "log_produtividade",
+      tname = "ano",
+      idname = "id_microrregiao",
+      gname = "gname",
+      xformla = form,
+      data = df,
+      est_method = met,
+      control_group = control_grp,
+      bstrap = TRUE
+    )
+  }
 
-# (a) Efeito Médio Global (Overall Treatment Effect)
-agg_overall <- aggte(att_results, type = "group", na.rm = TRUE)
-
-# (b) Event Study (efeito por tempo de exposição)
-# Definir type = "dynamic" cria uma análise de estudo de evento
-agg_event <- aggte(att_results, type = "dynamic", na.rm = TRUE)
-
-# 4. Visualização dos Resultados -----------------------
-
-# (a) Gráfico do Event Study
-event_df <- data.frame(
-  time_relative = agg_event$egt,
-  att = agg_event$att.egt,
-  se = agg_event$se.egt
-)
-
-ggplot(event_df, aes(x = time_relative, y = att)) +
-  # Faixa de confiança (intervalo de confiança) usando geom_ribbon
-  geom_ribbon(aes(ymin = att - 1.96*se, ymax = att + 1.96*se), fill = "blue", alpha = 0.2) +
-  
-  # Linha do efeito estimado
-  geom_line(color = "blue", size = 1) +
-  
-  # Pontos sobre a linha
-  geom_point(color = "blue", size = 2) +
-  
-  # Linha horizontal em y=0 para referencia
-  geom_hline(yintercept = 0, linetype = "dashed", color = "red", size = 1) +
-  
-  # Linha vertical em x=0 para marcar o início do tratamento
-  geom_vline(xintercept = 0, linetype = "dashed", color = "gray40") +
-  
-  # Ajuste no tema
-  theme_minimal(base_size = 14) +
-  theme(
-    panel.grid.minor = element_blank(),
-    panel.grid.major.x = element_line(color = "gray90"),
-    panel.grid.major.y = element_line(color = "gray90"),
-    plot.title = element_text(face = "bold", size = 16)
-  ) +
-  
-  # Legenda
-  labs(
-    title = "Event Study: Efeito do Tratamento ao Longo do Tempo de Disponibilidade da Estação",
-    x = "Períodos após o tratamento",
-    y = "Efeito estimado (log-produtividade)"
+  # Tentativa 1: método solicitado com covariáveis filtradas
+  att_res <- tryCatch(
+    {
+      safe_att(method, xform)
+    },
+    error = function(e) {
+      if (grepl("singular", e$message)) {
+        cli::cli_alert_warning("Singularidade detectada. Reestimando sem covariáveis…")
+        tryCatch(safe_att(method, ~1), error = function(e2) {
+          cli::cli_alert_warning("Ainda falhou. Alternando para método 'ipw'.")
+          safe_att("ipw", ~1)
+        })
+      } else {
+        stop(e)
+      }
+    }
   )
 
-ggsave(
-  "event_study_plot.png",
-  plot = last_plot(), 
-  width = 12,
-  height = 6 
-)
+  # Agregação Global e Dinâmica (event study)
+  # na.rm = TRUE ignora possíveis ATT(g,t) não identificados (ex.: grupos pequenos)
+  agg_overall <- aggte(att_res, type = "group", na.rm = TRUE)
+  agg_event <- aggte(att_res, type = "dynamic", na.rm = TRUE)
 
-# ==============================================================================
-# Interpretação dos resultados 
-# ==============================================================================
+  if (any(is.na(att_res$att))) {
+    cli::cli_alert_warning("Alguns ATT(g,t) não foram estimados (NA). Eles foram removidos na agregação.")
+  }
 
-# 1. Resumo dos ATT(g,t)
-summary(att_results)
-summary(agg_overall)  # Para o efeito médio global
-summary(agg_event)    # Para o event study agregado
+  # Persistência dos objetos para reuso
+  dir_out <- here::here("data", "outputs")
+  if (!dir.exists(dir_out)) dir.create(dir_out, recursive = TRUE)
+  saveRDS(att_res, file = file.path(dir_out, paste0("att_results_", method, ".rds")))
+  saveRDS(agg_overall, file = file.path(dir_out, paste0("agg_overall_", method, ".rds")))
+  saveRDS(agg_event, file = file.path(dir_out, paste0("agg_event_", method, ".rds")))
 
-# O objeto retornado por att_gt() possui componentes que armazenam os ATT(g,t) individuais
-# Para acessá-los individualmente, os coloquei na tabela abaixo:
-att_table <- data.frame(
-  group = att_results$group,
-  time = att_results$t,
-  att = att_results$att,
-  se = att_results$se,
-  n = att_results$n
-)
+  # Efeito médio global da versão atual do pacote did
+  att_global <- agg_overall$overall.att
+  se_global <- agg_overall$overall.se
 
-head(att_table)
+  cli::cli_alert_success("Estimativa concluída. ATT médio global: {round(att_global, 4)}")
+  return(list(att = att_res, overall = agg_overall, event = agg_event, att_global = att_global, se_global = se_global))
+}
 
-# 2. Estatísticas Descritivas dos ATT
-# Média, mediana, desvio padrão, minímas e máximas dos efeitos estimados
-summary_att <- att_table %>%
-  summarise(
-    mean_att = mean(att, na.rm = TRUE),
-    median_att = median(att, na.rm = TRUE),
-    sd_att = sd(att, na.rm = TRUE),
-    min_att = min(att, na.rm = TRUE),
-    max_att = max(att, na.rm = TRUE)
+# 1.3 Placebo Test ----------------------------------------------------------- #
+# Econometric rationale: atribuir falsamente o tratamento antes do período     #
+# real avalia se há efeitos espúrios, reforçando a validade da estratégia.    #
+placebo_test <- function(df, placebo_year = 2015) {
+  cli::cli_alert_info("Executando placebo test fixo (ano fictício = {placebo_year})…")
+
+  # Todas as unidades que eventualmente recebem tratamento passam a ter gname = placebo_year
+  # Unidades nunca tratadas permanecem com 0
+  df_placebo <- df %>% mutate(gname = ifelse(!never_treated, placebo_year, gname))
+
+  out <- tryCatch(
+    {
+      res <- estimate_att(df_placebo, method = "dr", control_grp = "notyettreated")
+      res$att_global
+    },
+    error = function(e) {
+      cli::cli_alert_warning("Placebo test falhou: {e$message}")
+      NA_real_
+    }
   )
 
-print(summary_att)
+  return(out)
+}
 
-# 3. Validando as Tendências Pré-Tratamento
-# Filtramos os períodos anteriores ao tratamento (time < group)
-att_pre <- att_table %>% 
-  filter(time < group)
+# 1.4 Robustez (métodos alternativos) --------------------------------------- #
+robust_specs <- function(df) {
+  methods <- c("dr", "ipw", "reg")
+  out <- purrr::map_dfr(methods, function(m) {
+    res <- tryCatch(
+      estimate_att(df, method = m),
+      error = function(e) {
+        cli::cli_alert_warning("Método {m} falhou: {e$message}")
+        NULL
+      }
+    )
+    if (is.null(res)) {
+      tibble::tibble(metodo = m, att_global = NA_real_, se_global = NA_real_)
+    } else {
+      tibble::tibble(metodo = m, att_global = res$att_global, se_global = res$se_global)
+    }
+  })
+  return(out)
+}
 
-# Calculamos a Média dos ATT pré-tratamento  que devem estar, idealmente, próximo de zero # nolint
-pre_trend_mean <- mean(att_pre$att, na.rm = TRUE)
-pre_trend_sd <- sd(att_pre$att, na.rm = TRUE)
-
-cat("Média do ATT pré-tratamento:", pre_trend_mean, 
-    "\nDesvio padrão do ATT pré-tratamento:", pre_trend_sd, "\n")
-
-# Número de observações pré-tratamento
-n <- nrow(att_pre)
-
-# Cálculo da estatística t
-t_stat <- pre_trend_mean / (pre_trend_sd / sqrt(n))
-
-# Cálculo do p-valor (teste bilateral)
-p_value <- 2 * pt(-abs(t_stat), df = n-1)
-
-# Para um intervalo de confiança de 95%
-error_margin <- qt(0.975, df = n-1) * (pre_trend_sd / sqrt(n))
-ci_lower <- pre_trend_mean - error_margin
-ci_upper <- pre_trend_mean + error_margin
-
-cat("Estatística t pré:", t_stat, "\nP-valor pré:", p_value, 
-    "\nIntervalo de Confiança (95%) pré: [", ci_lower, ",", ci_upper, "]\n")
-
-
-# 4. Validando as Tendências Pós-Tratamento
-# Filtramos os períodos pós tratamento (time >= group)
-att_post <- att_table %>% 
-  filter(time >= group)
-
-# Calculamos a Média e Desvio Padrão dos ATT pós-tratamento
-post_trend_mean <- mean(att_post$att, na.rm = TRUE)
-post_trend_sd <- sd(att_post$att, na.rm = TRUE)
-
-# Número de observações pós-tratamento
-n_post <- nrow(att_post)
-
-# Cálculo da estatística t
-t_stat_post <- post_trend_mean / (post_trend_sd / sqrt(n_post))
-
-# Cálculo do p-valor (teste bilateral)
-p_value_post <- 2 * pt(-abs(t_stat_post), df = n_post-1)
-
-# Para um intervalo de confiança de 95%
-error_margin_post <- qt(0.975, df = n_post-1) * (post_trend_sd / sqrt(n_post))
-ci_lower_post <- post_trend_mean - error_margin_post
-ci_upper_post <- post_trend_mean + error_margin_post
-
-cat("Estatística t pós:", t_stat_post, "\nP-valor pós:", p_value_post, 
-    "\nIntervalo de Confiança (95%) pós: [", ci_lower_post, ",", ci_upper_post, "]\n")
-
-# 5. Interpretação do Efeito Médio Global
-summary(agg_overall)
-
-# O objeto agg_overall$att.agg fornece o efeito médio global,
-# e agg_overall$se.agg o erro padrão. 
-# Podemos interpretar esse efeito da seguinte forma:
-overall_effect <- agg_overall$att.agg
-overall_se <- agg_overall$se.agg
-
-cat("Overall Treatment Effect (ETE):", overall_effect, 
-    "\nSE:", overall_se,
-    "\nInterpretação: Um valor positivo significa que, em média,\n",
-    "a intervenção aumentou o log da produtividade. Por exemplo,",
-    "um efeito de 0.1 implica um aumento aproximado de 10,5%\n",
-    "na produtividade.\n")
-
-# 6. Interpretação do Event Study (dinâmica do efeito)
-summary(agg_event)
-
-event_df <- data.frame(
-  event_time = agg_event$egt,
-  att = agg_event$att.egt,
-  se = agg_event$se.egt
-)
-# Verificamos se, em média, o efeito pós-tratamento é maior que o pré-tratamento
-post_event_att <- mean(event_df$att[event_df$event_time > 0], na.rm = TRUE)
-pre_event_att <- mean(event_df$att[event_df$event_time < 0], na.rm = TRUE)
-
-cat("Média do efeito pós-tratamento:", post_event_att,
-    "\nMédia do efeito pré-tratamento:", pre_event_att,
-    "\nSe a média pós > média pré e há evidência estatística (intervalos não cruzam zero),",
-    "o tratamento parece ter impacto positivo ao longo do tempo.\n")
-
-ggplot(att_table, aes(x = factor(group), y = att)) +
-  geom_boxplot() +
-  theme_minimal() +
-  labs(
-    title = "Distribuição dos ATT(g,t) por Coorte (Group)",
-    x = "Ano Inicial de Tratamento (Coorte)",
-    y = "Efeito estimado (ATT)"
+# 1.5 Visualização ----------------------------------------------------------- #
+visualize_results <- function(att_event, output_prefix = "event_study") {
+  cli::cli_alert_info("Gerando gráficos…")
+  event_df <- tibble::tibble(
+    time_relative = att_event$egt,
+    att = att_event$att.egt,
+    se = att_event$se.egt
   )
 
-ggsave(
-  "distribution.png",
-  plot = last_plot(), 
-  width = 12,
-  height = 6 
-)
+  p_event <- ggplot(event_df, aes(x = time_relative, y = att)) +
+    geom_ribbon(aes(ymin = att - 1.96 * se, ymax = att + 1.96 * se), fill = "skyblue", alpha = 0.3) +
+    geom_errorbar(aes(ymin = att - 1.96 * se, ymax = att + 1.96 * se), width = 0.2, color = "navy") +
+    geom_line(color = "navy", size = 1) +
+    geom_point(color = "navy", size = 2) +
+    geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
+    geom_vline(xintercept = 0, linetype = "dashed", color = "gray40") +
+    theme_minimal(base_size = 14) +
+    labs(
+      title = "Event Study: Impacto da Estação ao Longo do Tempo",
+      x = "Períodos em relação ao tratamento",
+      y = "Efeito estimado (log-produtividade)"
+    )
 
-# ADICIONAL
+  dir_out <- here::here("data", "outputs")
+  ggsave(file.path(dir_out, paste0(output_prefix, ".png")), p_event, width = 12, height = 6)
+  ggsave(file.path(dir_out, paste0(output_prefix, ".pdf")), p_event, width = 12, height = 6)
+}
 
-# ==============================================================================
-# Algumas visualizações dos dados
-# ==============================================================================
+# 1.6 Diagnóstico de Covariáveis ------------------------------------------- #
+#   • Verifica variância no pré-tratamento e colinearidade.                   #
+#   • Retorna subconjunto de covariáveis elegíveis para DR.                   #
+check_covariates <- function(df, covars) {
+  cli::cli_alert_info("Verificando colinearidade/variância das covariáveis…")
 
+  # Filtra período pré-tratamento
+  df_pre <- df %>% filter((gname == 0 & TRUE) | ano < gname)
 
-library(dplyr)
+  # Variância de cada covariável
+  var_tbl <- purrr::map_dfr(covars, function(v) {
+    tibble::tibble(
+      var = v,
+      var_pre = var(df_pre[[v]], na.rm = TRUE)
+    )
+  })
 
-desc_stats <- df %>%
-  mutate(periodo = ifelse(pos_tratamento == 0, "Pre", "Pos"),
-         grupo = ifelse(treated == 1, "Tratado", "Não Tratado")) %>%
-  group_by(grupo, periodo) %>%
-  summarise(
-    mean_prod = mean(produtividade, na.rm = TRUE),
-    median_prod = median(produtividade, na.rm = TRUE),
-    mean_area = mean(total_area_plantada, na.rm = TRUE),
-    median_area = median(total_area_plantada, na.rm = TRUE),
-    mean_precip = mean(total_precipitacao, na.rm = TRUE),
-    median_precip = median(total_precipitacao, na.rm = TRUE),
-    n = n(),
-    .groups = "drop"
+  # Mantém apenas variância > 0
+  valid_covars <- var_tbl %>%
+    filter(var_pre > 0) %>%
+    pull(var)
+
+  # Colinearidade: constrói matriz incremental
+  keep <- c()
+  for (v in valid_covars) {
+    test_set <- c(keep, v)
+    X <- model.matrix(as.formula(paste("~", paste(test_set, collapse = "+"))), data = df_pre)
+    rk <- qr(X)$rank
+    if (rk == ncol(X)) {
+      keep <- test_set
+    } else {
+      cli::cli_alert_warning("Removendo covariável '{v}' por colinearidade no pré-tratamento.")
+    }
+  }
+
+  cli::cli_alert_success("Covariáveis elegíveis: {paste(keep, collapse = ', ')}")
+
+  # Exporta diagnóstico
+  diag_dir <- here::here("data", "outputs")
+  if (!dir.exists(diag_dir)) dir.create(diag_dir, recursive = TRUE)
+  diag_path <- file.path(diag_dir, "covar_diag.csv")
+  readr::write_csv(var_tbl, diag_path)
+
+  return(keep)
+}
+
+# --------------------------------------------------------------------------- #
+# 2. Execução Principal                                                      #
+# --------------------------------------------------------------------------- #
+# Este bloco roda automaticamente quando o script é "sourced".                #
+if (interactive() || sys.nframe() == 0) {
+  cli::cli_h1("Avaliação de Impacto de Estações Meteorológicas")
+
+  DATA_PATH <- here::here("data", "csv", "WightedMethod", "sugar_cane_treated.csv")
+  df_clean <- prep_data(DATA_PATH)
+
+  # Estimação principal
+  res_main <- estimate_att(df_clean, method = "dr")
+
+  # Teste de Tendências Paralelas (pré-tratamento)
+  cli::cli_alert_info("Testando tendências paralelas…")
+  att_df <- tibble::tibble(
+    group = res_main$att$group,
+    time  = res_main$att$t,
+    att   = res_main$att$att
   )
+  pre_df <- dplyr::filter(att_df, time < group)
+  pre_mean <- mean(pre_df$att, na.rm = TRUE)
+  pre_se <- sd(pre_df$att, na.rm = TRUE) / sqrt(nrow(pre_df))
+  t_stat <- pre_mean / pre_se
+  p_val <- 2 * stats::pt(-abs(t_stat), df = nrow(pre_df) - 1)
+  cli::cli_alert_success("Teste manual de tendências paralelas: média PRE = {round(pre_mean, 4)}, p-valor = {round(p_val, 4)}")
 
-desc_stats
+  # Placebo test
+  placebo_att <- placebo_test(df_clean, placebo_year = 2015)
+  if (!is.na(placebo_att)) {
+    cli::cli_alert_success("ATT placebo (esperado ≈ 0): {round(placebo_att, 4)}")
+  }
 
-unidades_ano <- df %>%
-  group_by(ano, treated) %>%
-  summarise(num_unidades = n_distinct(id_microrregiao), .groups = "drop")
+  # Robustez
+  robust_tbl <- robust_specs(df_clean)
+  readr::write_csv(robust_tbl, here::here("data", "outputs", "robust_att.csv"))
 
-print(n = 100, unidades_ano)
+  # Visualizações
+  visualize_results(res_main$event)
 
-# Menor e maior ano na amostra
-range_anos <- range(df$ano)
-pre_trat <- df %>% filter(pos_tratamento == 0)
-pos_trat <- df %>% filter(pos_tratamento == 1)
-
-cat("Intervalo de anos:", range_anos, "\n")
-cat("Anos pré-tratamento disponíveis:", length(unique(pre_trat$ano)), "\n")
-cat("Anos pós-tratamento disponíveis:", length(unique(pos_trat$ano)), "\n")
-
-summary_precip_area <- df %>%
-  group_by(treated, pos_tratamento) %>%
-  summarise(
-    mean_ratio = mean(precipitacao_por_area_plantada, na.rm = TRUE),
-    median_ratio = median(precipitacao_por_area_plantada, na.rm = TRUE),
-    sd_ratio = sd(precipitacao_por_area_plantada, na.rm = TRUE),
-    .groups = "drop"
-  )
-
-summary_precip_area
-
-estacoes_ano <- df %>%
-  group_by(ano) %>%
-  summarise(
-    mean_estacoes = mean(qtd_estacoes_ativas, na.rm = TRUE),
-    median_estacoes = median(qtd_estacoes_ativas, na.rm = TRUE),
-    .groups = "drop"
-  )
-
-print(n = 100,estacoes_ano)
-
-
-prod_ano <- df %>%
-  group_by(ano, treated) %>%
-  summarise(mean_prod = mean(log_produtividade, na.rm = TRUE), .groups = "drop")
-
-ggplot(prod_ano, aes(x = ano, y = mean_prod, color = factor(treated))) +
-  geom_line(size = 1) +
-  theme_minimal() +
-  labs(title = "Evolução da Produtividade ao Longo do Tempo",
-       x = "Ano",
-       y = "Produtividade Média",
-       color = "Tratado") +
-  scale_color_discrete(labels = c("0" = "Não Tratado", "1" = "Tratado"))
-
-df_periodo_grupo <- df %>%
-  mutate(periodo = ifelse(pos_tratamento == 0, "Pré", "Pós"),
-         grupo = ifelse(treated == 1, "Tratado", "Não Tratado"),
-         cat = paste(grupo, periodo))
-
-ggplot(df_periodo_grupo, aes(x = cat, y = produtividade)) +
-  geom_boxplot() +
-  theme_minimal() +
-  labs(title = "Distribuição da Produtividade por Grupo e Período",
-       x = "Grupo e Período",
-       y = "Produtividade")
-
-ggplot(estacoes_ano, aes(x = ano, y = mean_estacoes)) +
-  geom_line(size = 1, color = "blue") +
-  theme_minimal() +
-  labs(title = "Evolução do Número Médio de Estações Ativas ao Longo do Tempo",
-       x = "Ano",
-       y = "Média de Estações Ativas")
-
-
-
+  cli::cli_h2("Script concluído com sucesso.")
+}
