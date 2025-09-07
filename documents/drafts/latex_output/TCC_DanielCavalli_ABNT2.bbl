@@ -5,75 +5,85 @@
 \providecommand{\abntbstabout}[1]{}
 \abntbstabout{v-1.9.7 }
 
-\bibitem[ASSAD et al. 2022]{assad2022}
-\abntrefinfo{ASSAD et al.}{ASSAD et al.}{2022}
-{ASSAD, E.~D. et al. Impactos e vulnerabilidades da agricultura brasileira às
-  mudanças climáticas.
-\emph{Revista Brasileira de Climatologia}, v.~30, p. 355--378, 2022.}
-
 \bibitem[BURKE et al. 2021]{burke2021}
 \abntrefinfo{BURKE et al.}{BURKE et al.}{2021}
 {BURKE, M. et al. Using satellite imagery to understand and promote sustainable
   development.
-\emph{Science}, v.~371, n.~6535, p. eabe8628, 2021.}
+\textbf{Science}, v.~371, n.~6535, p. eabe8628, 2021.
+Dispon{\'\i}vel em:
+  \url{https://www.science.org/doi/abs/10.1126/science.abe8628}.}
 
 \bibitem[{CALLAWAY} e {SANT'ANNA} 2021]{callaway2021}
 \abntrefinfo{{CALLAWAY} e {SANT'ANNA}}{{CALLAWAY}; {SANT'ANNA}}{2021}
 {{CALLAWAY}, B.; {SANT'ANNA}, P. H.~C. Difference-in-differences with multiple
   time periods.
-\emph{Journal of Econometrics}, v.~225, n.~2, p. 200--230, 2021.}
+\textbf{Journal of Econometrics}, v.~225, n.~2, p. 200--230, 2021.
+Dispon{\'\i}vel em:
+  \url{https://www.sciencedirect.com/science/article/pii/S0304407620303948}.}
 
-\bibitem[CARVALHO et al. 2019]{carvalho2019}
-\abntrefinfo{CARVALHO et al.}{CARVALHO et al.}{2019}
-{CARVALHO, A.~L. et al. Impact of climate changes on potential sugarcane yield
-  in pernambuco, northeastern region of brazil.
-\emph{Renewable Energy}, v.~78, p. 26--34, 2019.}
+\bibitem[CARVALHO et al. 2015]{carvalho2015}
+\abntrefinfo{CARVALHO et al.}{CARVALHO et al.}{2015}
+{CARVALHO, A. L.~d. et al. Impact of climate changes on potential sugarcane
+  yield in {P}ernambuco, northeastern region of {B}razil.
+\textbf{Renewable Energy}, v.~78, p. 26--34, 2015.
+Dispon{\'\i}vel em:
+  \url{https://www.sciencedirect.com/science/article/pii/S0960148114008507}.}
 
-\bibitem[CROST et al. 2022]{crost2022}
-\abntrefinfo{CROST et al.}{CROST et al.}{2022}
+\bibitem[CROST et al. 2018]{crost2018}
+\abntrefinfo{CROST et al.}{CROST et al.}{2018}
 {CROST, B. et al. Climate change, agricultural production and civil conflict:
-  Evidence from the philippines.
-\emph{Journal of Environmental Economics and Management}, v.~88, p. 379--395,
-  2022.}
+  {E}vidence from the {P}hilippines.
+\textbf{Journal of Environmental Economics and Management}, v.~88, p. 379--395,
+  2018.
+Dispon{\'\i}vel em:
+  \url{https://www.sciencedirect.com/science/article/pii/S0095069617301584}.}
 
-\bibitem[GATTI, BAYLIS e CROST 2023]{gatti2023}
-\abntrefinfo{GATTI, BAYLIS e CROST}{GATTI; BAYLIS; CROST}{2023}
+\bibitem[GATTI, BAYLIS e CROST 2021]{gatti2021}
+\abntrefinfo{GATTI, BAYLIS e CROST}{GATTI; BAYLIS; CROST}{2021}
 {GATTI, N.; BAYLIS, K.; CROST, B. Can irrigation infrastructure mitigate the
-  effect of rainfall shocks on conflict? evidence from indonesia.
-\emph{American Journal of Agricultural Economics}, v.~105, n.~4, p. 1149--1176,
-  2023.}
+  effect of rainfall shocks on conflict? {E}vidence from {I}ndonesia.
+\textbf{American Journal of Agricultural Economics}, v.~103, n.~1, p. 211--231,
+  2021.
+Dispon{\'\i}vel em:
+  \url{https://onlinelibrary.wiley.com/doi/abs/10.1002/ajae.12092}.}
 
 \bibitem[{GOODMAN-BACON} 2021]{goodman2021}
 \abntrefinfo{{GOODMAN-BACON}}{{GOODMAN-BACON}}{2021}
 {{GOODMAN-BACON}, A. Difference-in-differences with variation in treatment
   timing.
-\emph{Journal of Econometrics}, v.~225, n.~2, p. 254--277, 2021.}
+\textbf{Journal of Econometrics}, v.~225, n.~2, p. 254--277, 2021.
+Dispon{\'\i}vel em:
+  \url{https://www.sciencedirect.com/science/article/pii/S0304407621001445}.}
 
-\bibitem[MARIN et al. 2016]{marin2016}
-\abntrefinfo{MARIN et al.}{MARIN et al.}{2016}
-{MARIN, F.~R. et al. Sugarcane model intercomparison: Structural differences
+\bibitem[MARIN et al. 2015]{marin2015}
+\abntrefinfo{MARIN et al.}{MARIN et al.}{2015}
+{MARIN, F.~R. et al. Sugarcane model intercomparison: {S}tructural differences
   and uncertainties under current and potential future climates.
-\emph{Environmental Modelling \& Software}, v.~72, p. 372--386, 2016.}
+\textbf{Environmental Modelling \& Software}, v.~72, p. 372--386, 2015.
+Dispon{\'\i}vel em:
+  \url{https://www.sciencedirect.com/science/article/pii/S1364815215000766}.}
 
 \bibitem[{MAVI} e {TUPPER} 2004]{mavi2004}
 \abntrefinfo{{MAVI} e {TUPPER}}{{MAVI}; {TUPPER}}{2004}
-{{MAVI}, H.~S.; {TUPPER}, G.~J. \emph{Agrometeorology: principles and
-  application of climate studies in agriculture}. New York: Food Products
-  Press, 2004.}
+{{MAVI}, H.~S.; {TUPPER}, G.~J. \textbf{Agrometeorology: {P}rinciples and
+  {A}pplications of {C}limate {S}tudies in {A}griculture}. 1. ed. CRC Press,
+  2004. Dispon{\'\i}vel em: \url{https://doi.org/10.1201/9781482277999}.}
 
-\bibitem[{MINISTÉRIO DA AGRICULTURA E PECUÁRIA} 2024]{mapa2024}
+\bibitem[{MINISTÉRIO DA AGRICULTURA E PECUÁRIA} 2025]{mapa2024}
 \abntrefinfo{{MINISTÉRIO DA AGRICULTURA E PECUÁRIA}}{{MINISTÉRIO DA
-  AGRICULTURA E PECUÁRIA}}{2024}
-{{MINISTÉRIO DA AGRICULTURA E PECUÁRIA}. \emph{Ministro Carlos Fávaro assina
-  acordo que garante instalação de 220 novas estações meteorológicas no
-  país}. 2024.
-Acesso em: 7 dez. 2024.
+  AGRICULTURA E PECUÁRIA}}{2025}
+{{MINISTÉRIO DA AGRICULTURA E PECUÁRIA}. \textbf{Ministro Carlos Fávaro
+  assina acordo que garante instalação de 220 novas estações
+  meteorológicas no país}. 2025.
+Publicado em: 3 set. 2025. Acesso em: 4 set. 2025.
 Dispon{\'\i}vel em:
-  \url{https://www.gov.br/agricultura/pt-br/assuntos/noticias/ministro-carlos-favaro-assina-acordo-que-garante-instalacao-de-220-novas-estacoes-meteorologicas-no-pais-1}.}
+  \url{https://www.gov.br/agricultura/pt-br/assuntos/noticias/
+  ministro-carlos-favaro-assina-acordo-que-garante-instalacao-de-
+  220-novas-estacoes-meteorologicas-no-pais-1}.}
 
 \bibitem[{MONTEIRO} 2009]{monteiro2009}
 \abntrefinfo{{MONTEIRO}}{{MONTEIRO}}{2009}
-{{MONTEIRO}, J. E. B.~A. \emph{Agrometeorologia dos cultivos: o fator
+{{MONTEIRO}, J. E. B.~A. \textbf{Agrometeorologia dos cultivos: o fator
   meteorológico na produção agrícola}. Brasília, DF: INMET, 2009. 530~p.
 ISBN 978-85-62817-00-7.}
 
@@ -81,49 +91,59 @@ ISBN 978-85-62817-00-7.}
 \abntrefinfo{MONTEIRO e SENTELHAS}{MONTEIRO; SENTELHAS}{2017}
 {MONTEIRO, L.~A.; SENTELHAS, P.~C. Sugarcane yield gap: can it be determined at
   national level with a simple agrometeorological model?
-\emph{Crop and Pasture Science}, v.~68, n.~3, p. 272--284, 2017.}
+\textbf{Crop and Pasture Science}, v.~68, n.~3, p. 272--284, 2017.
+Dispon{\'\i}vel em: \url{https://doi.org/10.1071/CP16334}.}
 
-\bibitem[ORTIZ-BOBEA, KNIPPENBERG e CHAMBERS 2023]{ortiz2023}
-\abntrefinfo{ORTIZ-BOBEA, KNIPPENBERG e CHAMBERS}{ORTIZ-BOBEA; KNIPPENBERG;
-  CHAMBERS}{2023}
-{ORTIZ-BOBEA, A.; KNIPPENBERG, E.; CHAMBERS, R.~G. Climate change and
-  agricultural productivity.
-\emph{Annual Review of Resource Economics}, v.~15, p. 317--337, 2023.}
+\bibitem[ORTIZ-BOBEA et al. 2020]{ortiz2020}
+\abntrefinfo{ORTIZ-BOBEA et al.}{ORTIZ-BOBEA et al.}{2020}
+{ORTIZ-BOBEA, A. et al. \textbf{The {H}istorical {I}mpact of {A}nthropogenic
+  {C}limate {C}hange on {G}lobal {A}gricultural {P}roductivity}. 2020.
+Dispon{\'\i}vel em: \url{https://arxiv.org/abs/2007.10415}.}
 
-\bibitem[{R CORE TEAM} 2024]{rcoreteam2024}
-\abntrefinfo{{R CORE TEAM}}{{R CORE TEAM}}{2024}
-{{R CORE TEAM}. \emph{R: A language and environment for statistical computing}.
-Vienna, Austria, 2024. Dispon{\'\i}vel em: \url{https://www.R-project.org/}.}
+\bibitem[{R Core Team} 2025]{rcoreteam2024}
+\abntrefinfo{{R Core Team}}{{R Core Team}}{2025}
+{{R Core Team}. \textbf{R: A Language and Environment for Statistical
+  Computing}.
+Vienna, Austria, 2025. Dispon{\'\i}vel em: \url{https://www.R-project.org/}.}
 
 \bibitem[{RIJKS} e {BARADAS} 2000]{rijks2000}
 \abntrefinfo{{RIJKS} e {BARADAS}}{{RIJKS}; {BARADAS}}{2000}
 {{RIJKS}, D.; {BARADAS}, M.~W. The clients for agrometeorological information.
-\emph{Agricultural and Forest Meteorology}, v.~103, n.~1-2, p. 27--42, 2000.}
+\textbf{Agricultural and Forest Meteorology}, v.~103, n.~1, p. 27--42, 2000.
+Dispon{\'\i}vel em:
+  \url{https://www.sciencedirect.com/science/article/pii/S0168192300001167}.}
 
 \bibitem[{SANT'ANNA} e {ZHAO} 2020]{santanna2020}
 \abntrefinfo{{SANT'ANNA} e {ZHAO}}{{SANT'ANNA}; {ZHAO}}{2020}
 {{SANT'ANNA}, P. H.~C.; {ZHAO}, J. Doubly robust difference-in-differences
   estimators.
-\emph{Journal of Econometrics}, v.~219, n.~1, p. 101--122, 2020.}
+\textbf{Journal of Econometrics}, v.~219, n.~1, p. 101--122, 2020.
+Dispon{\'\i}vel em:
+  \url{https://www.sciencedirect.com/science/article/pii/S0304407620301901}.}
 
 \bibitem[{SUN} e {ABRAHAM} 2021]{sun2021}
 \abntrefinfo{{SUN} e {ABRAHAM}}{{SUN}; {ABRAHAM}}{2021}
 {{SUN}, L.; {ABRAHAM}, S. Estimating dynamic treatment effects in event studies
   with heterogeneous treatment effects.
-\emph{Journal of Econometrics}, v.~225, n.~2, p. 175--199, 2021.}
+\textbf{Journal of Econometrics}, v.~225, n.~2, p. 175--199, 2021.
+Dispon{\'\i}vel em:
+  \url{https://www.sciencedirect.com/science/article/pii/S030440762030378X}.}
 
-\bibitem[VIANNA e SENTELHAS 2020]{vianna2020}
-\abntrefinfo{VIANNA e SENTELHAS}{VIANNA; SENTELHAS}{2020}
-{VIANNA, M.~S.; SENTELHAS, P.~C. Performance of dssat csm-canegro under
+\bibitem[VIANNA e SENTELHAS 2016]{vianna2016}
+\abntrefinfo{VIANNA e SENTELHAS}{VIANNA; SENTELHAS}{2016}
+{VIANNA, M. d.~S.; SENTELHAS, P.~C. Performance of {DSSAT} {CSM-CANEGRO} under
   operational conditions and its use in determining the 'saving irrigation'
   impact on sugarcane crop.
-\emph{Sugar Tech}, v.~18, p. 75--86, 2020.}
+\textbf{Sugar Tech}, v.~18, n.~1, p. 75--86, 2016.
+Dispon{\'\i}vel em: \url{https://doi.org/10.1007/s12355-015-0367-0}.}
 
 \bibitem[{WEISS}, {VAN CROWDER} e {BERNARDI} 2000]{weiss2000}
 \abntrefinfo{{WEISS}, {VAN CROWDER} e {BERNARDI}}{{WEISS}; {VAN CROWDER};
   {BERNARDI}}{2000}
 {{WEISS}, A.; {VAN CROWDER}, L.; {BERNARDI}, M. Communicating
   agrometeorological information to farming communities.
-\emph{Agricultural and Forest Meteorology}, v.~103, p. 185--196, 2000.}
+\textbf{Agricultural and Forest Meteorology}, v.~103, n.~1, p. 185--196, 2000.
+Dispon{\'\i}vel em:
+  \url{https://www.sciencedirect.com/science/article/pii/S0168192300001118}.}
 
 \end{thebibliography}

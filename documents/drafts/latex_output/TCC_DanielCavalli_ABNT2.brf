@@ -1,5 +1,5 @@
 \backcite {monteiro2009}{{12}{1}{chapter.1}}
-\backcite {ortiz2023}{{12}{1}{chapter.1}}
+\backcite {ortiz2020}{{12}{1}{chapter.1}}
 \backcite {mavi2004}{{12}{1}{chapter.1}}
 \backcite {weiss2000}{{12}{1}{chapter.1}}
 \backcite {rijks2000}{{12}{1}{chapter.1}}
@@ -7,9 +7,9 @@
 \backcite {sun2021}{{12}{1}{chapter.1}}
 \backcite {callaway2021}{{13}{1}{chapter.1}}
 \backcite {burke2021}{{13}{1}{Item.4}}
-\backcite {assad2022}{{13}{1}{Item.4}}
-\backcite {crost2022}{{14}{1}{Item.4}}
-\backcite {gatti2023}{{14}{1}{Item.4}}
+\backcite {monteiro2017}{{13}{1}{Item.4}}
+\backcite {crost2018}{{13}{1}{Item.4}}
+\backcite {gatti2021}{{14}{1}{Item.4}}
 \backcite {callaway2021}{{14}{1}{Item.4}}
 \backcite {callaway2021}{{14}{1}{Item.4}}
 \backcite {callaway2021}{{15}{2}{chapter.2}}
@@ -25,9 +25,9 @@
 \backcite {rcoreteam2024}{{25}{3.1.1}{subsection.3.1.1}}
 \backcite {callaway2021}{{25}{3.1.1}{subsection.3.1.1}}
 \backcite {mapa2024}{{38}{3.5.1}{subsection.3.5.1}}
-\backcite {carvalho2019}{{39}{1}{Item.59}}
-\backcite {monteiro2017, marin2016}{{39}{2}{Item.60}}
-\backcite {monteiro2017, marin2016}{{39}{2}{Item.60}}
-\backcite {vianna2020}{{39}{3}{Item.61}}
+\backcite {carvalho2015}{{39}{1}{Item.59}}
+\backcite {monteiro2017, marin2015}{{39}{2}{Item.60}}
+\backcite {monteiro2017, marin2015}{{39}{2}{Item.60}}
+\backcite {vianna2016}{{39}{3}{Item.61}}
 \backcite {callaway2021}{{40}{3.5.5}{subsection.3.5.5}}
 \backcite {callaway2021}{{44}{4}{chapter.4}}

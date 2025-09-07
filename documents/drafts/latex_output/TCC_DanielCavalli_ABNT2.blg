@@ -13,6 +13,7 @@ Reallocated singl_function (elt_size=4) to 100 items from 50.
 Reallocated wiz_functions (elt_size=4) to 9000 items from 6000.
 Database file #1: abntex2-options.bib
 Database file #2: referencias.bib
+Warning--I didn't find a database entry for "abnt-url=yes"
 Reallocated singl_function (elt_size=4) to 100 items from 50.
 Reallocated glb_str_ptr (elt_size=4) to 20 items from 10.
 Reallocated global_strs (elt_size=200001) to 20 items from 10.
@@ -24,42 +25,43 @@ Reallocated glb_str_end (elt_size=4) to 20 items from 10.
 +---------------------------------------------------------+
 You've used 20 entries,
             6714 wiz_defined-function locations,
-            1316 strings with 12832 characters,
-and the built_in function-call counts, 21108 in all, are:
-= -- 1962
-> -- 657
-< -- 242
-+ -- 477
-- -- 195
-* -- 1491
-:= -- 2716
-add.period$ -- 62
+            1322 strings with 13742 characters,
+and the built_in function-call counts, 37154 in all, are:
+= -- 4618
+> -- 605
+< -- 1113
++ -- 1334
+- -- 180
+* -- 2312
+:= -- 4446
+add.period$ -- 75
 call.type$ -- 20
-change.case$ -- 220
-chr.to.int$ -- 65
-cite$ -- 19
-duplicate$ -- 1406
-empty$ -- 1182
-format.name$ -- 936
-if$ -- 4721
-int.to.chr$ -- 0
+change.case$ -- 208
+chr.to.int$ -- 61
+cite$ -- 18
+duplicate$ -- 3939
+empty$ -- 1169
+format.name$ -- 866
+if$ -- 7273
+int.to.chr$ -- 1
 int.to.str$ -- 0
-missing$ -- 352
-newline$ -- 103
-num.names$ -- 95
-pop$ -- 470
+missing$ -- 343
+newline$ -- 111
+num.names$ -- 90
+pop$ -- 445
 preamble$ -- 1
-purify$ -- 83
+purify$ -- 81
 quote$ -- 0
-skip$ -- 1516
+skip$ -- 4074
 stack$ -- 1
-substring$ -- 973
-swap$ -- 640
-text.length$ -- 40
+substring$ -- 1786
+swap$ -- 1464
+text.length$ -- 53
 text.prefix$ -- 0
 top$ -- 0
 type$ -- 0
 warning$ -- 0
-while$ -- 147
+while$ -- 152
 width$ -- 0
-write$ -- 316
+write$ -- 315
+(There was 1 warning)
