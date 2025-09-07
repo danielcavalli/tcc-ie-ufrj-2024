@@ -88,4 +88,18 @@ renv-snapshot:  ## Update renv.lock with current package state
 # Remove the local renv library cache (does NOT delete lock file)
 renv-clean:  ## Delete renv library directory
 	rm -rf $(RENVDIR)/library
-	@echo "Removed renv library directory" 
+	@echo "Removed renv library directory"
+
+# -----------------------------------------------------------------------------
+# LaTeX value generation
+# -----------------------------------------------------------------------------
+
+latex-values:  ## Generate LaTeX values from R outputs
+	@$(R) rscripts/generate_latex_values.r
+	@echo "LaTeX values updated in documents/drafts/latex_output/auto_values.tex"
+
+# Run the complete DiD analysis and update LaTeX values
+analysis: renv-restore  ## Run complete DiD analysis and update LaTeX values
+	@$(R) rscripts/did_v2.r
+	@$(R) rscripts/generate_latex_values.r
+	@echo "Analysis complete and LaTeX values updated" 
