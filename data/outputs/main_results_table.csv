@@ -1,0 +1,7 @@
+Análise,ATT,Erro Padrão,IC 95%,N
+ATT Principal (PIB Agro),0.082***,(0.032),"[0.019, 0.145]",10290
+Placebo (PIB Não-Agro),0.015,(0.019),"[-0.022, 0.052]",9310
+Robustez - Nevertreated,0.080**,(0.036),"[0.009, 0.151]",10290
+Robustez - Sem Covariáveis,0.110***,(0.026),"[0.060, 0.161]",10290
+Robustez - IPW,0.094***,(0.032),"[0.032, 0.157]",10290
+Robustez - REG,0.066**,(0.030),"[0.007, 0.126]",10290
