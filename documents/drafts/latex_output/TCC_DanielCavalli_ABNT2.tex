@@ -45,7 +45,10 @@
 
 % Pacotes de citações
 \usepackage[brazilian,hyperpageref]{backref}	 % Paginas com as citações na bibl
-\usepackage[alf]{abntex2cite}	% Citações padrão ABNT
+\usepackage[alf,abnt-url=yes,abnt-emphasize=bf]{abntex2cite}	% Citações padrão ABNT
+
+% Configuração para quebra de URLs longas
+\PassOptionsToPackage{hyphens}{url}
 
 % --- 
 % CONFIGURAÇÕES DE PACOTES
@@ -97,6 +100,7 @@ Uma Aplicação de Diferenças em Diferenças com Tratamento Escalonado}
 % informações do PDF
 \makeatletter
 \hypersetup{
+     	breaklinks=true,			% permite quebra de links em múltiplas linhas
      	%pagebackref=true,
 		pdftitle={\@title}, 
 		pdfauthor={\@author},
@@ -267,7 +271,7 @@ Agradeço à minha família, que sempre me apoiou durante toda a graduação sem
 % resumo em português
 \setlength{\absparsep}{18pt} % ajusta o espaçamento dos parágrafos do resumo
 \begin{resumo}
-Este estudo examina o impacto causal da instalação de estações meteorológicas automáticas sobre o PIB agropecuário no Brasil, utilizando dados em painel de 490 microrregiões agrícolas entre 2003 e 2023. Empregamos o arcabouço de Diferenças em Diferenças com adoção escalonada proposto por Callaway e Sant'Anna (2021), demonstrando sua superioridade sobre métodos tradicionais em contextos de tratamento sequencial. A estratégia de identificação explora a variação temporal e geográfica na instalação de estações entre microrregiões eventualmente tratadas, utilizando o método "not-yet-treated" como grupo de controle dinâmico. Os resultados principais, obtidos através do estimador doubly robust, indicam um efeito médio do tratamento (ATT) de \mainattpct{} (IC 95\%: [1,9\%; 14,5\%], p = 0,0103), representando ganhos econômicos significativos no setor agropecuário. A análise de event study revela ausência de tendências pré-tratamento diferenciadas, validando a estratégia de identificação. Testes extensivos de robustez confirmam a validade causal: placebos com PIB não-agropecuário (ATT não significativo), randomização múltipla (p-valor empírico < 0,01), múltiplas especificações alternativas (IPW: 9,4\%, REG: 6,6\%), e estabilidade temporal. Além dos resultados substantivos sobre produtividade agrícola, este trabalho estabelece um modelo metodológico rigoroso para avaliação de políticas públicas com implementação gradual, oferecendo um guia prático para aplicações do framework de Callaway e Sant'Anna. A disponibilização completa do código e documentação reforça o compromisso com transparência e reprodutibilidade na pesquisa econométrica aplicada.
+Este estudo examina o impacto causal da instalação de estações meteorológicas automáticas sobre o PIB agropecuário no Brasil, utilizando dados em painel de 490 microrregiões agrícolas entre 2003 e 2023. Empregamos o arcabouço de Diferenças em Diferenças com adoção escalonada proposto por Callaway e Sant'Anna (2021), demonstrando sua superioridade sobre métodos tradicionais em contextos de tratamento sequencial. A estratégia de identificação explora a variação temporal e geográfica na instalação de estações entre microrregiões eventualmente tratadas, utilizando o método "not-yet-treated" como grupo de controle dinâmico. Os resultados principais, obtidos através do estimador doubly robust, indicam um efeito médio do tratamento (ATT) de \mainattpct{} (IC 95\%: [1,9\%; 14,5\%], p = 0,0103), representando ganhos econômicos significativos no setor agropecuário. A análise de event study revela ausência de tendências pré-tratamento diferenciadas, validando a estratégia de identificação. Testes extensivos de robustez confirmam a validade causal: placebos com PIB não-agropecuário (ATT não significativo), randomização múltipla (p-valor empírico < 0,01), múltiplas especificações alternativas (IPW: 9,4\%, REG: 6,6\%), e estabilidade temporal. Além dos resultados substantivos sobre produtividade agrícola, este trabalho estabelece um modelo metodológico rigoroso para avaliação de políticas públicas com implementação gradual, oferecendo um guia prático para aplicações do arcabouço de Callaway e Sant'Anna. A disponibilização completa do código e documentação reforça o compromisso com transparência e reprodutibilidade na pesquisa econométrica aplicada.
 
  \textbf{Palavras-chave}: estações meteorológicas. produtividade agrícola. PIB agropecuário. diferenças em diferenças escalonada. Callaway e Sant'Anna. informação climática. avaliação de políticas públicas.
 \end{resumo}
@@ -317,7 +321,7 @@ This study examines the causal impact of automatic weather station installation 
 \label{cap:introducao}
 
 % Abertura forte conectando o problema econômico central
-A agricultura brasileira enfrenta o desafio permanente de aumentar a produtividade em um contexto de crescente variabilidade climática. Com a produção agrícola global sendo amplamente determinada por oscilações meteorológicas durante o ciclo produtivo \cite{monteiro2009}, e as mudanças climáticas já impactando significativamente a produtividade mundial \cite{ortiz2023}, a questão central não é mais \textit{se} o clima afeta a agricultura, mas \textit{como} mitigar seus efeitos adversos e aproveitar janelas de oportunidade. Neste contexto, a informação meteorológica precisa emerge como insumo produtivo crítico, potencialmente capaz de transformar incerteza em risco gerenciável.
+A agricultura brasileira enfrenta o desafio permanente de aumentar a produtividade em um contexto de crescente variabilidade climática. Com a produção agrícola global sendo amplamente determinada por oscilações meteorológicas durante o ciclo produtivo \cite{monteiro2009}, e as mudanças climáticas já impactando significativamente a produtividade mundial \cite{ortiz2020}, a questão central não é mais \textit{se} o clima afeta a agricultura, mas \textit{como} mitigar seus efeitos adversos e aproveitar janelas de oportunidade. Neste contexto, a informação meteorológica precisa emerge como insumo produtivo crítico, potencialmente capaz de transformar incerteza em risco gerenciável.
 
 % Desenvolvimento do argumento com suporte da literatura
 A literatura documenta extensivamente os canais através dos quais informações meteorológicas podem aumentar a produtividade agrícola. \citeonline{mavi2004} identificam três dimensões principais: planejamento estratégico (escolha de culturas e épocas de plantio), decisões táticas (timing de irrigação, aplicação de defensivos) e construção de resiliência sistêmica. \citeonline{weiss2000} demonstram que estações meteorológicas locais permitem ajustes finos nas práticas agrícolas, enquanto \citeonline{rijks2000} quantificam os ganhos econômicos potenciais de serviços meteorológicos bem estruturados. No Brasil, sistemas como AGRITEMPO e SISDAGRO já operacionalizam essas informações, mas sua efetividade depende crucialmente da densidade e qualidade da rede de estações meteorológicas subjacente.
@@ -350,10 +354,10 @@ As contribuições deste trabalho são quádruplas:
 A relevância destes achados transcende o contexto específico analisado. Em um momento em que o Brasil busca conciliar aumento de produção agrícola com sustentabilidade ambiental, demonstrar que investimentos em informação podem gerar ganhos de produtividade superiores a 8\% oferece um caminho alternativo à expansão da fronteira agrícola. Além disso, com a aceleração das mudanças climáticas, a capacidade de monitorar e responder a variações meteorológicas torna-se ainda mais crítica para a segurança alimentar e competitividade do agronegócio brasileiro.
 
 % Diálogo com literatura recente
-Nossos resultados dialogam com desenvolvimentos recentes na literatura. \citeonline{burke2021} argumentam que avanços em tecnologias de informação representam uma das principais fronteiras para aumentar a produtividade agrícola no século XXI. \citeonline{assad2022} identificam o monitoramento climático como prioridade para adaptação da agricultura brasileira. \citeonline{crost2022} e \citeonline{gatti2023} demonstram, usando métodos similares aos nossos, como infraestrutura pode mitigar impactos climáticos. Este trabalho contribui para essa literatura emergente ao fornecer a primeira evidência causal direta sobre estações meteorológicas.
+Nossos resultados dialogam com desenvolvimentos recentes na literatura. \citeonline{burke2021} argumentam que avanços em tecnologias de informação representam uma das principais fronteiras para aumentar a produtividade agrícola no século XXI. \citeonline{monteiro2017} demonstram a importância de modelos agrometeorológicos para identificação de gaps de produtividade na agricultura brasileira. \citeonline{crost2018} e \citeonline{gatti2021} demonstram, usando métodos similares aos nossos, como infraestrutura pode mitigar impactos climáticos. Este trabalho contribui para essa literatura emergente ao fornecer a primeira evidência causal direta sobre estações meteorológicas.
 
 % Estrutura do trabalho
-O restante deste trabalho está organizado da seguinte forma. O Capítulo 2 apresenta a metodologia completa, incluindo o framework de Diferenças em Diferenças com múltiplos períodos de \citeonline{callaway2021}, a estratégia empírica, definição do tratamento, variáveis e especificação do modelo. O Capítulo 3 apresenta os resultados, começando pela implementação computacional e seguindo com os efeitos estimados, análises de robustez e testes de validação. O Capítulo 4 conclui com implicações para políticas públicas e direções para pesquisa futura.
+O restante deste trabalho está organizado da seguinte forma. O Capítulo 2 apresenta a metodologia completa, incluindo o arcabouço de Diferenças em Diferenças com múltiplos períodos de \citeonline{callaway2021}, a estratégia empírica, definição do tratamento, variáveis e especificação do modelo. O Capítulo 3 apresenta os resultados, começando pela implementação computacional e seguindo com os efeitos estimados, análises de robustez e testes de validação. O Capítulo 4 conclui com implicações para políticas públicas e direções para pesquisa futura.
 
 % Fechamento que conecta com o próximo capítulo
 Antes de prosseguir para a análise empírica, é fundamental compreender por que os métodos tradicionais falham neste contexto e como a abordagem de \citeonline{callaway2021} resolve esses problemas. O próximo capítulo desenvolve essa discussão metodológica em detalhe.
@@ -744,7 +748,7 @@ A análise de estudo de evento fornece evidências fundamentais sobre a evoluç�
 \label{fig:eventstudy}
 \includegraphics[width=0.9\textwidth]{../../../data/outputs/presentation/event_study_enhanced.png}
 
-\textit{Nota: A figura apresenta as estimativas pontuais (linha azul) e intervalos de confiança de 95\% (área sombreada) dos efeitos do tratamento em função do tempo relativo à instalação da estação. O período e=0 marca o ano de instalação. A linha vermelha tracejada indica efeito zero, e a linha cinza vertical marca o início do tratamento.}
+\textit{Nota: A figura apresenta as estimativas pontuais (linha azul) e intervalos de confiança de 95\% (área sombreada) dos efeitos do tratamento em função do tempo relativo à instalação da estação. O período e=0 marca o ano de instalação.}
 \end{figure}
 
 \subsubsection{Período Pré-Tratamento: Validação das Tendências Paralelas}
@@ -1043,11 +1047,11 @@ A evidência empírica sugere que o histórico subinvestimento em infraestrutura
 Os padrões temporais observados sugerem múltiplos canais através dos quais as informações meteorológicas afetam a produtividade:
 
 \begin{enumerate}
-\item \textbf{Otimização do calendário agrícola}: Melhor determinação dos momentos de plantio e colheita baseada em previsões precisas. Estudos no Nordeste brasileiro demonstram como mudanças climáticas afetam o potencial produtivo da cana-de-açúcar, ressaltando a importância de informações meteorológicas precisas para adaptação \cite{carvalho2019}.
+\item \textbf{Otimização do calendário agrícola}: Melhor determinação dos momentos de plantio e colheita baseada em previsões precisas. Estudos no Nordeste brasileiro demonstram como mudanças climáticas afetam o potencial produtivo da cana-de-açúcar, ressaltando a importância de informações meteorológicas precisas para adaptação \cite{carvalho2015}.
 
-\item \textbf{Gestão hídrica eficiente}: Ajuste de irrigação conforme condições climáticas reais. Modelos agrometeorológicos específicos para cana-de-açúcar no Brasil demonstram a importância crítica da gestão hídrica baseada em dados meteorológicos precisos \cite{monteiro2017, marin2016}.
+\item \textbf{Gestão hídrica eficiente}: Ajuste de irrigação conforme condições climáticas reais. Modelos agrometeorológicos específicos para cana-de-açúcar no Brasil demonstram a importância crítica da gestão hídrica baseada em dados meteorológicos precisos \cite{monteiro2017, marin2015}.
 
-\item \textbf{Redução de perdas}: Antecipação a eventos extremos permite medidas preventivas. Aplicações operacionais de modelos de simulação de cana-de-açúcar no Brasil demonstram como informações meteorológicas precisas podem otimizar decisões de irrigação e reduzir perdas \cite{vianna2020}.
+\item \textbf{Redução de perdas}: Antecipação a eventos extremos permite medidas preventivas. Aplicações operacionais de modelos de simulação de cana-de-açúcar no Brasil demonstram como informações meteorológicas precisas podem otimizar decisões de irrigação e reduzir perdas \cite{vianna2016}.
 
 \end{enumerate}
 
@@ -1076,7 +1080,7 @@ Para avaliar a capacidade do design de pesquisa em detectar efeitos de diferente
 \label{fig:power}
 \includegraphics[width=0.85\textwidth]{../../../data/outputs/additional_figures/power_analysis_simulation.png}
 
-\textit{Nota: O gráfico apresenta o poder estatístico (probabilidade de rejeitar H0 quando falsa) em função do tamanho do efeito verdadeiro, para diferentes níveis de significância ($\alpha$). O efeito estimado de \mainattpct{} corresponde a um poder > 90\% ao nível de 5\%, indicando adequada capacidade de detecção.}
+\textit{Nota: O gráfico apresenta o poder estatístico (probabilidade de rejeitar H0 quando falsa) em função do tamanho do efeito verdadeiro, para três níveis de significância ($\alpha$ = 0,01, 0,05 e 0,10). Para o efeito estimado de \mainattpct{}, o poder estatístico é de 78,7\% ($\alpha$ = 0,01), 92,1\% ($\alpha$ = 0,05) e 95,8\% ($\alpha$ = 0,10), indicando excelente capacidade de detecção ao nível convencional de 5\%.}
 \end{figure}
 
 \subsection{Procedimentos de Inferência}
@@ -1174,7 +1178,7 @@ Este trabalho investigou o impacto causal da instalação de estações meteorol
 
 Os resultados têm implicações diretas para o desenho de políticas públicas voltadas ao desenvolvimento agrícola. Em um cenário de mudanças climáticas e pressão crescente sobre os recursos naturais, investimentos em sistemas de informação agrometeorológica emergem como instrumentos fundamentais para aumentar a resiliência e eficiência do setor agrícola.
 
-Do ponto de vista metodológico, este estudo demonstra a importância de utilizar métodos adequados para contextos de tratamento escalonado. O framework de \citeonline{callaway2021} permitiu evitar os vieses conhecidos dos estimadores tradicionais, fornecendo estimativas confiáveis dos efeitos causais. A disponibilização completa do código e dados reforça nosso compromisso com a transparência e reprodutibilidade na pesquisa científica.
+Do ponto de vista metodológico, este estudo demonstra a importância de utilizar métodos adequados para contextos de tratamento escalonado. O arcabouço de \citeonline{callaway2021} permitiu evitar os vieses conhecidos dos estimadores tradicionais, fornecendo estimativas confiáveis dos efeitos causais. A disponibilização completa do código e dados reforça nosso compromisso com a transparência e reprodutibilidade na pesquisa científica.
 
 Ao quantificar rigorosamente os benefícios econômicos da infraestrutura meteorológica, este estudo fornece subsídios para a tomada de decisão sobre alocação de recursos públicos e privados. A evidência apresentada sugere que a expansão da rede de estações meteorológicas deveria ser priorizada como estratégia de desenvolvimento sustentável, com potencial para gerar retornos econômicos significativos e contribuir para a segurança alimentar nacional.
 
@@ -1331,15 +1335,15 @@ A Figura \ref{fig:trends_quartile} apresenta a evolução do PIB agropecuário p
 
 \section{Análises Descritivas Complementares}
 
-A Figura \ref{fig:evolucao_pib} apresenta a evolução temporal do PIB agropecuário médio por status de tratamento:
+A Figura \ref{fig:evolucao_pib} apresenta a evolução temporal comparativa entre PIB agropecuário e não-agropecuário:
 
 \begin{figure}[h]
 \centering
-\caption{Evolução Temporal do PIB Agropecuário por Status de Tratamento}
+\caption{Evolução Temporal do PIB Agropecuário vs PIB Não-Agropecuário}
 \label{fig:evolucao_pib}
 \includegraphics[width=0.85\textwidth]{../../../data/outputs/descriptive_analysis/evolucao_temporal_pib.png}
 
-\textit{Nota: O gráfico mostra a evolução do PIB agropecuário médio (em log) para grupos de microrregiões classificados por status de tratamento. Observa-se divergência crescente entre tratados e controles após 2008.}
+\textit{Nota: O gráfico mostra a evolução temporal do PIB agropecuário e do PIB não-agropecuário médio (em log) para as microrregiões da amostra. A comparação permite visualizar as dinâmicas distintas entre os setores ao longo do período analisado.}
 \end{figure}
 
 A Figura \ref{fig:correlacao} apresenta a matriz de correlação entre as principais variáveis utilizadas no estudo:

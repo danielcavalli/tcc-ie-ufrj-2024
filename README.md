@@ -424,7 +424,19 @@ plot_parallel_trends_by_gname(df_clean, "log_pib_agro")
 
 ## Licença
 
-Este projeto é licenciado sob os termos da [MIT License](LICENSE). Sinta-se livre para utilizar e adaptar o código, desde que cite a fonte.
+Este projeto é licenciado sob os termos da [GNU General Public License v3.0](LICENSE). Isso significa que você pode:
+- ✅ Usar o código para qualquer propósito
+- ✅ Modificar o código fonte
+- ✅ Distribuir o código original ou modificado
+- ✅ Usar o código em projetos comerciais
+
+Com as seguintes condições:
+- 📋 Deve manter a mesma licença GPL v3.0
+- 📋 Deve disponibilizar o código fonte
+- 📋 Deve documentar as modificações realizadas
+- 📋 Deve incluir a licença e avisos de copyright
+
+Para mais detalhes, consulte o arquivo [LICENSE](LICENSE) ou visite [GNU GPL v3.0](https://www.gnu.org/licenses/gpl-3.0.html).
 
 ## Autor e citação
 
