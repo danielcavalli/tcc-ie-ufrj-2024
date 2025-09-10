@@ -274,7 +274,7 @@ Agradeço à minha família, que sempre me apoiou durante toda a graduação sem
 % resumo em português
 \setlength{\absparsep}{18pt} % ajusta o espaçamento dos parágrafos do resumo
 \begin{resumo}
-Este estudo examina o impacto causal da instalação de estações meteorológicas automáticas sobre o Produto Interno Bruto (PIB) agropecuário no Brasil, utilizando dados em painel de 490 microrregiões produtoras de cana-de-açúcar entre 2003 e 2023. Empregamos o arcabouço de Diferenças em Diferenças com adoção escalonada proposto por Callaway e Sant'Anna (2021), demonstrando sua aplicação em contextos de tratamento escalonado. A estratégia de identificação explora a variação temporal e geográfica na instalação de estações entre microrregiões eventualmente tratadas, utilizando o método "not-yet-treated" como grupo de controle dinâmico. Os resultados principais, obtidos através do estimador doubly robust, indicam um Efeito Médio do Tratamento sobre os Tratados (ATT) de \mainattpct{} (IC 95\%: [1,9\%; 14,5\%], p = 0,0103), representando ganhos econômicos significativos no setor agropecuário. A análise de event study revela ausência de tendências pré-tratamento diferenciadas, validando a estratégia de identificação. Testes extensivos de robustez confirmam a validade causal: placebos com PIB não-agropecuário (ATT não significativo), randomização múltipla (p-valor empírico < 0,01), múltiplas especificações alternativas (IPW: 9,4\%, REG: 6,6\%), e estabilidade temporal. Além dos resultados substantivos sobre produtividade agrícola, este trabalho estabelece um modelo metodológico rigoroso para avaliação de políticas públicas com implementação gradual, oferecendo um guia prático para aplicações do arcabouço de Callaway e Sant'Anna. A disponibilização completa do código e documentação reforça o compromisso com transparência e reprodutibilidade na pesquisa econométrica aplicada.
+Este estudo examina o impacto causal da instalação de estações meteorológicas automáticas sobre o Produto Interno Bruto (PIB) agropecuário no Brasil, utilizando dados em painel de 490 microrregiões produtoras de cana-de-açúcar entre 2003 e 2023. Empregamos o arcabouço de Diferenças em Diferenças com adoção escalonada proposto por Callaway e Sant'Anna (2021), demonstrando sua aplicação em contextos de tratamento escalonado. A estratégia de identificação explora a variação temporal e geográfica na instalação de estações entre microrregiões eventualmente tratadas, utilizando o método "not-yet-treated" como grupo de controle dinâmico. Os resultados principais, obtidos através do estimador doubly robust, indicam um Efeito Médio do Tratamento sobre os Tratados (ATT) de \mainattpct{} (IC 95\%: [1,9\%; 14,5\%], p = 0,0103), representando ganhos econômicos significativos no setor agropecuário. A análise de event study revela ausência de tendências pré-tratamento diferenciadas, validando a estratégia de identificação. Testes extensivos de robustez confirmam a validade causal: placebos com PIB não-agropecuário (ATT não significativo), randomização múltipla (p-valor empírico < 0,01), múltiplas especificações alternativas (IPW: 9,4\%, REG: 6,6\%), e estabilidade temporal. Além dos resultados substantivos sobre produtividade agrícola, este trabalho serve como um guia prático para aplicação do arcabouço de Callaway e Sant'Anna no contexto de avaliação de políticas públicas com múltiplos períodos de tratamento. A disponibilização completa do código e documentação reforça o compromisso com transparência e reprodutibilidade na pesquisa econométrica aplicada.
 
  \textbf{Palavras-chave}: estações meteorológicas. produtividade agrícola. PIB agropecuário. diferenças em diferenças escalonada. Callaway e Sant'Anna. informação climática. avaliação de políticas públicas.
 \end{resumo}
@@ -282,7 +282,7 @@ Este estudo examina o impacto causal da instalação de estações meteorológic
 % resumo em inglês
 \begin{resumo}[Abstract]
  \begin{otherlanguage*}{english}
-This study examines the causal impact of automatic weather station installation on agricultural GDP in Brazil, using panel data from 490 sugarcane-producing microregions between 2003 and 2023. We employ the staggered adoption Differences-in-Differences framework proposed by Callaway and Sant'Anna (2021), demonstrating its suitability over traditional methods treatment with multiple time periods contexts. The identification strategy exploits temporal and geographic variation in station installation among eventually treated microregions, using the "not-yet-treated" method as a dynamic control group. The main results, obtained through the doubly robust estimator, indicate an average treatment effect (ATT) of 8.2\% (95\% CI: [1.9\%; 14.5\%], p = 0.0103), representing economically significant gains in agricultural GDP. The event study analysis reveals absence of differential pre-treatment trends, validating the identification strategy. Extensive robustness tests confirm causal validity: non-agricultural GDP placebos (non-significant ATT), multiple randomization (empirical p-value < 0.01), alternative specifications (IPW: 9.4\%, REG: 6.6\%), and temporal stability analysis. Beyond substantive findings on agricultural productivity, this work establishes a rigorous methodological template for evaluating public policies with gradual implementation, offering a practical guide for applications of the Callaway and Sant'Anna framework. Complete code and documentation availability reinforces commitment to transparency and reproducibility in applied econometric research.
+This study examines the causal impact of automatic weather station installation on agricultural GDP in Brazil, using panel data from 490 sugarcane-producing microregions between 2003 and 2023. We employ the staggered adoption Differences-in-Differences framework proposed by Callaway and Sant'Anna (2021), demonstrating its superiority over traditional methods in contexts with multiple treatment periods. The identification strategy exploits temporal and geographic variation in station installation among eventually treated microregions, using the "not-yet-treated" method as a dynamic control group. The main results, obtained through the doubly robust estimator, indicate an average treatment effect (ATT) of 8.2\% (95\% CI: [1.9\%; 14.5\%], p = 0.0103), representing economically significant gains in agricultural GDP. The event study analysis reveals absence of differential pre-treatment trends, validating the identification strategy. Extensive robustness tests confirm causal validity: non-agricultural GDP placebos (non-significant ATT), multiple randomization (empirical p-value < 0.01), alternative specifications (IPW: 9.4\%, REG: 6.6\%), and temporal stability analysis. Beyond substantive findings on agricultural productivity, this work serves as a practical guide for applying the Callaway and Sant'Anna framework in the context of public policy evaluation with multiple treatment periods. Complete code and documentation availability reinforces commitment to transparency and reproducibility in applied econometric research.
 
    \textbf{Keywords}: weather stations. agricultural productivity. agricultural GDP. staggered differences-in-differences. Callaway and Sant'Anna. climate information. policy evaluation. Brazil.
  \end{otherlanguage*}
@@ -831,30 +831,6 @@ A estabilidade das estimativas entre diferentes grupos de controle (diferença d
 \item O pressuposto de tendências paralelas se mantém para ambas as especificações
 \end{itemize}
 
-\subsection{Análise da Composição Dinâmica dos Efeitos}
-
-Um desafio em DiD escalonado é que a composição dos grupos tratados muda ao longo do tempo. A Figura \ref{fig:composition} decompõe o efeito agregado por coorte de adoção:
-
-\begin{figure}[H]
-\centering
-\caption{Composição Dinâmica do Efeito do Tratamento}
-\label{fig:composition}
-\includegraphics[width=0.75\textwidth]{../../../data/outputs/additional_figures/treatment_composition_dynamic.png}
-
-\textit{Nota: O gráfico decompõe o ATT agregado mostrando a contribuição de cada coorte de adoção (indicada por cores) ao longo do tempo relativo ao tratamento. Observa-se que: (i) grupos adotantes precoces (2004-2007) dominam os períodos de exposição mais longos; (ii) a partir de 2013, mais de 70\% das unidades já haviam sido tratadas por pelo menos 5 anos, indicando maturidade do programa; (iii) a contribuição é relativamente balanceada entre coortes nos primeiros anos pós-tratamento, validando que o ATT não é dirigido por grupos específicos.}
-
-\textit{Fonte: Elaboração própria a partir dos dados do estudo.}
-\end{figure}
-
-Esta análise revela três insights importantes:
-
-\begin{enumerate}
-\item \textbf{Balanceamento inicial}: Nos primeiros 5 anos após o tratamento (períodos cruciais para identificação), múltiplas coortes contribuem para o efeito agregado, evitando viés de composição.
-
-\item \textbf{Maturidade do programa}: A concentração de unidades com exposição longa ao tratamento após 2013 sugere que os efeitos estimados capturam impactos de longo prazo sustentados.
-
-\item \textbf{Ausência de dominância}: Nenhuma coorte individual domina excessivamente o ATT agregado, fortalecendo a validade externa dos resultados.
-\end{enumerate}
 
 \subsection{Testes Placebo}
 
