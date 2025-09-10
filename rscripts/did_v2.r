@@ -45,7 +45,8 @@
 pkgs <- c(
   "did", "dplyr", "ggplot2", "readr", "here", "cli", "purrr", "tibble", "tidyr",
   "knitr", "kableExtra", "scales", "viridis", "patchwork", "gt", "htmltools", "corrplot",
-  "sf", "geobr", "RColorBrewer", "ggridges", "gtsummary"
+  "sf", "geobr", "RColorBrewer", "ggridges", "gtsummary",
+  "foreach", "doParallel" # Para paralelização do placebo test
 )
 for (p in pkgs) {
   if (!requireNamespace(p, quietly = TRUE)) {
@@ -1179,18 +1180,54 @@ estimate_att_robust_se <- function(df, method = "dr", se_type = "twoway") {
   return(estimate_att(df, method = method))
 }
 
-# 1.12 Teste Placebo Aleatório ---------------------------------------------- #
-#' random_placebo_test()
+# 1.11.1 Funções Auxiliares de Paralelização -------------------------------- #
+#' setup_parallel_placebo()
 #' ---------------------------------------------------------------------------
-#' Atribui anos de tratamento aleatórios repetidamente e constrói distribuição
-#' nula dos ATTs placebos. O ATT verdadeiro deve estar na cauda.
+#' Configura ambiente paralelo para placebo test
+#' @param n_cores Número de cores (NULL = auto-detecta)
+#' @return Lista com n_cores e cluster (se Windows)
+#' ---------------------------------------------------------------------------
+setup_parallel_placebo <- function(n_cores = NULL) {
+  # Auto-detecta cores se não especificado
+  if (is.null(n_cores)) {
+    n_cores <- max(1, parallel::detectCores() - 1)
+    cli::cli_alert_info("Auto-detectados {parallel::detectCores()} cores, usando {n_cores}")
+  }
+
+  # Setup específico por OS
+  if (.Platform$OS.type == "windows") {
+    cl <- parallel::makeCluster(n_cores)
+    doParallel::registerDoParallel(cl)
+    return(list(n_cores = n_cores, cluster = cl))
+  } else {
+    doParallel::registerDoParallel(cores = n_cores)
+    return(list(n_cores = n_cores, cluster = NULL))
+  }
+}
+
+#' cleanup_parallel_placebo()
+#' ---------------------------------------------------------------------------
+#' Limpa recursos de paralelização
+#' @param setup_info Retorno de setup_parallel_placebo
+#' ---------------------------------------------------------------------------
+cleanup_parallel_placebo <- function(setup_info) {
+  if (!is.null(setup_info$cluster)) {
+    parallel::stopCluster(setup_info$cluster)
+  }
+  foreach::registerDoSEQ()
+}
+
+# 1.12 Teste Placebo Aleatório ---------------------------------------------- #
+#' random_placebo_test_serial()
+#' ---------------------------------------------------------------------------
+#' Versão serial original - fallback quando paralelização não disponível
 #' @param df Dados preparados
 #' @param n_sims Número de simulações
 #' @param method Método de estimação
 #' @param seed Semente aleatória
 #' @return Lista com distribuição de placebos e p-valor
 #' ---------------------------------------------------------------------------
-random_placebo_test <- function(df, n_sims = 100, method = "dr", seed = 42) {
+random_placebo_test_serial <- function(df, n_sims = 100, method = "dr", seed = 42) {
   set.seed(seed)
   cli::cli_alert_info("Executando {n_sims} testes placebo aleatórios...")
 
@@ -1256,8 +1293,16 @@ random_placebo_test <- function(df, n_sims = 100, method = "dr", seed = 42) {
     cli::cli_alert_warning("Apenas {n_valid} simulações válidas. Resultados podem ser imprecisos.")
   }
 
-  # Calcula p-valor empírico
-  p_value <- mean(abs(placebo_atts) >= abs(true_att))
+  # Calcula p-valor empírico com correção de amostra finita
+  # p̂ = (1 + #{extremes}) / (S + 1) para evitar p=0 e manter o teste conservador
+  n_extremes <- sum(abs(placebo_atts) >= abs(true_att))
+  p_value <- (1 + n_extremes) / (n_valid + 1)
+
+  # Erro padrão e intervalo de confiança do p-valor (Monte Carlo)
+  # SE(p̂) = sqrt(p̂(1-p̂)/S) - variabilidade devido ao número finito de simulações
+  se_pvalue <- sqrt(p_value * (1 - p_value) / n_valid)
+  ci_lower_pvalue <- max(0, p_value - 1.96 * se_pvalue)
+  ci_upper_pvalue <- min(1, p_value + 1.96 * se_pvalue)
 
   # Percentis para comparação
   percentiles <- quantile(placebo_atts, c(0.025, 0.05, 0.95, 0.975))
@@ -1267,8 +1312,10 @@ random_placebo_test <- function(df, n_sims = 100, method = "dr", seed = 42) {
     sprintf("%.2e", p_value),
     sprintf("%.4f", p_value)
   )
-  cli::cli_alert_success("P-valor empírico: {p_emp_formatted}")
+  cli::cli_alert_success("P-valor empírico (com correção): {p_emp_formatted}")
+  cli::cli_alert_info("IC 95% do p-valor: [{sprintf('%.4f', ci_lower_pvalue)}, {sprintf('%.4f', ci_upper_pvalue)}]")
   cli::cli_alert_info("ATT verdadeiro: {round(true_att, 4)}")
+  cli::cli_alert_info("Extremos: {n_extremes} de {n_valid} ({round(100*n_extremes/n_valid, 1)}%)")
   cli::cli_alert_info("Intervalo 95% placebos: [{round(percentiles[1], 4)}, {round(percentiles[4], 4)}]")
 
   # Visualização
@@ -1281,7 +1328,10 @@ random_placebo_test <- function(df, n_sims = 100, method = "dr", seed = 42) {
       title = "Distribuição de ATTs Placebo vs ATT Verdadeiro",
       x = "ATT estimado",
       y = "Frequência",
-      subtitle = paste0("P-valor empírico: ", round(p_value, 3))
+      subtitle = sprintf(
+        "P-valor (correção finita): %.3f | Extremos: %d/%d",
+        p_value, n_extremes, n_valid
+      )
     )
 
   ggsave(here::here("data", "outputs", "placebo_distribution.png"), p_dist, width = 10, height = 6)
@@ -1290,8 +1340,215 @@ random_placebo_test <- function(df, n_sims = 100, method = "dr", seed = 42) {
     placebo_atts = placebo_atts,
     true_att = true_att,
     p_value = p_value,
+    p_value_se = se_pvalue,
+    p_value_ci = c(ci_lower_pvalue, ci_upper_pvalue),
+    n_extremes = n_extremes,
     percentiles = percentiles,
     n_valid = n_valid
+  ))
+}
+
+#' random_placebo_test()
+#' ---------------------------------------------------------------------------
+#' Versão paralela - usa foreach/doParallel para acelerar simulações
+#' @param df Dados preparados
+#' @param n_sims Número de simulações
+#' @param method Método de estimação
+#' @param seed Semente aleatória
+#' @param parallel Usar paralelização? (default: TRUE)
+#' @param n_cores Número de cores (NULL = auto)
+#' @return Lista com distribuição de placebos e p-valor
+#' ---------------------------------------------------------------------------
+random_placebo_test <- function(df, n_sims = 100, method = "dr", seed = 42,
+                                parallel = TRUE, n_cores = NULL) {
+  # Decisão: paralelo ou serial?
+  if (!parallel || n_sims < 100) {
+    cli::cli_alert_info("Executando em modo serial (parallel = {parallel}, n_sims = {n_sims})")
+    return(random_placebo_test_serial(df, n_sims, method, seed))
+  }
+
+  # Setup paralelo
+  setup_info <- setup_parallel_placebo(n_cores)
+  on.exit(cleanup_parallel_placebo(setup_info), add = TRUE)
+
+  cli::cli_alert_info("Executando {n_sims} testes placebo em paralelo ({setup_info$n_cores} cores)...")
+
+  # ATT verdadeiro para comparação
+  true_res <- estimate_att(df, method = method)
+  true_att <- true_res$att_global
+
+  # Preparar dados compartilhados
+  all_units <- unique(df$id_microrregiao)
+  n_units <- length(all_units)
+  n_treated_original <- df %>%
+    group_by(id_microrregiao) %>%
+    summarise(treated = any(gname > 0), .groups = "drop") %>%
+    pull(treated) %>%
+    sum()
+
+  year_range <- range(df$ano)
+  possible_years <- seq(year_range[1] + 2, year_range[2] - 2)
+
+  # Tempo inicial
+  start_time <- Sys.time()
+
+  # Dividir simulações entre cores
+  sims_per_core <- split(
+    1:n_sims,
+    rep(1:setup_info$n_cores,
+      length.out = n_sims
+    )
+  )
+
+  # Execução paralela
+  cli::cli_alert_info("Iniciando {n_sims} simulações em {setup_info$n_cores} cores...")
+
+  # Dividir em batches menores para mostrar progresso
+  n_batches <- min(100, n_sims) # Mostrar progresso a cada 1% ou cada simulação
+  batch_size <- ceiling(n_sims / n_batches)
+
+  # Criar batches de simulações
+  sim_batches <- split(1:n_sims, ceiling(seq_along(1:n_sims) / batch_size))
+
+  # Barra de progresso
+  cli::cli_progress_bar("Simulando placebos", total = length(sim_batches))
+
+  placebo_results <- list()
+
+  for (batch_idx in seq_along(sim_batches)) {
+    batch_sims <- sim_batches[[batch_idx]]
+
+    # Processar batch em paralelo
+    batch_results <- foreach(
+      sim_id = batch_sims,
+      .combine = "c",
+      .packages = c("dplyr", "did", "tibble"),
+      .export = c("estimate_att")
+    ) %dopar% {
+      # Seed única e reproduzível
+      set.seed(seed * 1000 + sim_id)
+
+      # Randomizar quais unidades são tratadas
+      treated_units <- sample(all_units, n_treated_original, replace = FALSE)
+
+      # Para cada unidade tratada, sortear ano de tratamento
+      treatment_years <- sample(possible_years, n_treated_original, replace = TRUE)
+
+      # Criar lookup de tratamento
+      unit_treatment <- data.frame(
+        id_microrregiao = all_units,
+        gname_placebo = 0
+      )
+      unit_treatment$gname_placebo[match(treated_units, all_units)] <- treatment_years
+
+      # Aplicar tratamento placebo
+      df_placebo <- df %>%
+        left_join(unit_treatment,
+          by = "id_microrregiao",
+          suffix = c("", "_drop")
+        ) %>%
+        mutate(gname = gname_placebo) %>%
+        select(-gname_placebo)
+
+      # Estimar ATT placebo
+      tryCatch(
+        {
+          res <- estimate_att(df_placebo, method = method)
+          res$att_global
+        },
+        error = function(e) NA_real_
+      )
+    }
+
+    # Adicionar resultados do batch
+    placebo_results[[batch_idx]] <- batch_results
+
+    # Atualizar barra de progresso
+    cli::cli_progress_update()
+  }
+
+  # Combinar todos os resultados
+  placebo_results <- unlist(placebo_results)
+
+  cli::cli_progress_done()
+
+  # Tempo total
+  elapsed_time <- difftime(Sys.time(), start_time, units = "mins")
+  cli::cli_alert_success("Placebo test completado em {round(elapsed_time, 1)} minutos")
+
+  # Remover NAs e processar resultados
+  valid_results <- placebo_results[!is.na(placebo_results)]
+  n_valid <- length(valid_results)
+
+  if (n_valid < n_sims * 0.9) {
+    cli::cli_alert_warning("Apenas {n_valid}/{n_sims} simulações válidas ({round(100*n_valid/n_sims, 1)}%)")
+  }
+
+  # Estatísticas com correção de amostra finita
+  # p̂ = (1 + #{extremes}) / (S + 1) para evitar p=0 e manter o teste conservador
+  n_extremes <- sum(abs(valid_results) >= abs(true_att))
+  p_value <- (1 + n_extremes) / (n_valid + 1)
+
+  # Erro padrão e intervalo de confiança do p-valor (Monte Carlo)
+  # SE(p̂) = sqrt(p̂(1-p̂)/S) - variabilidade devido ao número finito de simulações
+  se_pvalue <- sqrt(p_value * (1 - p_value) / n_valid)
+  ci_lower_pvalue <- max(0, p_value - 1.96 * se_pvalue)
+  ci_upper_pvalue <- min(1, p_value + 1.96 * se_pvalue)
+
+  percentiles <- quantile(valid_results, c(0.025, 0.05, 0.5, 0.95, 0.975))
+
+  # Formatação do p-value
+  p_emp_formatted <- ifelse(p_value < 0.001,
+    sprintf("%.2e", p_value),
+    sprintf("%.4f", p_value)
+  )
+
+  cli::cli_alert_info("ATT verdadeiro: {round(true_att, 4)}")
+  cli::cli_alert_info("P-valor empírico (com correção): {p_emp_formatted}")
+  cli::cli_alert_info("IC 95% do p-valor: [{sprintf('%.4f', ci_lower_pvalue)}, {sprintf('%.4f', ci_upper_pvalue)}]")
+  cli::cli_alert_info("Extremos: {n_extremes} de {n_valid} ({round(100*n_extremes/n_valid, 1)}%)")
+  cli::cli_alert_info("IC 95% placebos: [{round(percentiles[1], 4)}, {round(percentiles[5], 4)}]")
+
+  # Visualização aprimorada
+  p_dist <- ggplot(data.frame(att = valid_results), aes(x = att)) +
+    geom_histogram(bins = 50, fill = "lightgray", color = "black", alpha = 0.7) +
+    geom_vline(xintercept = true_att, color = "red", linewidth = 2) +
+    geom_vline(xintercept = percentiles[c(1, 5)], color = "blue", linetype = "dashed") +
+    geom_vline(xintercept = 0, color = "gray50", linetype = "dotted") +
+    theme_minimal(base_size = 14) +
+    labs(
+      title = "Distribuição de ATTs Placebo vs ATT Verdadeiro",
+      subtitle = sprintf(
+        "P-valor (correção finita): %.3f | Extremos: %d/%d | Tempo: %.1f min",
+        p_value, n_extremes, n_valid, elapsed_time
+      ),
+      x = "ATT Estimado",
+      y = "Frequência"
+    ) +
+    theme(
+      plot.title = element_text(face = "bold"),
+      panel.grid.minor = element_blank()
+    )
+
+  ggsave(
+    here::here("data", "outputs", "placebo_distribution.png"),
+    p_dist,
+    width = 10,
+    height = 6,
+    dpi = 300
+  )
+
+  return(list(
+    placebo_atts = valid_results,
+    true_att = true_att,
+    p_value = p_value,
+    p_value_se = se_pvalue,
+    p_value_ci = c(ci_lower_pvalue, ci_upper_pvalue),
+    n_extremes = n_extremes,
+    percentiles = percentiles,
+    n_valid = n_valid,
+    elapsed_time = as.numeric(elapsed_time),
+    n_cores_used = setup_info$n_cores
   ))
 }
 
@@ -2960,20 +3217,56 @@ create_parallel_trends_test_table <- function(df,
     )
 
   # Salvar tabela
-  output_dir <- here::here("data", "outputs", "presentation")
+  output_dir <- here::here("data", "outputs")
   if (!dir.exists(output_dir)) dir.create(output_dir, recursive = TRUE)
 
-  # Salvar em HTML
-  gt::gtsave(gt_table, file.path(output_dir, "teste_tendencias_paralelas.html"))
+  # Salvar versão formatada em CSV
+  write_csv(test_table, file.path(output_dir, "teste_tendencias_paralelas_formatado.csv"))
 
-  # Salvar em PNG se webshot2 disponível
-  if (requireNamespace("webshot2", quietly = TRUE)) {
-    gt::gtsave(gt_table, file.path(output_dir, "teste_tendencias_paralelas.png"))
-  }
+  # Criar versão com dados brutos para análise
+  raw_data <- tibble::tibble(
+    test_type = "Tendências Paralelas Pré-Tratamento",
+    f_statistic = f_stat,
+    df1 = df1,
+    df2 = df2,
+    p_value = p_value,
+    significance = ifelse(!is.na(p_value) && !is.null(p_value),
+      ifelse(p_value < 0.01, "***",
+        ifelse(p_value < 0.05, "**",
+          ifelse(p_value < 0.10, "*", "n.s.")
+        )
+      ),
+      "N/A"
+    ),
+    conclusion_short = ifelse(!is.na(p_value) && !is.null(p_value),
+      ifelse(p_value > 0.05, "Tendências Paralelas Válidas", "Violação de Tendências Paralelas"),
+      "P-valor não disponível"
+    ),
+    n_cohorts = nrow(cohort_info),
+    n_treated_units = sum(cohort_info$n_units),
+    interpretation = conclusion
+  )
 
-  cli::cli_alert_success("Tabela de teste de tendências paralelas criada!")
+  # Salvar dados brutos
+  write_csv(raw_data, file.path(output_dir, "teste_tendencias_paralelas_dados.csv"))
 
-  return(gt_table)
+  # Também salvar informações das coortes
+  cohort_info_export <- cohort_info %>%
+    select(treatment_year = gname, n_units, cohort_label)
+
+  write_csv(cohort_info_export, file.path(output_dir, "teste_tendencias_paralelas_coortes.csv"))
+
+  cli::cli_alert_success("Arquivos CSV de teste de tendências paralelas criados!")
+  cli::cli_alert_info("- teste_tendencias_paralelas_formatado.csv (tabela formatada)")
+  cli::cli_alert_info("- teste_tendencias_paralelas_dados.csv (dados brutos)")
+  cli::cli_alert_info("- teste_tendencias_paralelas_coortes.csv (informações das coortes)")
+
+  return(list(
+    table = gt_table,
+    formatted_data = test_table,
+    raw_data = raw_data,
+    cohort_info = cohort_info_export
+  ))
 }
 
 # ┌─────────────────────────────────────────────────────────────────────────┐ #
@@ -3988,14 +4281,24 @@ if (interactive() || sys.nframe() == 0) {
   # NOVA ANÁLISE 5: Teste Placebo Aleatório
   # ---------------------------------------------------------------------- #
   cli::cli_h2("Teste Placebo Aleatório")
-  placebo_random <- random_placebo_test(df_clean, n_sims = 50, method = "dr")
+  placebo_random <- random_placebo_test(
+    df_clean,
+    n_sims = 5000,
+    method = "dr",
+    parallel = TRUE, # Ativar paralelização
+    n_cores = NULL # Auto-detectar cores
+  )
 
   # Salva resultados do placebo aleatório
   placebo_summary <- tibble::tibble(
     true_att = placebo_random$true_att,
     p_value_empirical = placebo_random$p_value,
-    ci_95_lower = placebo_random$percentiles[1],
-    ci_95_upper = placebo_random$percentiles[4],
+    p_value_se = placebo_random$p_value_se,
+    p_value_ci_lower = placebo_random$p_value_ci[1],
+    p_value_ci_upper = placebo_random$p_value_ci[2],
+    n_extremes = placebo_random$n_extremes,
+    placebo_ci_95_lower = placebo_random$percentiles[1],
+    placebo_ci_95_upper = placebo_random$percentiles[5],
     n_valid_sims = placebo_random$n_valid
   )
   readr::write_csv(placebo_summary, here::here("data", "outputs", "placebo_random_summary.csv"))

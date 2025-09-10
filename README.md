@@ -1,29 +1,47 @@
-# Impacto de Estações Meteorológicas no PIB Agropecuário: Uma Análise via Difference-in-Differences
+# Impacto de Estações Meteorológicas na Produtividade Agrícola: Uma Aplicação de Diferenças em Diferenças com Tratamento Escalonado
 
-> Trabalho de Conclusão de Curso – Instituto de Economia, UFRJ (2024)
+> Trabalho de Conclusão de Curso – Instituto de Economia, UFRJ (2025)
 
-Este repositório contém os códigos, dados e documentação utilizados no meu Trabalho de Conclusão de Curso (TCC) no Instituto de Economia da Universidade Federal do Rio de Janeiro. O estudo investiga o impacto causal da instalação de estações meteorológicas automáticas sobre o PIB agropecuário municipal no Brasil, utilizando o estimador de diferenças-em-diferenças (DiD) com adoção escalonada de Callaway & Sant'Anna (2021).
+Este repositório contém os códigos, dados e documentação do meu TCC no Instituto de Economia da UFRJ. O estudo investiga o impacto causal da instalação de estações meteorológicas automáticas sobre o PIB agropecuário no Brasil, utilizando o estimador de Diferenças em Diferenças (DiD) com adoção escalonada de Callaway e Sant'Anna (2021).
 
-## Índice
-1. [Objetivos do projeto](#objetivos-do-projeto)
-2. [Estrutura do repositório](#estrutura-do-repositório)
-3. [Pré-requisitos](#pré-requisitos)
-4. [Instalação do ambiente](#instalação-do-ambiente)
-5. [Reprodução dos resultados](#reprodução-dos-resultados)
-6. [Fontes de dados](#fontes-de-dados)
-7. [Licença](#licença)
-8. [Autor e citação](#autor-e-citação)
+## 📋 Sumário
 
-## Objetivos do projeto
-1. Reunir e integrar bases de dados agropecuários (PAM/IBGE), meteorológicos (INMET) e socioeconômicos municipais.
-2. Identificar o impacto causal da instalação de estações meteorológicas automáticas sobre o PIB agropecuário.
-3. Implementar o estimador DiD com adoção escalonada de Callaway & Sant'Anna (2021), adequado para contextos onde todas as unidades são eventualmente tratadas.
-4. Realizar testes de robustez, análises de heterogeneidade regional e validação das hipóteses de identificação.
-5. Documentar todo o pipeline de análise para garantir transparência e reprodutibilidade científica.
+1. [Resumo da Pesquisa](#resumo-da-pesquisa)
+2. [Resultados Principais](#resultados-principais)
+3. [Estrutura do Repositório](#estrutura-do-repositório)
+4. [Reprodução dos Resultados](#reprodução-dos-resultados)
+5. [Metodologia](#metodologia)
+6. [Dados](#dados)
+7. [Citação](#citação)
 
-## Visão geral da pesquisa
+## 📊 Resumo da Pesquisa
 
-Esta pesquisa investiga o impacto causal da instalação de estações meteorológicas automáticas sobre o PIB agropecuário em microrregiões brasileiras. A hipótese central é que o acesso a informações meteorológicas precisas e localizadas melhora significativamente a tomada de decisão no setor agrícola, resultando em ganhos de produtividade e valor agregado. Utilizamos a expansão gradual da rede de estações do INMET entre 2003-2023 como variação exógena para identificação causal.
+**Pergunta:** A instalação de estações meteorológicas automáticas aumenta a produtividade agrícola local?
+
+**Hipótese:** O acesso a informações meteorológicas precisas e localizadas melhora a tomada de decisão no setor agrícola, resultando em ganhos de produtividade.
+
+**Metodologia:** Diferenças em Diferenças com adoção escalonada, adequado para contextos onde todas as unidades são eventualmente tratadas.
+
+**Período:** 2003-2023 (21 anos)
+
+**Unidades:** 490 microrregiões produtoras de cana-de-açúcar
+
+## 🎯 Resultados Principais
+
+### Efeito Principal
+- **ATT Agregado:** +8,2% no PIB agropecuário (IC 95%: [1,9%; 14,5%], p = 0,0103)
+- **Interpretação:** Cada estação gera, em média, R$ 8,20 adicionais para cada R$ 100 de PIB agropecuário
+
+### Validação e Robustez
+- ✅ **Tendências Paralelas:** Confirmadas (múltiplos testes, p > 0,10)
+- ✅ **Placebo PIB Não-Agrícola:** Efeito nulo, confirmando especificidade
+- ✅ **Placebo Monte Carlo:** 5.000 simulações confirmam significância (p < 0,01)
+- ✅ **Especificações Alternativas:** Resultados consistentes (DR, IPW, REG)
+
+### Dinâmica Temporal
+- **Event Study:** Efeitos crescentes ao longo do tempo
+- **Lag:** Impactos significativos após 2-3 anos
+- **Persistência:** Benefícios mantidos no longo prazo
 
 ## Metodologia
 

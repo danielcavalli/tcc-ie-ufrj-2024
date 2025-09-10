@@ -102,4 +102,36 @@ latex-values:  ## Generate LaTeX values from R outputs
 analysis: renv-restore  ## Run complete DiD analysis and update LaTeX values
 	@$(R) rscripts/did_v2.r
 	@$(R) rscripts/generate_latex_values.r
-	@echo "Analysis complete and LaTeX values updated" 
+	@echo "Analysis complete and LaTeX values updated"
+
+# -----------------------------------------------------------------------------
+# LaTeX document compilation
+# -----------------------------------------------------------------------------
+
+# Compile the thesis document
+thesis: latex-values  ## Compile the thesis PDF (TCC)
+	@echo "📄 Compiling thesis document..."
+	@cd documents/drafts/latex_output && \
+	pdflatex -interaction=nonstopmode TCC_DanielCavalli_ABNT2.tex && \
+	bibtex TCC_DanielCavalli_ABNT2 && \
+	pdflatex -interaction=nonstopmode TCC_DanielCavalli_ABNT2.tex && \
+	pdflatex -interaction=nonstopmode TCC_DanielCavalli_ABNT2.tex
+	@echo "✅ Thesis compiled: documents/drafts/latex_output/TCC_DanielCavalli_ABNT2.pdf"
+
+# Compile the defense presentation
+presentation: latex-values  ## Compile the defense presentation PDF
+	@echo "📊 Compiling defense presentation..."
+	@cd documents/drafts/latex_output && \
+	pdflatex -interaction=nonstopmode apresentacao_defesa.tex && \
+	pdflatex -interaction=nonstopmode apresentacao_defesa.tex
+	@echo "✅ Presentation compiled: documents/drafts/latex_output/apresentacao_defesa.pdf"
+
+# Compile all LaTeX documents
+docs: thesis presentation  ## Compile both thesis and presentation
+
+# Clean LaTeX auxiliary files
+latex-clean:  ## Remove LaTeX auxiliary files
+	@echo "🧹 Cleaning LaTeX auxiliary files..."
+	@cd documents/drafts/latex_output && \
+	rm -f *.aux *.log *.out *.toc *.lof *.lot *.bbl *.blg *.idx *.ilg *.ind *.synctex.gz *.fdb_latexmk *.fls *.nav *.snm *.vrb
+	@echo "✅ LaTeX cleanup complete" 

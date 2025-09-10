@@ -7,7 +7,12 @@ library(glue)
 # Função para formatar números para LaTeX
 format_number <- function(x, digits = 4, percent = FALSE) {
     if (percent) {
-        return(sprintf("%.1f\\%%", x * 100))
+        pct_value <- x * 100
+        if (pct_value < 0.1) {
+            return(sprintf("%.2f\\%%", pct_value))  # Show 2 decimals for very small percentages
+        } else {
+            return(sprintf("%.1f\\%%", pct_value))
+        }
     } else if (abs(x) < 0.01) {
         return(sprintf("%.3f", x))
     } else {
@@ -43,10 +48,16 @@ latex_content <- c(
     "% Valores do teste placebo aleatório",
     paste0("\\newcommand{\\placebotruatt}{", format_number(placebo_data$true_att[1]), "}"),
     paste0("\\newcommand{\\placebopvalue}{", format_pvalue(placebo_data$p_value_empirical[1]), "}"),
-    paste0("\\newcommand{\\placebolower}{", format_number(placebo_data$ci_95_lower[1]), "}"),
-    paste0("\\newcommand{\\placeboupper}{", format_number(placebo_data$ci_95_upper[1]), "}"),
+    paste0("\\newcommand{\\placebolower}{", format_number(placebo_data$placebo_ci_95_lower[1]), "}"),
+    paste0("\\newcommand{\\placeboupper}{", format_number(placebo_data$placebo_ci_95_upper[1]), "}"),
     paste0("\\newcommand{\\placebonsims}{", placebo_data$n_valid_sims[1], "}"),
-    paste0("\\newcommand{\\placebomean}{", format_number(mean(c(placebo_data$ci_95_lower[1], placebo_data$ci_95_upper[1]))), "}"),
+    paste0("\\newcommand{\\placebomean}{", format_number(mean(c(placebo_data$placebo_ci_95_lower[1], placebo_data$placebo_ci_95_upper[1]))), "}"),
+    "",
+    "% Valores de precisão do p-valor (Monte Carlo)",
+    paste0("\\newcommand{\\placebopvaluese}{", format_number(placebo_data$p_value_se[1]), "}"),
+    paste0("\\newcommand{\\placebopvaluelower}{", format_number(placebo_data$p_value_ci_lower[1]), "}"),
+    paste0("\\newcommand{\\placebopvalueupper}{", format_number(placebo_data$p_value_ci_upper[1]), "}"),
+    paste0("\\newcommand{\\placebonextremes}{", placebo_data$n_extremes[1], "}"),
     "",
     "% Valores formatados para texto",
     paste0("\\newcommand{\\placebotruattpct}{", format_number(placebo_data$true_att[1], percent = TRUE), "}"),

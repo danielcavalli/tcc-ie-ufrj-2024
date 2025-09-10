@@ -7,11 +7,11 @@
 \documentclass[
 	% -- opções da classe memoir --
 	12pt,				% tamanho da fonte
-	%openright,			% capítulos começam em pág ímpar (insere página vazia caso preciso)
+	%openright,			% seções começam em pág ímpar (insere página vazia caso preciso)
 	oneside,			% para impressão em verso e anverso. Oposto a oneside
 	a4paper,			% tamanho do papel. 
 	% -- opções da classe abntex2 --
-	%chapter=TITLE,		% títulos de capítulos convertidos em letras maiúsculas
+	%chapter=TITLE,		% títulos de seções principais convertidos em letras maiúsculas
 	%section=TITLE,		% títulos de seções convertidos em letras maiúsculas
 	%subsection=TITLE,	% títulos de subseções convertidos em letras maiúsculas
 	%subsubsection=TITLE,% títulos de subsubseções convertidos em letras maiúsculas
@@ -42,6 +42,17 @@
 \usepackage{booktabs}
 \usepackage{multirow}           % Para células multi-linha em tabelas
 \usepackage{csquotes}           % Para aspas corretas
+\usepackage{float}              % Para forçar posicionamento de figuras com [H]
+\usepackage{placeins}           % Para controlar onde floats podem ir com \FloatBarrier
+
+% Configuração para melhorar posicionamento de figuras
+\renewcommand{\topfraction}{0.85}        % máximo da página que pode ser ocupado por floats no topo
+\renewcommand{\bottomfraction}{0.7}     % máximo da página que pode ser ocupado por floats no fundo
+\renewcommand{\textfraction}{0.15}      % mínimo da página que deve ser texto
+\renewcommand{\floatpagefraction}{0.66} % mínimo da página de floats que deve estar ocupada
+\setcounter{topnumber}{3}
+\setcounter{bottomnumber}{3}
+\setcounter{totalnumber}{4}
 
 % Pacotes de citações
 \usepackage[brazilian,hyperpageref]{backref}	 % Paginas com as citações na bibl
@@ -73,18 +84,17 @@
 % ---
 % Informações de dados para CAPA e FOLHA DE ROSTO
 % ---
-\titulo{Impacto de Estações Meteorológicas na Produtividade Agrícola: 
-Uma Aplicação de Diferenças em Diferenças com Tratamento Escalonado}
+\titulo{IMPACTO DE ESTAÇÕES METEOROLÓGICAS NA PRODUTIVIDADE AGRÍCOLA: UMA APLICAÇÃO DE DIFERENÇAS EM DIFERENÇAS COM TRATAMENTO ESCALONADO}
 \autor{Daniel Cavalli}
 \local{Rio de Janeiro}
-\data{2025}
+\data{Dezembro 2025}
 \orientador{Prof. Romero Rocha}
 \instituicao{%
-  Universidade Federal do Rio de Janeiro -- UFRJ
+  UNIVERSIDADE FEDERAL DO RIO DE JANEIRO
   \par
-  Instituto de Economia
+  INSTITUTO DE ECONOMIA
   \par
-  Graduação em Ciências Econômicas}
+  CURSO DE GRADUAÇÃO EM CIÊNCIAS ECONÔMICAS}
 \tipotrabalho{Monografia}
 % O preambulo deve conter o tipo do trabalho, o objetivo, 
 % o nome da instituição e a área de concentração 
@@ -106,7 +116,7 @@ Uma Aplicação de Diferenças em Diferenças com Tratamento Escalonado}
 		pdfauthor={\@author},
     	pdfsubject={\imprimirpreambulo},
 	    pdfcreator={LaTeX with abnTeX2},
-		pdfkeywords={estações meteorológicas}{PIB agropecuário}{cana-de-açúcar}{diferenças em diferenças}{Callaway e Sant'Anna}, 
+		pdfkeywords={estações meteorológicas}{PIB agropecuário}{diferenças em diferenças escalonada}{Callaway e Sant'Anna}{informação climática}, 
 		colorlinks=true,       		% false: boxed links; true: colored links
     	linkcolor=blue,          	% color of internal links
     	citecolor=blue,        		% color of links to bibliography
@@ -139,24 +149,24 @@ Uma Aplicação de Diferenças em Diferenças com Tratamento Escalonado}
 % ---
 
 % ---
-% Configuração para capítulos sem quebra de página
+% Configuração para seções com quebra de página
 % ---
 \makeatletter
-% Redefine o comportamento do \chapter para não forçar quebra de página
-\renewcommand{\@chapter}[2][]{%
-  \refstepcounter{chapter}%
-  \typeout{\@chapapp\space\thechapter.}%
-  \addcontentsline{toc}{chapter}%
-    {\protect\numberline{\thechapter}#2}%
-  \chaptermark{#1}%
-  \addtocontents{lof}{\protect\addvspace{10\p@}}%
-  \addtocontents{lot}{\protect\addvspace{10\p@}}%
-  \@makechapterhead{#2}%
-  \@afterheading
-}
-% Ajusta espaçamento antes do capítulo
-\setlength{\beforechapskip}{2\baselineskip}
+% Mantém quebra de página entre as seções principais
+% \renewcommand{\clearforchapter}{}  % Comentado para manter quebras de página
 \makeatother
+
+% ---
+% Configuração de espaçamentos das seções conforme ABNT
+% ---
+% ABNT: 2 espaços de 1,5 entrelinhas antes do título
+\setlength{\beforechapskip}{3\baselineskip}
+% ABNT: 1 espaço de 1,5 entrelinhas depois do título
+\setlength{\afterchapskip}{1.5\baselineskip}
+
+% Ajusta também o espaçamento das seções
+\setlength{\beforesecskip}{1.5\baselineskip}
+\setlength{\aftersecskip}{1.5\baselineskip}
 % ---
 
 % ----
@@ -271,7 +281,7 @@ Agradeço à minha família, que sempre me apoiou durante toda a graduação sem
 % resumo em português
 \setlength{\absparsep}{18pt} % ajusta o espaçamento dos parágrafos do resumo
 \begin{resumo}
-Este estudo examina o impacto causal da instalação de estações meteorológicas automáticas sobre o PIB agropecuário no Brasil, utilizando dados em painel de 490 microrregiões agrícolas entre 2003 e 2023. Empregamos o arcabouço de Diferenças em Diferenças com adoção escalonada proposto por Callaway e Sant'Anna (2021), demonstrando sua superioridade sobre métodos tradicionais em contextos de tratamento sequencial. A estratégia de identificação explora a variação temporal e geográfica na instalação de estações entre microrregiões eventualmente tratadas, utilizando o método "not-yet-treated" como grupo de controle dinâmico. Os resultados principais, obtidos através do estimador doubly robust, indicam um efeito médio do tratamento (ATT) de \mainattpct{} (IC 95\%: [1,9\%; 14,5\%], p = 0,0103), representando ganhos econômicos significativos no setor agropecuário. A análise de event study revela ausência de tendências pré-tratamento diferenciadas, validando a estratégia de identificação. Testes extensivos de robustez confirmam a validade causal: placebos com PIB não-agropecuário (ATT não significativo), randomização múltipla (p-valor empírico < 0,01), múltiplas especificações alternativas (IPW: 9,4\%, REG: 6,6\%), e estabilidade temporal. Além dos resultados substantivos sobre produtividade agrícola, este trabalho estabelece um modelo metodológico rigoroso para avaliação de políticas públicas com implementação gradual, oferecendo um guia prático para aplicações do arcabouço de Callaway e Sant'Anna. A disponibilização completa do código e documentação reforça o compromisso com transparência e reprodutibilidade na pesquisa econométrica aplicada.
+Este estudo examina o impacto causal da instalação de estações meteorológicas automáticas sobre o Produto Interno Bruto (PIB) agropecuário no Brasil, utilizando dados em painel de 490 microrregiões produtoras de cana-de-açúcar entre 2003 e 2023. Empregamos o arcabouço de Diferenças em Diferenças com adoção escalonada proposto por Callaway e Sant'Anna (2021), demonstrando sua superioridade sobre métodos tradicionais em contextos de tratamento sequencial. A estratégia de identificação explora a variação temporal e geográfica na instalação de estações entre microrregiões eventualmente tratadas, utilizando o método "not-yet-treated" como grupo de controle dinâmico. Os resultados principais, obtidos através do estimador doubly robust, indicam um Efeito Médio do Tratamento sobre os Tratados (ATT) de \mainattpct{} (IC 95\%: [1,9\%; 14,5\%], p = 0,0103), representando ganhos econômicos significativos no setor agropecuário. A análise de event study revela ausência de tendências pré-tratamento diferenciadas, validando a estratégia de identificação. Testes extensivos de robustez confirmam a validade causal: placebos com PIB não-agropecuário (ATT não significativo), randomização múltipla (p-valor empírico < 0,01), múltiplas especificações alternativas (IPW: 9,4\%, REG: 6,6\%), e estabilidade temporal. Além dos resultados substantivos sobre produtividade agrícola, este trabalho estabelece um modelo metodológico rigoroso para avaliação de políticas públicas com implementação gradual, oferecendo um guia prático para aplicações do arcabouço de Callaway e Sant'Anna. A disponibilização completa do código e documentação reforça o compromisso com transparência e reprodutibilidade na pesquisa econométrica aplicada.
 
  \textbf{Palavras-chave}: estações meteorológicas. produtividade agrícola. PIB agropecuário. diferenças em diferenças escalonada. Callaway e Sant'Anna. informação climática. avaliação de políticas públicas.
 \end{resumo}
@@ -279,7 +289,7 @@ Este estudo examina o impacto causal da instalação de estações meteorológic
 % resumo em inglês
 \begin{resumo}[Abstract]
  \begin{otherlanguage*}{english}
-This study examines the causal impact of automatic weather station installation on agricultural GDP in Brazil, using panel data from 490 agricultural microregions between 2003 and 2023. We employ the staggered adoption Differences-in-Differences framework proposed by Callaway and Sant'Anna (2021), demonstrating its superiority over traditional methods in sequential treatment contexts. The identification strategy exploits temporal and geographic variation in station installation among eventually treated microregions, using the "not-yet-treated" method as a dynamic control group. The main results, obtained through the doubly robust estimator, indicate an average treatment effect (ATT) of 8.2\% (95\% CI: [1.9\%; 14.5\%], p = 0.0103), representing economically significant gains in agricultural GDP. The event study analysis reveals absence of differential pre-treatment trends, validating the identification strategy. Extensive robustness tests confirm causal validity: non-agricultural GDP placebos (non-significant ATT), multiple randomization (empirical p-value < 0.01), alternative specifications (IPW: 9.4\%, REG: 6.6\%), and temporal stability analysis. Beyond substantive findings on agricultural productivity, this work establishes a rigorous methodological template for evaluating public policies with gradual implementation, offering a practical guide for applications of the Callaway and Sant'Anna framework. Complete code and documentation availability reinforces commitment to transparency and reproducibility in applied econometric research.
+This study examines the causal impact of automatic weather station installation on agricultural GDP in Brazil, using panel data from 490 sugarcane-producing microregions between 2003 and 2023. We employ the staggered adoption Differences-in-Differences framework proposed by Callaway and Sant'Anna (2021), demonstrating its superiority over traditional methods in sequential treatment contexts. The identification strategy exploits temporal and geographic variation in station installation among eventually treated microregions, using the "not-yet-treated" method as a dynamic control group. The main results, obtained through the doubly robust estimator, indicate an average treatment effect (ATT) of 8.2\% (95\% CI: [1.9\%; 14.5\%], p = 0.0103), representing economically significant gains in agricultural GDP. The event study analysis reveals absence of differential pre-treatment trends, validating the identification strategy. Extensive robustness tests confirm causal validity: non-agricultural GDP placebos (non-significant ATT), multiple randomization (empirical p-value < 0.01), alternative specifications (IPW: 9.4\%, REG: 6.6\%), and temporal stability analysis. Beyond substantive findings on agricultural productivity, this work establishes a rigorous methodological template for evaluating public policies with gradual implementation, offering a practical guide for applications of the Callaway and Sant'Anna framework. Complete code and documentation availability reinforces commitment to transparency and reproducibility in applied econometric research.
 
    \textbf{Keywords}: weather stations. agricultural productivity. agricultural GDP. staggered differences-in-differences. Callaway and Sant'Anna. climate information. policy evaluation. Brazil.
  \end{otherlanguage*}
@@ -326,14 +336,21 @@ A agricultura brasileira enfrenta o desafio permanente de aumentar a produtivida
 % Desenvolvimento do argumento com suporte da literatura
 A literatura documenta extensivamente os canais através dos quais informações meteorológicas podem aumentar a produtividade agrícola. \citeonline{mavi2004} identificam três dimensões principais: planejamento estratégico (escolha de culturas e épocas de plantio), decisões táticas (timing de irrigação, aplicação de defensivos) e construção de resiliência sistêmica. \citeonline{weiss2000} demonstram que estações meteorológicas locais permitem ajustes finos nas práticas agrícolas, enquanto \citeonline{rijks2000} quantificam os ganhos econômicos potenciais de serviços meteorológicos bem estruturados. No Brasil, sistemas como AGRITEMPO e SISDAGRO já operacionalizam essas informações, mas sua efetividade depende crucialmente da densidade e qualidade da rede de estações meteorológicas subjacente.
 
+% Mecanismo causal explícito
+O mecanismo causal pode ser descrito de forma sequencial: a instalação de uma estação meteorológica local gera dados climáticos precisos e em tempo real, que são processados e disponibilizados aos produtores através de boletins, alertas e sistemas de informação. Com acesso a previsões mais acuradas sobre temperatura, precipitação e eventos extremos, os agricultores podem otimizar decisões críticas – desde o momento ideal de plantio e colheita até a aplicação precisa de insumos e gestão eficiente de irrigação. 
+
+Além do uso direto pelos produtores, esses dados alimentam modelos computacionais avançados de simulação agrícola. Por exemplo, o modelo DSSAT CSM-CANEGRO, amplamente utilizado no setor sucroalcooleiro, integra informações meteorológicas locais para simular o crescimento e desenvolvimento da cana-de-açúcar sob diferentes cenários de manejo. Com dados meteorológicos precisos, o modelo permite aos agricultores testar virtualmente diferentes estratégias de irrigação, identificando configurações ótimas que podem resultar em incrementos de produtividade de até 30\%, especialmente em solos mais vulneráveis ao déficit hídrico \cite{vianna2016}. Essa capacidade de simular e otimizar decisões antes da implementação no campo representa um salto qualitativo na gestão agrícola.
+
+Essas decisões melhor informadas – seja através do uso direto das previsões ou através de modelos de simulação alimentados por dados locais – traduzem-se em redução de perdas, aumento de produtividade e, consequentemente, crescimento do PIB agropecuário local.
+
 % Identificação da lacuna crítica
 Apesar do consenso teórico sobre a importância da informação meteorológica, existe uma lacuna crítica na literatura: \textbf{a ausência de evidências causais robustas sobre o impacto econômico da expansão da infraestrutura de monitoramento climático}. Estudos existentes são predominantemente descritivos ou baseados em correlações, deixando em aberto questões fundamentais: Qual é o retorno econômico da instalação de estações meteorológicas? Como esse impacto evolui ao longo do tempo? Os benefícios justificam os custos de expansão da rede?
 
 % Desafio metodológico
-A dificuldade em responder essas questões não é trivial. A instalação de estações meteorológicas no Brasil ocorreu de forma escalonada ao longo de duas décadas, com diferentes regiões adotando a tecnologia em momentos distintos. Este padrão de "adoção escalonada" (staggered adoption) invalida o uso de métodos econométricos tradicionais. Como demonstrado por \citeonline{goodman2021} e \citeonline{sun2021}, o estimador de Diferenças em Diferenças com Efeitos Fixos Bidimensionais (TWFE) – padrão ouro em avaliações de impacto – produz resultados enviesados neste contexto, pois inadvertidamente usa unidades já tratadas como controles e confunde efeitos heterogêneos ao longo do tempo.
+A dificuldade em responder essas questões não é trivial. A instalação de estações meteorológicas no Brasil ocorreu de forma escalonada ao longo de duas décadas, com diferentes regiões adotando a tecnologia em momentos distintos. Este padrão de "adoção escalonada" (staggered adoption) invalida o uso de métodos econométricos tradicionais. Como demonstrado por \citeonline{goodman2021} e \citeonline{sun2021}, o estimador de Diferenças em Diferenças com Efeitos Fixos Bidimensionais (Two-Way Fixed Effects - TWFE) – padrão ouro em avaliações de impacto – produz resultados enviesados neste contexto, pois inadvertidamente usa unidades já tratadas como controles e confunde efeitos heterogêneos ao longo do tempo.
 
 % Proposta e contribuição principal
-Este trabalho preenche essa lacuna ao estimar o \textbf{efeito causal da instalação de estações meteorológicas sobre o PIB agropecuário}, utilizando o arcabouço metodológico de \citeonline{callaway2021} para Diferenças em Diferenças com múltiplos períodos. Focando especificamente na cultura da cana-de-açúcar – escolhida por sua relevância econômica e sensibilidade climática – quantificamos pela primeira vez o retorno econômico dessa infraestrutura crítica. 
+Este trabalho preenche essa lacuna ao estimar o \textbf{efeito causal da instalação de estações meteorológicas sobre o PIB agropecuário}, utilizando o arcabouço metodológico de \citeonline{callaway2021} para Diferenças em Diferenças com múltiplos períodos. É importante esclarecer que, embora utilizemos a produção de cana-de-açúcar como critério de seleção das microrregiões – dada sua relevância econômica e alta sensibilidade climática – nossa variável de resultado é o PIB agropecuário total, capturando assim os efeitos agregados sobre toda a produção agrícola local. 
 
 Nossa análise revela que a instalação de estações meteorológicas gera um aumento de \textbf{\mainattpct{} no PIB agropecuário} das microrregiões tratadas. Estes resultados são robustos a múltiplas especificações, testes placebo e análises de sensibilidade, fornecendo evidência causal rigorosa sobre a efetividade desta política.
 
@@ -350,17 +367,11 @@ As contribuições deste trabalho são quádruplas:
 \item \textbf{Subsídios para expansão da rede}: Evidências de que o retorno social supera amplamente os custos, justificando a expansão da infraestrutura meteorológica como estratégia de adaptação climática e aumento de produtividade.
 \end{enumerate}
 
-% Contextualização da relevância
-A relevância destes achados transcende o contexto específico analisado. Em um momento em que o Brasil busca conciliar aumento de produção agrícola com sustentabilidade ambiental, demonstrar que investimentos em informação podem gerar ganhos de produtividade superiores a 8\% oferece um caminho alternativo à expansão da fronteira agrícola. Além disso, com a aceleração das mudanças climáticas, a capacidade de monitorar e responder a variações meteorológicas torna-se ainda mais crítica para a segurança alimentar e competitividade do agronegócio brasileiro.
-
 % Diálogo com literatura recente
 Nossos resultados dialogam com desenvolvimentos recentes na literatura. \citeonline{burke2021} argumentam que avanços em tecnologias de informação representam uma das principais fronteiras para aumentar a produtividade agrícola no século XXI. \citeonline{monteiro2017} demonstram a importância de modelos agrometeorológicos para identificação de gaps de produtividade na agricultura brasileira. \citeonline{crost2018} e \citeonline{gatti2021} demonstram, usando métodos similares aos nossos, como infraestrutura pode mitigar impactos climáticos. Este trabalho contribui para essa literatura emergente ao fornecer a primeira evidência causal direta sobre estações meteorológicas.
 
 % Estrutura do trabalho
-O restante deste trabalho está organizado da seguinte forma. O Capítulo 2 apresenta a metodologia completa, incluindo o arcabouço de Diferenças em Diferenças com múltiplos períodos de \citeonline{callaway2021}, a estratégia empírica, definição do tratamento, variáveis e especificação do modelo. O Capítulo 3 apresenta os resultados, começando pela implementação computacional e seguindo com os efeitos estimados, análises de robustez e testes de validação. O Capítulo 4 conclui com implicações para políticas públicas e direções para pesquisa futura.
-
-% Fechamento que conecta com o próximo capítulo
-Antes de prosseguir para a análise empírica, é fundamental compreender por que os métodos tradicionais falham neste contexto e como a abordagem de \citeonline{callaway2021} resolve esses problemas. O próximo capítulo desenvolve essa discussão metodológica em detalhe.
+O restante deste trabalho está organizado da seguinte forma. A Seção 2 apresenta a metodologia completa, incluindo o arcabouço de Diferenças em Diferenças com múltiplos períodos de \citeonline{callaway2021}, a estratégia empírica, definição do tratamento, variáveis e especificação do modelo. A Seção 3 apresenta os resultados, começando pela implementação computacional e seguindo com os efeitos estimados, análises de robustez e testes de validação. A Seção 4 conclui com implicações para políticas públicas e direções para pesquisa futura.
 
 % ----------------------------------------------------------
 % Metodologia
@@ -418,7 +429,7 @@ O artigo de \citeonline{callaway2021} apresenta uma série de pressupostos para 
 
 É importante verificar como estes pressupostos se aplicam ao nosso contexto específico:
 
-\textbf{No Anticipation}: No caso de estações meteorológicas, este pressuposto é naturalmente satisfeito pela própria natureza do tratamento. As informações meteorológicas localizadas e precisas só passam a existir após a instalação física da estação. Produtores não podem se beneficiar de dados que ainda não são coletados, tornando impossível qualquer efeito antecipatório. Isso contrasta com outros contextos onde o anúncio de uma política futura pode gerar mudanças comportamentais antecipadas.
+\textbf{No Anticipation}: No caso de estações meteorológicas, este pressuposto é amplamente, mas não perfeitamente, satisfeito. Embora as informações meteorológicas localizadas e precisas só existam após a instalação física da estação, reconhecemos que produtores podem utilizar dados de estações vizinhas, com menor precisão. Se houver algum grau de antecipação, nosso estimador tende a ser conservador, subestimando o verdadeiro impacto da estação, pois parte do efeito seria capturado antes do período oficial de tratamento. Isso fortalece nossas conclusões: se encontramos efeitos significativos mesmo com possível antecipação, o impacto real tende a ser ainda maior.
 
 \textbf{Tratamento Irreversível}: Uma vez instalada, assume-se que a estação permanece operacional. Nossa análise não considera casos de desativação de estações, tratando a adoção como permanente (staggered adoption).
 
@@ -474,19 +485,19 @@ Para análises de event study que examinam a dinâmica temporal dos efeitos, uti
 
 \section{Especificação do Modelo}
 
-A abordagem apresentada por \citeonline{callaway2021} não se reduz a uma única equação final, pois seu objetivo é oferecer uma estrutura flexível para estimar efeitos causais médios (ATT) específicos para cada grupo e período, além de permitir a agregação desses efeitos de diferentes maneiras. No entanto, ela pode ser representada pela seguinte equação genérica:
+Nossa análise baseia-se em um painel de dados escalonado que pode ser formalmente descrito como $\mathcal{D} = \{(Y_{it}, W_{it}, X_{it})\}_{i=1,t=1}^{N,T}$, onde:
 
-\begin{equation}
-\theta = \sum_{g \in \mathcal{G}} \sum_{t=2}^{T} w(g,t) \cdot ATT(g,t)
-\end{equation}
-
-onde:
 \begin{itemize}
-\item $\theta$ é o efeito agregado de interesse
-\item $ATT(g,t)$ é o Efeito Médio do Tratamento para a coorte $g$ no período $t$
-\item $w(g,t)$ são funções de ponderação escolhidas pelo pesquisador (seção 3.1.1 do artigo), conhecidas ou estimáveis a partir dos dados, que determinam a importância relativa de cada $ATT(g,t)$ na composição do efeito agregado
-\item $\mathcal{G}$ é o conjunto de coortes de tratamento
+\item $N$: número total de unidades (microrregiões) no painel.
+\item $T$: número total de períodos de tempo (anos) no painel.
+\item $i \in \{1, 2, \ldots, N\}$: índice que identifica a unidade (microrregião).
+\item $t \in \{1, 2, \ldots, T\}$: índice que identifica o período de tempo (ano).
+\item $Y_{it}$: logaritmo do PIB agropecuário da microrregião $i$ no ano $t$.
+\item $W_{it}$: indicador binário de tratamento (1 se a microrregião $i$ possui estação meteorológica ativa no ano $t$, 0 caso contrário).
+\item $X_{it}$: vetor de covariadas da microrregião $i$ no ano $t$.
 \end{itemize}
+
+A abordagem de \citeonline{callaway2021} permite estimar o Efeito Médio do Tratamento sobre os Tratados (ATT) específico para cada coorte $g$ (grupo de unidades tratadas no mesmo período) e tempo $t$, denotado por $ATT(g,t)$. Estes efeitos podem então ser agregados de diferentes formas para obter estimativas de interesse para políticas públicas.
 
 
 \subsection{Definição do Tratamento e Unidades de Análise}
@@ -652,15 +663,17 @@ O conjunto de dados foi construído através de um processo sistemático de extr
 \subsubsection{Fontes de Dados e Extração}
 
 \begin{enumerate}
-\item \textbf{Mapeamento Município-Microrregião}: Extraído da tabela \texttt{br\_bd\_diretorios\_brasil.municipio}, identificando 5.570 municípios em 558 microrregiões brasileiras.
+\item \textbf{Mapeamento Município-Microrregião}: Extraído da tabela\\
+\texttt{\small br\_bd\_diretorios\_brasil.municipio}, identificando 5.570 municípios em 558 microrregiões brasileiras.
 
-\item \textbf{Estações Meteorológicas (INMET)}: Dados de 610 estações extraídos da tabela \texttt{br\_inmet\_bdmep.estacao}, incluindo coordenadas geográficas e data de fundação. Após agregação por microrregião, identificamos 394 microrregiões com pelo menos uma estação (70,6\% de cobertura).
+\item \textbf{Estações Meteorológicas}: Dados de 610 estações do Instituto Nacional de Meteorologia (INMET) extraídos da tabela \texttt{\small br\_inmet\_bdmep.estacao}, incluindo coordenadas geográficas e data de fundação. Após agregação por microrregião, identificamos 394 microrregiões com pelo menos uma estação (70,6\% de cobertura).
 
-\item \textbf{População Municipal}: Dados anuais da tabela \texttt{br\_ibge\_populacao.municipio}, agregados para o nível de microrregião através de soma simples.
+\item \textbf{População Municipal}: Dados anuais da tabela \texttt{\small br\_ibge\_populacao.municipio}, agregados para o nível de microrregião através de soma simples.
 
-\item \textbf{PIB Municipal}: Valores totais e agropecuários extraídos de \texttt{br\_ibge\_pib.municipio}, incluindo PIB total e valor adicionado da agropecuária.
+\item \textbf{PIB Municipal}: Valores totais e agropecuários extraídos de\\
+\texttt{\small br\_ibge\_pib.municipio}, incluindo PIB total e valor adicionado da agropecuária.
 
-\item \textbf{Produção Agrícola (PAM)}: Dados detalhados de produção de cana-de-açúcar da tabela \texttt{br\_ibge\_pam.lavoura\_temporaria}, incluindo área plantada, área colhida, quantidade produzida, produtividade média e valor da produção.
+\item \textbf{Produção Agrícola (PAM)}: Dados detalhados de produção de cana-de-açúcar da tabela \texttt{\small br\_ibge\_pam.lavoura\_temporaria}, incluindo área plantada, área colhida, quantidade produzida, produtividade média e valor da produção.
 \end{enumerate}
 
 \subsubsection{Critérios de Qualidade e Filtros}
@@ -742,13 +755,15 @@ Never-treated & 0,080** & (0,036) & [0,009; 0,151] \\
 
 A análise de estudo de evento fornece evidências fundamentais sobre a evolução temporal dos efeitos do tratamento. A Figura \ref{fig:eventstudy} apresenta as estimativas pontuais e intervalos de confiança para períodos relativos ao início do tratamento.
 
-\begin{figure}[htbp]
+\begin{figure}[H]
 \centering
 \caption{Estudo de Evento - Dinâmica Temporal dos Efeitos da Instalação de Estações Meteorológicas}
 \label{fig:eventstudy}
-\includegraphics[width=0.9\textwidth]{../../../data/outputs/presentation/event_study_enhanced.png}
+\includegraphics[width=0.75\textwidth]{../../../data/outputs/presentation/event_study_enhanced.png}
 
 \textit{Nota: A figura apresenta as estimativas pontuais (linha azul) e intervalos de confiança de 95\% (área sombreada) dos efeitos do tratamento em função do tempo relativo à instalação da estação. O período e=0 marca o ano de instalação.}
+
+\textit{Fonte: Elaboração própria a partir dos dados do estudo.}
 \end{figure}
 
 \subsubsection{Período Pré-Tratamento: Validação das Tendências Paralelas}
@@ -782,15 +797,18 @@ Este padrão é consistente com um processo de difusão tecnológica onde:
 
 Para uma validação mais rigorosa do pressuposto de tendências paralelas, a Figura \ref{fig:parallel_trends} apresenta a evolução completa do PIB agropecuário normalizado para grupos tratados e controle ao longo de todo o período amostral.
 
-\begin{figure}[htbp]
+\begin{figure}[H]
 \centering
 \caption{Tendências Paralelas - PIB Agropecuário Normalizado (2003-2023)}
 \label{fig:parallel_trends}
-\includegraphics[width=0.9\textwidth]{../../../data/outputs/parallel_trends_complete_pib_agro_normalized.png}
+\includegraphics[width=0.75\textwidth]{../../../data/outputs/parallel_trends_complete_pib_agro_normalized.png}
 
 \textit{Nota: A figura mostra a evolução do PIB agropecuário médio (em log) para microrregiões antes e depois do tratamento, normalizado pelo valor de 2003. As áreas sombreadas representam intervalos de confiança de 95\%.}
+
+\textit{Fonte: Elaboração própria a partir dos dados do estudo.}
 \end{figure}
 
+\FloatBarrier
 \section{Testes de Robustez e Diagnósticos}
 
 Para garantir a confiabilidade dos resultados, implementamos uma bateria abrangente de testes de robustez e diagnósticos. Esta seção examina três aspectos críticos: (i) a sensibilidade à escolha do grupo de controle, (ii) a composição dinâmica do efeito agregado ao longo do tempo, e (iii) testes placebo para validar a estratégia de identificação.
@@ -824,13 +842,15 @@ A estabilidade das estimativas entre diferentes grupos de controle (diferença d
 
 Um desafio em DiD escalonado é que a composição dos grupos tratados muda ao longo do tempo. A Figura \ref{fig:composition} decompõe o efeito agregado por coorte de adoção:
 
-\begin{figure}[htbp]
+\begin{figure}[H]
 \centering
 \caption{Composição Dinâmica do Efeito do Tratamento}
 \label{fig:composition}
-\includegraphics[width=0.9\textwidth]{../../../data/outputs/additional_figures/treatment_composition_dynamic.png}
+\includegraphics[width=0.75\textwidth]{../../../data/outputs/additional_figures/treatment_composition_dynamic.png}
 
 \textit{Nota: O gráfico decompõe o ATT agregado mostrando a contribuição de cada coorte de adoção (indicada por cores) ao longo do tempo relativo ao tratamento. Observa-se que: (i) grupos adotantes precoces (2004-2007) dominam os períodos de exposição mais longos; (ii) a partir de 2013, mais de 70\% das unidades já haviam sido tratadas por pelo menos 5 anos, indicando maturidade do programa; (iii) a contribuição é relativamente balanceada entre coortes nos primeiros anos pós-tratamento, validando que o ATT não é dirigido por grupos específicos.}
+
+\textit{Fonte: Elaboração própria a partir dos dados do estudo.}
 \end{figure}
 
 Esta análise revela três insights importantes:
@@ -864,40 +884,117 @@ Este teste avalia se o modelo pode gerar resultados significativos quando o trat
 \end{itemize}
 \end{enumerate}
 
-\subsubsection{Teste Placebo com Randomização Múltipla}
+\subsubsection{Teste de Randomização de Monte Carlo}
 
-Este teste constrói uma distribuição empírica de efeitos placebo para avaliar a probabilidade de observar o ATT verdadeiro por acaso:
+Para validar ainda mais a robustez de nossos resultados, implementamos um teste de randomização de Monte Carlo. Este teste verifica se o ATT estimado de \mainatt{} poderia ter surgido por mero acaso no timing de tratamento. O procedimento consiste em reatribuir aleatoriamente o momento de tratamento entre as unidades múltiplas vezes, criando uma distribuição de referência sob a hipótese nula de ausência de efeito.
+
+\paragraph{Formalização do Teste}
+
+Para manter o rigor metodológico, formalizamos o teste considerando nosso conjunto de dados $\mathcal{D} = \{(Y_{it}, W_{it}, X_{it})\}_{i=1,t=1}^{N,T}$ (conforme definido na Seção 2.3), onde:
+
+\begin{itemize}
+\item $\mathcal{W} = \{W_{it}\}_{i,t}$: matriz de tratamento observada.
+\item $\text{ATT}(\mathcal{W})$: efeito médio do tratamento estimado via método DR com a atribuição de tratamento $\mathcal{W}$.
+\item $\mathcal{S}$: espaço de todas as possíveis atribuições de tratamento.
+\end{itemize}
+
+\textbf{Hipótese Nula ($H_0$):} A instalação de estações meteorológicas não tem efeito causal sobre o PIB agropecuário, ou seja, $Y_{it}(1) = Y_{it}(0)$ para todas as unidades e períodos.
+
+\textbf{Procedimento:}
+
+Como o número total de permutações possíveis é astronomicamente grande, aproximamos a distribuição exata através de simulações de Monte Carlo. O teste segue os seguintes passos:
 
 \begin{enumerate}
-\item \textbf{Metodologia}: 
+\item \textbf{Geração de Atribuições Aleatórias:}
+   
+   Para cada uma das $S = 5000$ simulações:
+   \begin{itemize}
+   \item Selecionamos aleatoriamente $N_{\text{tratado}}$ microrregiões para receber o tratamento (mantendo o mesmo número de unidades tratadas que no estudo original).
+   \item Atribuímos aleatoriamente o ano de instalação da estação entre 2005 e 2021 para cada unidade selecionada.
+   \end{itemize}
+   
+   Esta restrição temporal garante pelo menos 2 anos de dados antes e depois do tratamento para cada unidade.
+
+\item \textbf{Estimação dos ATTs Placebo:}
+   
+   Para cada atribuição aleatória $s$, estimamos o ATT usando exatamente o mesmo método DR aplicado aos dados originais:
+   \begin{equation}
+   \text{ATT}^{(s)} = \text{ATT}(\mathcal{W}^{(s)}), \quad s = 1, \ldots, S
+   \end{equation}
+
+\item \textbf{Cálculo do P-valor:}
+   
+   Seguindo \cite{davison1997}, calculamos o p-valor empírico com correção para amostras finitas:
+   
+   \begin{equation}
+   \hat{p} = \frac{1 + \#\{\text{extremos}\}}{S + 1}
+   \end{equation}
+   
+   onde $\#\{\text{extremos}\}$ representa o número de simulações cujo ATT em valor absoluto é maior ou igual ao ATT observado. Esta correção evita p-valores exatamente zero e é prática padrão em testes de permutação.
+\end{enumerate}
+
+\textbf{Intuição:} Se o tratamento realmente não tivesse efeito, seria igualmente provável observar o ATT estimado com qualquer atribuição aleatória de tratamento. Portanto, se nosso ATT observado é muito extremo comparado à distribuição de ATTs sob atribuições aleatórias, temos evidência forte contra a hipótese nula.
+
+\paragraph{Aspectos Computacionais}
+
+A implementação do teste incorpora várias considerações práticas:
+
 \begin{itemize}
-\item Realizamos 50 simulações independentes
-\item Em cada simulação, atribuímos aleatoriamente quais microrregiões são ``tratadas'' e quando
-\item Estimamos o ATT placebo para cada configuração aleatória
-\item Construímos a distribuição empírica desses ATTs placebos
+\item \textbf{Margem de Segurança Temporal:} Restringimos $t_i^* \in [2005, 2021]$ para garantir pelo menos 2 anos de dados pré e pós-tratamento.
+\item \textbf{Paralelização:} Implementamos computação paralela via \texttt{foreach/doParallel} em R, distribuindo as $S$ simulações entre múltiplos núcleos de processamento.
+\item \textbf{Tratamento de Falhas:} Aproximadamente 5-10\% das simulações podem falhar devido a configurações que não permitem estimação robusta do ATT.
+\item \textbf{Validação:} Apenas simulações com convergência bem-sucedida ($S_{\text{válido}}$) entram no cálculo: $\hat{p} = \frac{1 + \#\{\text{extremos}\}}{S_{\text{válido}} + 1}$.
+\item \textbf{Reprodutibilidade:} Utilizamos sementes aleatórias únicas ($\text{seed} \times 1000 + s$) para cada simulação, garantindo reprodutibilidade mesmo em ambiente paralelo.
 \end{itemize}
 
-\item \textbf{Resultados}:
-\begin{itemize}
-\item Distribuição dos ATTs placebo centrada em zero (média = \placebomean)
-\item 95\% dos ATTs placebo situam-se no intervalo [\placebolower; \placeboupper]
-\item ATT verdadeiro (\placebotruatt) está na cauda extrema direita da distribuição
-\item P-valor empírico \placebopvalue{} (menos de \placebopvaluepct{} dos ATTs placebo excedem o ATT verdadeiro)
-\end{itemize}
+\paragraph{Implementação e Resultados}
+
+A Tabela \ref{tab:placebo_results} apresenta os resultados do teste de randomização de Monte Carlo com $S = 5000$ simulações independentes:
+
+\begin{table}[htbp]
+\centering
+\caption{Resultados do Teste de Randomização de Monte Carlo}
+\label{tab:placebo_results}
+\begin{tabular}{lc}
+\toprule
+\textbf{Estatística} & \textbf{Valor} \\
+\midrule
+Número de simulações & 5.000 \\
+ATT observado & \placebotruatt \\
+Média dos placebos & \placebomean \\
+Desvio padrão dos placebos & 0,017 \\
+Intervalo empírico 95\% & [\placebolower; \placeboupper] \\
+P-valor empírico & \placebopvalue \\
+\bottomrule
+\end{tabular}
+
+\textit{Notas: O teste simula 5.000 atribuições aleatórias de tratamento, mantendo a estrutura temporal do painel. O p-valor empírico indica a proporção de simulações com ATT em valor absoluto maior ou igual ao observado.}
+\end{table}
 
 A Figura \ref{fig:placebo} visualiza o resultado do teste de randomização múltipla:
 
-\begin{figure}[!htbp]
+\begin{figure}[H]
 \centering
 \caption{Distribuição dos ATTs Placebo vs. ATT Verdadeiro}
 \label{fig:placebo}
-\includegraphics[width=0.85\textwidth]{../../../data/outputs/placebo_distribution.png}
+\includegraphics[width=0.8\textwidth]{../../../data/outputs/placebo_distribution.png}
 
 \textit{Nota: O histograma apresenta a distribuição dos ATTs estimados em \placebonsims{} iterações do teste placebo, onde o tratamento foi atribuído aleatoriamente. Cada barra representa a frequência de ATTs placebo em cada intervalo. A linha vermelha tracejada indica o ATT verdadeiro do modelo principal (\placebotruatt). A distribuição placebo está claramente centrada em zero, enquanto o ATT verdadeiro encontra-se na cauda extrema direita, ocorrendo em menos de \placebopvaluepct{} das simulações aleatórias (p-valor empírico \placebopvalue). Isso demonstra que um efeito desta magnitude é extremamente improvável de ser observado por mero acaso.}
+
+\textit{Fonte: Elaboração própria a partir dos dados do estudo.}
 \end{figure}
 
-\item \textbf{Interpretação}: A probabilidade de observar um efeito tão grande quanto o estimado por puro acaso é inferior a 1\%, fornecendo forte evidência de que o impacto das estações meteorológicas é genuíno e não resultado de variação aleatória.
-\end{enumerate}
+\paragraph{Interpretação dos Resultados}
+
+O teste de randomização revela que o ATT observado de \placebotruatt{} encontra-se na cauda extrema da distribuição placebo (p-valor = \placebopvalue). Isso significa que:
+
+\begin{itemize}
+\item A probabilidade de observar um efeito desta magnitude por puro acaso no timing de tratamento é menor que \placebopvaluepct{}.
+\item O efeito estimado não é compatível com variação aleatória nos dados.
+\item Podemos rejeitar com alta confiança a hipótese de que o tratamento não teve efeito.
+\end{itemize}
+
+\textbf{Observação importante:} Este teste valida que o efeito não surgiu por coincidência no timing de tratamento, mas não descarta outras possíveis ameaças à identificação causal (como variáveis omitidas ou choques concomitantes). A interpretação causal continua dependendo da validade dos pressupostos do modelo DiD discutidos anteriormente.
 
 \subsubsection{Teste Placebo com PIB Não-Agropecuário}
 
@@ -936,6 +1033,7 @@ Conjuntamente, esses testes fortalecem substancialmente a interpretação causal
 
 Além dos testes de validação apresentados, realizamos análises complementares para avaliar a sensibilidade dos resultados a diferentes especificações e períodos temporais.
 
+\FloatBarrier
 \subsection{Sensibilidade ao Período de Análise}
 
 Os resultados podem ser sensíveis à janela temporal escolhida, especialmente considerando eventos como a pandemia de COVID-19. Testamos diferentes recortes temporais, utilizando agregação por médias simples dos ATT(g,t) para permitir comparação justa entre os diferentes subconjuntos de dados:
@@ -999,11 +1097,11 @@ A consistência das estimativas entre os três métodos (variando de 6,6\% a 9,4
 
 A Figura \ref{fig:robustness} sintetiza visualmente os resultados de robustez:
 
-\begin{figure}[htbp]
+\begin{figure}[H]
 \centering
 \caption{Análise de Robustez - Comparação de Especificações}
 \label{fig:robustness}
-\includegraphics[width=0.9\textwidth]{../../../data/outputs/robustness_plot.png}
+\includegraphics[width=0.75\textwidth]{../../../data/outputs/robustness_plot.png}
 
 \textit{Nota: O gráfico apresenta as estimativas pontuais e intervalos de confiança de 95\% para diferentes especificações e métodos de estimação. Todas as estimativas são estatisticamente significativas e de magnitude similar, confirmando a robustez dos resultados.}
 \end{figure}
@@ -1033,7 +1131,7 @@ Estas evidências combinadas estabelecem uma base sólida para a interpretação
 
 \item \textbf{Valor monetário}: Considerando o PIB agropecuário médio das microrregiões tratadas e o efeito estimado de \mainattpct, o ganho anual por microrregião é economicamente significativo, justificando plenamente o investimento em infraestrutura meteorológica.
 
-\item \textbf{Custo-benefício e Política Atual}: A relevância destes resultados é amplificada pelo anúncio recente do governo federal. Em dezembro de 2024, o Ministério da Agricultura, Pecuária e Abastecimento (MAPA) anunciou um novo investimento de R\$ 49 milhões para a instalação de 220 novas estações meteorológicas automáticas \cite{mapa2024}, demonstrando o reconhecimento institucional da importância dessa infraestrutura. Com um custo médio de R\$ 223 mil por estação, nossos resultados sugerem retornos econômicos que superam amplamente o investimento inicial.
+\item \textbf{Custo-benefício e Política Atual}: A relevância destes resultados é amplificada pelo anúncio recente do governo federal. Em setembro de 2025, o Ministério da Agricultura, Pecuária e Abastecimento (MAPA) anunciou um novo investimento de R\$ 49 milhões para a instalação de 220 novas estações meteorológicas automáticas \cite{mapa2024}, demonstrando o reconhecimento institucional da importância dessa infraestrutura. Com um custo médio de R\$ 223 mil por estação, nossos resultados sugerem retornos econômicos que superam amplamente o investimento inicial.
 
 \item \textbf{Implicações para Expansão da Rede}: Nosso estudo fornece evidência empírica robusta para justificar não apenas o investimento anunciado, mas potencialmente sua ampliação. Com efeitos de \mainattpct{} no PIB agropecuário e considerando que 29\% das microrregiões produtoras ainda não possuem estações, existe espaço significativo para ganhos adicionais de produtividade através da expansão estratégica da rede.
 
@@ -1053,22 +1151,9 @@ Os padrões temporais observados sugerem múltiplos canais através dos quais as
 
 \item \textbf{Redução de perdas}: Antecipação a eventos extremos permite medidas preventivas. Aplicações operacionais de modelos de simulação de cana-de-açúcar no Brasil demonstram como informações meteorológicas precisas podem otimizar decisões de irrigação e reduzir perdas \cite{vianna2016}.
 
+\item \textbf{Melhoria em modelos computacionais}: Dados meteorológicos locais de alta qualidade aumentam significativamente a precisão de modelos de simulação agrícola, permitindo aos produtores testar cenários e otimizar estratégias de manejo antes da implementação no campo.
+
 \end{enumerate}
-
-
-\subsection{Análise de Robustez Expandida}
-
-Além dos testes de robustez tradicionais, implementamos análises adicionais que fortalecem a validade dos resultados:
-
-\begin{itemize}
-\item \textbf{Teste placebo com PIB não-agropecuário}: O ATT não significativo quando usamos o PIB não-agropecuário como variável de resultado confirma que o efeito é específico ao setor agrícola, não refletindo desenvolvimento econômico geral.
-
-\item \textbf{Placebo aleatório}: Distribuição de 50 simulações com atribuição aleatória de tratamento centrada em zero, com o ATT verdadeiro na cauda extrema (p-valor empírico < 0,01).
-
-\item \textbf{Diagnóstico de pesos}: Análise da distribuição de pesos implícitos no estimador agregado revela contribuição equilibrada das diferentes coortes de adoção, sem dominância de grupos específicos.
-
-\item \textbf{Análise agregada por UF}: Estimação ao nível de unidade federativa confirma robustez dos resultados com diferentes níveis de agregação espacial.
-\end{itemize}
 
 \subsection{Análise de Poder Estatístico}
 
@@ -1216,7 +1301,7 @@ Ao quantificar rigorosamente os benefícios econômicos da infraestrutura meteor
 \partapendices
 
 % ----------------------------------------------------------
-\chapter{A - Código do GitHub}
+\chapter{Código do GitHub}
 % ----------------------------------------------------------
 
 O código completo utilizado nesta pesquisa, incluindo os scripts de coleta de dados, análise econométrica e geração de visualizações, está disponível no repositório GitHub:
@@ -1233,7 +1318,7 @@ O repositório contém:
 \end{itemize}
 
 % ---
-\chapter{B - Estatísticas Descritivas Complementares}
+\chapter{Estatísticas Descritivas Complementares}
 % ---
 
 Este apêndice apresenta estatísticas descritivas complementares que apoiam a análise principal.
