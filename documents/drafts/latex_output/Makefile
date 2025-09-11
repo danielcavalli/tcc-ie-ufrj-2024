@@ -6,10 +6,7 @@
 help:
 	@echo "Comandos disponíveis:"
 	@echo "  make presentation           - Compila apresentação original (Madrid+Whale)"
-	@echo "  make presentation-clean     - Compila apresentação minimalista"
-	@echo "  make presentation-v2        - Compila apresentação Copenhagen"
-	@echo "  make presentation-v3        - Compila apresentação CambridgeUS"
-	@echo "  make presentation-refinada  - Compila apresentação Madrid refinada"
+	@echo "  make presentation-revisada  - Compila apresentação Madrid refinada"
 	@echo "  make thesis                 - Compila o TCC completo"
 	@echo "  make docx-best              - ⭐ MELHOR OPÇÃO: Guia para conversão perfeita"
 	@echo "  make docx                   - Converte o TCC para Word (.docx) via LaTeX"
@@ -28,29 +25,11 @@ presentation:
 	@pdflatex -interaction=nonstopmode apresentacao_defesa.tex
 	@echo "✅ Apresentação compilada: apresentacao_defesa.pdf"
 
-presentation-clean:
-	@echo "✨ Compilando apresentação clean/minimalista..."
-	@pdflatex -interaction=nonstopmode apresentacao_defesa_clean.tex
-	@pdflatex -interaction=nonstopmode apresentacao_defesa_clean.tex
-	@echo "✅ Apresentação clean compilada: apresentacao_defesa_clean.pdf"
-
-presentation-v2:
-	@echo "🎨 Compilando apresentação Copenhagen..."
-	@pdflatex -interaction=nonstopmode apresentacao_defesa_v2.tex
-	@pdflatex -interaction=nonstopmode apresentacao_defesa_v2.tex
-	@echo "✅ Apresentação v2 compilada: apresentacao_defesa_v2.pdf"
-
-presentation-v3:
-	@echo "🎓 Compilando apresentação CambridgeUS..."
-	@pdflatex -interaction=nonstopmode apresentacao_defesa_v3.tex
-	@pdflatex -interaction=nonstopmode apresentacao_defesa_v3.tex
-	@echo "✅ Apresentação v3 compilada: apresentacao_defesa_v3.pdf"
-
-presentation-refinada:
+presentation-revisada:
 	@echo "✨ Compilando apresentação Madrid refinada..."
-	@pdflatex -interaction=nonstopmode apresentacao_defesa_refinada.tex
-	@pdflatex -interaction=nonstopmode apresentacao_defesa_refinada.tex
-	@echo "✅ Apresentação refinada compilada: apresentacao_defesa_refinada.pdf"
+	@pdflatex -interaction=nonstopmode apresentacao_defesa_v4.tex
+	@pdflatex -interaction=nonstopmode apresentacao_defesa_v4.tex
+	@echo "✅ Apresentação refinada compilada: apresentacao_defesa_revisada.pdf"
 
 thesis:
 	@echo "📄 Compilando TCC..."
