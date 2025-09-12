@@ -1,0 +1,23 @@
+Model,Dep. Variable,Controls,ATT,SE,t-stat,p-value,Sig,Positive?
+PIB Agro - Controles Base,log_pib_agropecuario,"log_populacao, log_area_total_cultivos, share_agro_pib",0.1131,0.0277,4.08,0,***,YES
+PIB Agro - Área Cana,log_pib_agropecuario,"log_populacao, log_area_cana",0.093,0.0283,3.28,0.001,***,YES
+PIB Agro - Share Cana,log_pib_agropecuario,"log_populacao, share_cana_agricultura",0.0865,0.027,3.21,0.0013,***,YES
+PIB Agro Per Capita,log_pib_agro_per_capita,"log_area_total_cultivos, share_agro_pib",0.0766,0.028,2.74,0.0062,***,YES
+Área Cana - Controles Base,log_area_cana,"log_populacao, log_area_total_cultivos, log_area_soja",0.1436,0.053,2.71,0.0067,***,YES
+Área Cana - PIB PC,log_area_cana,"log_populacao, log_pib_per_capita",0.1718,0.0461,3.73,2e-4,***,YES
+Área Cana - Outras Culturas,log_area_cana,"log_populacao, log_area_outras_culturas",0.1456,0.0555,2.62,0.0088,***,YES
+Share Cana na Agricultura,share_cana_agricultura,"log_populacao, log_pib_total",0.0173,0.0062,2.81,0.005,***,YES
+Quantidade - Área Cana,log_pam_quantidade,"log_populacao, log_area_cana",-0.0982,0.188,-0.52,0.6015,,NO
+Quantidade - Área e Share,log_pam_quantidade,"log_area_cana, share_cana_agricultura",0.0853,0.1472,0.58,0.5622,,YES
+Quantidade (sqrt) - Base,sqrt_pam_quantidade,"log_populacao, log_area_total_cultivos",51.2259,28.5192,1.8,0.0725,*,YES
+Produtividade - Simples,log_pam_produtividade,log_populacao,-0.053,0.0694,-0.76,0.4455,,NO
+Eficiência (log) - Base,log_efficiency_cana,"log_populacao, log_area_cana",-0.0814,0.0827,-0.98,0.3251,,NO
+Intensidade Produção,log_intensity_producao,"log_populacao, share_cana_agricultura",0.143,0.2055,0.7,0.4864,,YES
+Valor - Quantidade,log_pam_valor,"log_populacao, log_pam_quantidade",-0.0723,0.1343,-0.54,0.5904,,NO
+Valor - Área e PIB PC,log_pam_valor,"log_area_cana, log_pib_per_capita",0.1118,0.1111,1.01,0.3143,,YES
+Valor por Tonelada,log_valor_por_tonelada,log_populacao,9e-4,0.0048,0.2,0.8443,,YES
+Valor por Hectare,log_valor_por_hectare,"log_populacao, share_cana_agricultura",-0.024,0.0528,-0.45,0.6496,,NO
+Área Plantada PAM,log_pam_area_plantada,"log_populacao, log_pib_per_capita",-0.0134,0.1054,-0.13,0.8985,,NO
+Área Colhida PAM,log_pam_area_colhida,"log_populacao, log_area_total_cultivos",-0.0385,0.0976,-0.39,0.693,,NO
+Área Cana Per Capita,area_cana_per_capita,"log_pib_per_capita, share_agro_pib",0,1e-4,0.26,0.7987,,YES
+Produção Per Capita,producao_per_capita,"log_area_cana, log_pib_per_capita",1.0446,0.5541,1.89,0.0594,*,YES
