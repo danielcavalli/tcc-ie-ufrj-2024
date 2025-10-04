@@ -340,7 +340,7 @@ df <- read_csv("data/csv/microrregions_Cana-de-açúcar_2003-2023.csv")
 df = pd.read_csv("data/csv/microrregions_Cana-de-açúcar_2003-2023.csv")
 ```
 
-## Pré-requisitos
+## Pré-requisitos e Reprodução dos Resultados
 
 | Tecnologia | Versão recomendada |
 |------------|--------------------|
@@ -374,48 +374,6 @@ Opcionalmente, utilize o **Makefile** para automatizar passos comuns:
 make setup            # Instala dependências Python e R
 make reproduce-data    # Executa pipeline de extração e tratamento
 make analysis          # Roda os scripts de análise estatística
-```
-
-## Reprodução dos resultados
-
-### 1. Preparação do ambiente:
-```bash
-# Clone o repositório
-git clone https://github.com/[usuario]/tcc-ie-ufrj-2024.git
-cd tcc-ie-ufrj-2024
-
-# Python: criar ambiente virtual
-python -m venv .venv
-source .venv/bin/activate  # No Windows: .venv\Scripts\activate
-pip install -r requirements.txt
-
-# R: restaurar pacotes
-R -e "renv::restore()"
-```
-
-### 2. Obtenção dos dados:
-Os dados já processados estão disponíveis em:
-- `data/csv/microrregions_Cana-de-açúcar_2003-2023.csv` (arquivo principal)
-- Alternativamente, execute as queries SQL em `data/sql_query/` no BigQuery
-
-### 3. Execução da análise completa:
-```bash
-# Rodar o pipeline completo de análise DiD
-Rscript rscripts/did_v2.r
-```
-
-Isso irá gerar automaticamente:
-- Estimativas do modelo em `data/outputs/`
-- Visualizações em `data/outputs/` (PNG, 300 DPI)
-- Dashboard HTML em `data/outputs/presentation/`
-- Tabelas de resultados em formatos CSV e HTML
-
-### 4. Visualizações específicas:
-```r
-# Para gerar apenas visualizações de tendências paralelas
-source("rscripts/did_v2.r")
-plot_parallel_trends(df_clean, "log_pib_agro")
-plot_parallel_trends_by_gname(df_clean, "log_pib_agro")
 ```
 
 ## Fontes de dados
