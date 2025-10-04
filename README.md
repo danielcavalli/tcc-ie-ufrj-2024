@@ -464,7 +464,7 @@ Para mais detalhes, consulte o arquivo [LICENSE](LICENSE) ou visite [GNU GPL v3.
 
 Se você utilizar este código ou dados em seu trabalho, por favor cite da seguinte forma:
 
-> Cavalli, D. (2024). *Impacto de Estações Meteorológicas no PIB Agropecuário: Uma Análise via Difference-in-Differences*. Trabalho de Conclusão de Curso (Graduação em Ciências Econômicas), Instituto de Economia, Universidade Federal do Rio de Janeiro.
+> Cavalli, D. (2025). *Impacto de Estações Meteorológicas no PIB Agropecuário: Uma Aplicação de Diferenças em Diferenças com Tratamento Escalonado*. Trabalho de Conclusão de Curso (Graduação em Ciências Econômicas), Instituto de Economia, Universidade Federal do Rio de Janeiro.
 
 ---
 
