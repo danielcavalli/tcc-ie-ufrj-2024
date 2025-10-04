@@ -460,7 +460,7 @@ Para mais detalhes, consulte o arquivo [LICENSE](LICENSE) ou visite [GNU GPL v3.
 
 | Autor | Contato |
 |-------|---------|
-| Daniel Cavalli | <daniel.cavalli@ufrj.br> |
+| Daniel Cavalli | <daniel@cavalli.dev> |
 
 Se você utilizar este código ou dados em seu trabalho, por favor cite da seguinte forma:
 
