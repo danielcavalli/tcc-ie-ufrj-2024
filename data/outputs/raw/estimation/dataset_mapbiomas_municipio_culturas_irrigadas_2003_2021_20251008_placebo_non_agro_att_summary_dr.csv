@@ -1,0 +1,2 @@
+label,method,control_group,att,se,z,p_value,ci_low,ci_high,n_obs,n_units,created_at
+dataset_mapbiomas_municipio_culturas_irrigadas_2003_2021_20251008_placebo_non_agro,dr,notyettreated,0.024186786823871365,0.016807510864743015,1.4390463298529113,0.15013739666882406,-0.008755934471024945,0.05712950811876767,10602,558,2025-11-12 12:08:40.416482

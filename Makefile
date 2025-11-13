@@ -1,4 +1,4 @@
-.PHONY: help env lock install update-lock clean shell fetch renv-init renv-restore renv-snapshot renv-clean
+.PHONY: help env lock install update-lock clean shell fetch renv-init renv-restore renv-snapshot renv-clean pipeline pipeline-latex pipeline-smoke
 
 # -------- Configuration ------------------------------------------------------
 # Virtual-env directory
@@ -97,6 +97,20 @@ renv-clean:  ## Delete renv library directory
 latex-values:  ## Generate LaTeX values from R outputs
 	@$(R) rscripts/generate_latex_values.r
 	@echo "LaTeX values updated in documents/drafts/latex_output/auto_values.tex"
+
+# -----------------------------------------------------------------------------
+# Modular DiD pipeline orchestration
+# -----------------------------------------------------------------------------
+
+pipeline: renv-restore  ## Run the modular DiD pipeline and publish artifacts
+	@$(R) -e "source('rscripts/pipeline/run_pipeline.R'); run_pipeline()"
+
+pipeline-latex: pipeline  ## Run pipeline and refresh LaTeX values
+	@$(R) rscripts/pipeline/tests/smoke_generate_latex.R
+	@echo "Pipeline completed and LaTeX smoke test passed."
+
+pipeline-smoke: renv-restore  ## Only verify LaTeX generation against current outputs
+	@$(R) rscripts/pipeline/tests/smoke_generate_latex.R
 
 # Run the complete DiD analysis and update LaTeX values
 analysis: renv-restore  ## Run complete DiD analysis and update LaTeX values

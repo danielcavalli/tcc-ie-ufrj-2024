@@ -1,0 +1,51 @@
+﻿variavel,descricao,tipo,unidade,fonte
+ano,Ano da observação,int,ano,Base dos Dados
+id_municipio,Código IBGE do município,string,código IBGE,IBGE/Base dos Dados
+id_microrregiao,Código IBGE da microrregião,string,código IBGE,IBGE/Base dos Dados
+sigla_uf,Sigla da Unidade Federativa (estado),string,sigla,IBGE/Base dos Dados
+primeiro_ano_tratamento,Ano de instalação da primeira estação meteorológica automática (0 = sem estação),int,ano,INMET/Base dos Dados
+tratado,"Indicador se o município possui estação meteorológica (1 = sim, 0 = não)",int,binário,INMET/Base dos Dados
+pos_tratamento,"Indicador se a observação é após instalação da estação (1 = sim, 0 = não)",int,binário,INMET/Base dos Dados
+populacao_total,População total do município,float,habitantes,IBGE População/Base dos Dados
+pib_total,PIB total do município,float,reais,IBGE PIB Municipal/Base dos Dados
+pib_per_capita,PIB per capita do município (PIB/população),float,reais/habitante,IBGE PIB Municipal/Base dos Dados
+pib_agropecuario,Valor adicionado bruto da agropecuária do município,float,reais,IBGE PIB Municipal/Base dos Dados
+area_total_ha,Área total do município,float,hectares,IBGE/Base dos Dados
+pct_area_agropecuaria,Percentual da área do município dedicado à agropecuária,float,percentual,MapBiomas/Base dos Dados (calculado)
+pct_area_urbana,Percentual da área do município considerado urbano,float,percentual,MapBiomas/Base dos Dados (calculado)
+razao_agropecuaria_urbana,Razão entre área agropecuária e área urbana,float,razão,MapBiomas/Base dos Dados (calculado)
+municipio_urbano,"Indicador se município é classificado como urbano (1 = urbano, 0 = rural)",int,binário,MapBiomas/Base dos Dados (calculado)
+area_plantada_cana,Área plantada de Cana-de-açúcar segundo PAM,float,hectares,IBGE PAM/Base dos Dados
+area_colhida_cana,Área colhida de Cana-de-açúcar segundo PAM,float,hectares,IBGE PAM/Base dos Dados
+quantidade_cana,Quantidade produzida de Cana-de-açúcar,float,toneladas,IBGE PAM/Base dos Dados
+produtividade_cana,Produtividade média de Cana-de-açúcar (quantidade/área colhida),float,kg/hectare,IBGE PAM/Base dos Dados
+valor_cana,Valor da produção de Cana-de-açúcar,float,mil reais,IBGE PAM/Base dos Dados
+area_plantada_arroz,Área plantada de Arroz (em casca) segundo PAM,float,hectares,IBGE PAM/Base dos Dados
+area_colhida_arroz,Área colhida de Arroz (em casca) segundo PAM,float,hectares,IBGE PAM/Base dos Dados
+quantidade_arroz,Quantidade produzida de Arroz (em casca),float,toneladas,IBGE PAM/Base dos Dados
+produtividade_arroz,Produtividade média de Arroz (em casca) (quantidade/área colhida),float,kg/hectare,IBGE PAM/Base dos Dados
+valor_arroz,Valor da produção de Arroz (em casca),float,mil reais,IBGE PAM/Base dos Dados
+area_plantada_soja,Área plantada de Soja (em grão) segundo PAM,float,hectares,IBGE PAM/Base dos Dados
+area_colhida_soja,Área colhida de Soja (em grão) segundo PAM,float,hectares,IBGE PAM/Base dos Dados
+quantidade_soja,Quantidade produzida de Soja (em grão),float,toneladas,IBGE PAM/Base dos Dados
+produtividade_soja,Produtividade média de Soja (em grão) (quantidade/área colhida),float,kg/hectare,IBGE PAM/Base dos Dados
+valor_soja,Valor da produção de Soja (em grão),float,mil reais,IBGE PAM/Base dos Dados
+area_plantada_milho,Área plantada de Milho (em grão) segundo PAM,float,hectares,IBGE PAM/Base dos Dados
+area_colhida_milho,Área colhida de Milho (em grão) segundo PAM,float,hectares,IBGE PAM/Base dos Dados
+quantidade_milho,Quantidade produzida de Milho (em grão),float,toneladas,IBGE PAM/Base dos Dados
+produtividade_milho,Produtividade média de Milho (em grão) (quantidade/área colhida),float,kg/hectare,IBGE PAM/Base dos Dados
+valor_milho,Valor da produção de Milho (em grão),float,mil reais,IBGE PAM/Base dos Dados
+area_plantada_feijao,Área plantada de Feijão (em grão) segundo PAM,float,hectares,IBGE PAM/Base dos Dados
+area_colhida_feijao,Área colhida de Feijão (em grão) segundo PAM,float,hectares,IBGE PAM/Base dos Dados
+quantidade_feijao,Quantidade produzida de Feijão (em grão),float,toneladas,IBGE PAM/Base dos Dados
+produtividade_feijao,Produtividade média de Feijão (em grão) (quantidade/área colhida),float,kg/hectare,IBGE PAM/Base dos Dados
+valor_feijao,Valor da produção de Feijão (em grão),float,mil reais,IBGE PAM/Base dos Dados
+area_agropecuaria,Área total dedicada à agropecuária (agricultura + pecuária),float,hectares,MapBiomas/Base dos Dados
+area_agricultura,Área dedicada somente à agricultura,float,hectares,MapBiomas/Base dos Dados
+area_lavoura_temporaria,Área dedicada a lavouras temporárias,float,hectares,MapBiomas/Base dos Dados
+area_soja,Área dedicada ao cultivo de soja (MapBiomas),float,hectares,MapBiomas/Base dos Dados
+area_cana,Área dedicada ao cultivo de cana-de-açúcar (MapBiomas),float,hectares,MapBiomas/Base dos Dados
+area_outras_lavouras_temporarias,Área de outras lavouras temporárias (exceto soja e cana),float,hectares,MapBiomas/Base dos Dados
+area_cafe,Área dedicada ao cultivo de café,float,hectares,MapBiomas/Base dos Dados
+area_citricos,Área dedicada ao cultivo de cítricos,float,hectares,MapBiomas/Base dos Dados
+area_area_urbana,Área urbana do município,float,hectares,MapBiomas/Base dos Dados

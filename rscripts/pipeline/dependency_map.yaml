@@ -1,0 +1,238 @@
+stages:
+  prep:
+    artifacts_dir: data/outputs/raw/prep
+    functions:
+      - name: prep_data
+        inputs:
+          - data/csv/dataset_mapbiomas_municipio_culturas_irrigadas_2003-2021_20251008.csv
+        internal_dependencies: []
+        outputs:
+          - df_microrregiao.rds
+          - df_municipio.rds
+          - prep_summary.csv
+        notes: >
+          Returns both microrregiao- and municipio-level tibbles, currently in-memory.
+          Also emits CLI diagnostics. Future refactor should persist diagnostics under diagnostics/.
+  estimation:
+    artifacts_dir: data/outputs/raw/estimation
+    functions:
+      - name: check_covariates
+        inputs:
+          - prep/df_microrregiao.rds
+        internal_dependencies: []
+        outputs:
+          - covariate_diagnostics.csv
+          - valid_covariates.json
+        notes: >
+          Filters candidate covariates using pre-treatment variance and collinearity checks.
+      - name: estimate_att
+        inputs:
+          - prep/df_microrregiao.rds
+          - estimation/valid_covariates.json
+        internal_dependencies:
+          - check_covariates
+        outputs:
+          - att_results_<method>.rds
+          - agg_overall_<method>.rds
+          - agg_event_<method>.rds
+          - att_summary_<method>.csv
+        notes: >
+          Core Callaway & Sant'Anna estimator. Currently saves RDS files in data/outputs/.
+      - name: analyze_weights
+        inputs:
+          - estimation/att_results_dr.rds
+        internal_dependencies:
+          - estimate_att
+        outputs:
+          - weights_analysis.csv
+          - weights_distribution.png
+      - name: robust_specs
+        inputs:
+          - prep/df_microrregiao.rds
+        internal_dependencies:
+          - estimate_att
+        outputs:
+          - robust_specs_summary.csv
+      - name: robustness_analysis
+        inputs:
+          - prep/df_microrregiao.rds
+          - estimation/att_results_dr.rds
+        internal_dependencies:
+          - estimate_att
+          - check_covariates
+        outputs:
+          - robustness_analysis.csv
+          - robustness_plot.png
+  placebo_and_tests:
+    artifacts_dir: data/outputs/raw/tests
+    functions:
+      - name: placebo_test
+        inputs:
+          - prep/df_microrregiao.rds
+          - estimation/att_results_dr.rds
+        internal_dependencies:
+          - estimate_att
+        outputs:
+          - placebo_fixed_summary.csv
+      - name: random_placebo_test
+        inputs:
+          - prep/df_microrregiao.rds
+        internal_dependencies:
+          - estimate_att
+          - random_placebo_test_serial
+          - setup_parallel_placebo
+        outputs:
+          - placebo_random_summary.csv
+          - placebo_distribution.png
+      - name: random_placebo_test_serial
+        inputs:
+          - prep/df_microrregiao.rds
+        internal_dependencies:
+          - estimate_att
+        outputs:
+          - placebo_random_serial.csv
+      - name: placebo_test_non_agro
+        inputs:
+          - prep/df_microrregiao.rds
+          - estimation/att_results_dr.rds
+        internal_dependencies:
+          - estimate_att
+        outputs:
+          - placebo_non_agro_results.csv
+      - name: check_balance_post_dr
+        inputs:
+          - estimation/att_results_dr.rds
+          - prep/df_microrregiao.rds
+        internal_dependencies: []
+        outputs:
+          - balance_stats_dr.csv
+      - name: compare_control_groups
+        inputs:
+          - prep/df_microrregiao.rds
+        internal_dependencies:
+          - estimate_att
+        outputs:
+          - control_group_comparison.csv
+      - name: diagnose_na_cohorts
+        inputs:
+          - estimation/att_results_dr.rds
+          - prep/df_microrregiao.rds
+        internal_dependencies: []
+        outputs:
+          - cohort_sizes.csv
+          - na_cohort_diagnostics.csv
+      - name: merge_small_cohorts
+        inputs:
+          - prep/df_microrregiao.rds
+        internal_dependencies: []
+        outputs:
+          - df_microrregiao_merged.rds
+      - name: estimate_att_robust_se
+        inputs:
+          - prep/df_microrregiao.rds
+        internal_dependencies:
+          - estimate_att
+        outputs:
+          - att_results_robust_se.rds
+  heterogeneity:
+    artifacts_dir: data/outputs/raw/heterogeneity
+    functions:
+      - name: crop_heterogeneity_analysis
+        inputs:
+          - prep/df_municipio.rds
+        internal_dependencies:
+          - check_covariates
+        outputs:
+          - <label>_crop_results.csv
+          - <label>_crop_results.png
+  visualization:
+    artifacts_dir: data/outputs/raw/visuals
+    functions:
+      - name: visualize_results
+        inputs:
+          - estimation/agg_event_dr.rds
+        internal_dependencies: []
+        outputs:
+          - event_study.png
+          - event_study.pdf
+      - name: plot_parallel_trends
+        inputs:
+          - prep/df_microrregiao.rds
+        internal_dependencies:
+          - estimate_att
+        outputs:
+          - parallel_trends_<outcome>_<mode>.png
+      - name: plot_parallel_trends_by_gname
+        inputs:
+          - prep/df_microrregiao.rds
+        internal_dependencies:
+          - estimate_att
+        outputs:
+          - parallel_trends_by_gname_<outcome>.png
+  reporting:
+    artifacts_dir: data/outputs/raw/reporting
+    functions:
+      - name: prepare_main_results_table
+        inputs:
+          - estimation/att_results_dr.rds
+          - tests/<label>_placebo_fixed_*.csv
+          - tests/<label>_placebo_non_agro.csv
+          - estimation/<label>_robustness_analysis.csv
+        internal_dependencies:
+          - robustness_analysis
+        outputs:
+          - <label>_main_results_table.csv
+      - name: sensitivity_analysis_stage
+        inputs:
+          - prep/df_microrregiao.rds
+        internal_dependencies: []
+        outputs:
+          - <label>_sensitivity_results.csv
+          - <label>_sensitivity_plot.png
+      - name: generate_summary_cards
+        inputs:
+          - estimation/<label>_att_summary_dr.csv
+          - estimation/<label>_weights_analysis.csv
+          - heterogeneity/<label>_heterogeneity_regional.csv
+        internal_dependencies:
+          - analyze_weights
+          - heterogeneity_analysis
+        outputs:
+          - <label>_summary_cards.csv
+  publishing:
+    artifacts_dir: data/outputs
+    functions:
+      - name: finalize_outputs
+        inputs:
+          - reporting/<label>_main_results_table.csv
+          - reporting/<label>_sensitivity_results.csv
+          - tests/<label>_placebo_random_*summary.csv
+          - estimation/<label>_weights_analysis.csv
+          - estimation/<label>_robustness_analysis.csv
+          - visuals/<label>_*.png
+        internal_dependencies:
+          - prepare_main_results_table
+          - sensitivity_analysis_stage
+          - analyze_weights
+          - robustness_analysis
+          - visualize_results
+        outputs:
+          - main_results_table.csv
+          - placebo_random_summary.csv
+          - additional_figures/sensitivity_analysis_results.csv
+          - additional_figures/sensitivity_analysis_period.png
+          - robustness_analysis.csv
+          - weights_analysis.csv
+          - event_study.png
+          - event_study.pdf
+          - robustness_plot.png
+          - weights_distribution.png
+          - placebo_distribution.png
+          - parallel_trends_complete_pib_agro_normalized.png
+          - parallel_trends_complete_pib_nao_agro_normalized.png
+          - parallel_trends_by_gname_pib_agro.png
+utilities:
+  - name: setup_parallel_placebo
+    purpose: Configure parallel backend for placebo simulations
+  - name: cleanup_parallel_placebo
+    purpose: Release parallel resources post-simulation

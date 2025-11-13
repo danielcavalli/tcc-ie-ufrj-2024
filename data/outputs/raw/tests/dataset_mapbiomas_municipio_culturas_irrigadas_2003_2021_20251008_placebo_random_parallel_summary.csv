@@ -1,0 +1,2 @@
+label,method,n_simulations,n_valid,true_att,empirical_p_value,p_value_se,p_value_ci_low,p_value_ci_high,n_extremes,dist_q025,dist_q975,elapsed_minutes,n_cores_used,created_at
+dataset_mapbiomas_municipio_culturas_irrigadas_2003_2021_20251008,dr,1000,1000,0.056912659541544626,9.99000999000999e-4,9.99000999000999e-4,0,0.002957042957042957,0,-0.0340922399760005,0.03653027220735069,8.406583567460379,9,2025-11-12 12:17:13.115961

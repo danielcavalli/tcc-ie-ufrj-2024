@@ -1,0 +1,26 @@
+{
+  "granularidade": "municipal",
+  "culturas_irrigadas": {
+    "Cana-de-açúcar": "cana",
+    "Arroz (em casca)": "arroz",
+    "Soja (em grão)": "soja",
+    "Milho (em grão)": "milho",
+    "Feijão (em grão)": "feijao"
+  },
+  "anos": "2003-2021",
+  "n_observacoes": 105764,
+  "n_municipios": 5570,
+  "n_microrregions": 558,
+  "n_tratadas": 587,
+  "n_controle": 4983,
+  "categorias_mapbiomas": [
+    "agricultura",
+    "lavoura_temporaria",
+    "soja",
+    "cana",
+    "outras_lavouras_temporarias",
+    "cafe",
+    "citricos"
+  ],
+  "data_extracao": "2025-10-08 00:42:23"
+}

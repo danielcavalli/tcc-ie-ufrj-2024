@@ -128,35 +128,31 @@ Empregamos o modelo de Diferenças-em-Diferenças (DiD) com adoção escalonada 
 - **gt/kableExtra**: Tabelas profissionais para apresentação
 - **Python 3.9+**: ETL e preparação de dados via BigQuery
 
-### Pipeline de análise (`rscripts/did_v2.r`):
+### Pipeline de análise modular (`rscripts/pipeline/run_pipeline.R`):
 
-1. **Preparação de dados** (`prep_data()`):
-   - Transformações logarítmicas
-   - Construção da variável de tratamento (gname)
-   - Criação de covariáveis e controles de spillover
+1. **`prep_stage.R` – Preparação de dados**
+   - Sanitiza rótulos e cria artefatos `.rds` em `data/outputs/raw/prep/`
+   - Agrega dados por microrregião e município, construindo covariáveis e medidas de spillover
 
-2. **Estimação principal** (`estimate_att()`):
-   - ATT(g,t) via método Doubly Robust
-   - Agregações: overall, event-study, por grupo
-   - Tratamento de singularidade com fallback automático
+2. **`estimation_stage.R` – Estimação principal**
+   - Roda `estimate_att()` (Doubly Robust) e salva resultados por método
+   - Gera diagnósticos de covariáveis e análise de pesos (`analyze_weights()`)
 
-3. **Testes de robustez**:
-   - **Placebo temporal**: Anos fictícios de tratamento
-   - **Placebo de outcome**: PIB não-agropecuário
-   - **Placebo aleatório**: Tratamento randomizado (50 simulações)
-   - **Especificações alternativas**: DR vs IPW vs Reg
+3. **`tests_stage.R` – Testes de validação**
+   - Placebos fixo, placebo de outcome (PIB não-agro) e placebo aleatório (Monte Carlo)
+   - Checagens de balanceamento, comparação de grupos de controle e diagnósticos de coortes
 
-4. **Análises complementares**:
-   - **Heterogeneidade regional**: Por UF e grandes regiões
-   - **Tendências paralelas**: Visualização por coorte e gname
-   - **Análise de pesos**: Contribuição de cada grupo ao ATT
-   - **Event-study estendido**: -10 a +10 períodos
+4. **`visuals_stage.R` – Visualizações**
+   - Event-study, tendências paralelas (agro e não-agro) e gráficos por coorte de adoção
 
-5. **Geração de apresentação** (`generate_presentation()`):
-   - Dashboard HTML interativo
-   - Tabelas formatadas (gt)
-   - Visualizações publicáveis (300 DPI)
-   - Documentação automática de resultados
+5. **`heterogeneity_stage.R` – Heterogeneidade**
+   - Resultados por cultura agrícola (demais recortes foram simplificados)
+
+6. **`reporting_stage.R` – Reporte e tabelas**
+   - Consolida a tabela `main_results`, resumo executivo e análise de sensibilidade temporal
+
+7. **`publish_stage.R` – Publicação dos artefatos**
+   - Promove artefatos raw para `data/outputs/`, harmoniza formatos legado e prepara insumos do LaTeX (`main_results_table.csv`, `placebo_random_summary.csv`, figuras-chave)
 
 ## Funcionalidades principais do código
 
@@ -190,7 +186,8 @@ Empregamos o modelo de Diferenças-em-Diferenças (DiD) com adoção escalonada 
 ├── documents/            # Rascunhos e versão final do TCC
 │   └── drafts/           # Versões LaTeX do documento
 ├── rscripts/             # Scripts em R (análises estatísticas)
-│   └── did_v2.r          # Script principal do modelo
+│   ├── pipeline/         # Pipeline modular (stages, orchestrator e testes)
+│   └── did_v2.r          # Script legado (monolítico) para comparação
 ├── scripts/              # Scripts em Python (ETL, coleta de dados)
 ├── renv/ & renv.lock     # Ambiente R reproduzível (renv)
 ├── requirements.txt      # Dependências Python
@@ -207,7 +204,7 @@ Este diretório contém todos os scripts R utilizados para análise estatística
 
 | Arquivo | Descrição | Funcionalidades |
 |---------|-----------|-----------------|
-| **`did_v2.r`** | Script principal do modelo DiD | • Estimação do ATT via Callaway & Sant'Anna (2021)<br>• Testes de robustez e placebo<br>• Análise de tendências paralelas<br>• Geração de todas as visualizações<br>• Dashboard HTML automático |
+| **`did_v2.r`** | Script principal do modelo DiD | • Seta dependências e delega a `run_pipeline()`<br>• Estimação do ATT via Callaway & Sant'Anna (2021)<br>• Testes de robustez e placebo<br>• Análise de tendências paralelas<br>• Geração de todas as visualizações<br>• Dashboard HTML automático |
 | **`balance_adjustments.r`** | Análise de balanceamento | • Diagnóstico de covariáveis<br>• Ajustes de propensity score<br>• Verificação de overlap |
 | **`did_complementary_visualizations.r`** | Visualizações adicionais | • Gráficos de tendências por grupo<br>• Mapas de heterogeneidade regional<br>• Análises de sensibilidade visual |
 | **`did_complementary_visualizations_pt2.r`** | Visualizações avançadas | • Event-study estendido<br>• Análise de composição dinâmica<br>• Gráficos de qualidade dos dados |
@@ -215,8 +212,12 @@ Este diretório contém todos os scripts R utilizados para análise estatística
 
 #### Como executar:
 ```r
-# Análise completa
+# Pipeline completo (gera artefatos em data/outputs/raw)
 source("rscripts/did_v2.r")
+
+# Ou chame o DAG diretamente
+source("rscripts/pipeline/run_pipeline.R")
+run_pipeline()
 
 # Apenas visualizações
 source("rscripts/did_complementary_visualizations.r")
@@ -281,6 +282,9 @@ Diretório com todos os outputs gerados pelos scripts de análise.
 | **`.rds`** | Objetos R serializados | `att_results_*.rds` - Resultados do modelo<br>`agg_*.rds` - Agregações |
 | **`.csv`** | Tabelas de resultados | `att_summary.csv` - ATT principal<br>`robust_att.csv` - Testes de robustez |
 | **`.png`/`.pdf`** | Visualizações principais | `event_study.png` - Gráfico principal<br>`robustness_plot.png` - Forest plot |
+
+##### 📂 `raw/`
+Artefatos persistidos de cada estágio do pipeline modular. Organizado por subpastas (`prep/`, `estimation/`, `tests/`, `visuals/`, `diagnostics/`, `heterogeneity/`), cada uma contendo os RDS/CSV/PNG gerados automaticamente ao executar `run_pipeline()`.
 
 ##### 📂 `descriptive_analysis/`
 Análises descritivas e exploratórias:
@@ -371,10 +375,13 @@ Além disso é necessário acesso à [Google Cloud BigQuery](https://cloud.googl
 
 Opcionalmente, utilize o **Makefile** para automatizar passos comuns:
 ```bash
-make setup            # Instala dependências Python e R
-make reproduce-data    # Executa pipeline de extração e tratamento
-make analysis          # Roda os scripts de análise estatística
+make pipeline         # Executa o pipeline modular e publica artefatos
+make pipeline-latex   # Pipeline completo + smoke test do LaTeX
+make pipeline-smoke   # Apenas verifica se generate_latex_values.r roda com sucesso
+make latex-values     # Regera comandos LaTeX a partir de artefatos existentes
 ```
+
+> **Nota:** o alvo histórico `make analysis` permanece disponível e executa o script monolítico `rscripts/did_v2.r`, servindo apenas para comparação com a nova pipeline modular.
 
 ## Fontes de dados
 

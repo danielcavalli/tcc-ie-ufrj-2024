@@ -1,0 +1,2 @@
+label,method,control_group,att,se,z,p_value,ci_low,ci_high,n_obs,n_units,created_at
+dataset_mapbiomas_municipio_culturas_irrigadas_2003_2021_20251008_covariaveis_basicas,dr,notyettreated,0.08338895750698065,0.02642166659612876,3.15608242211332,0.0015990366785262177,0.03160249097856828,0.135175424035393,10602,558,2025-11-12 12:08:30.032358

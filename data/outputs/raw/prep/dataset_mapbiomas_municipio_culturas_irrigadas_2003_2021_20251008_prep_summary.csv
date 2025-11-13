@@ -1,0 +1,2 @@
+label,source_csv,n_obs_municipio,n_obs_microrregiao,n_municipios,n_microrregioes,periodo_inicio,periodo_fim,created_at
+dataset_mapbiomas_municipio_culturas_irrigadas_2003_2021_20251008,/Users/daniel.cavalli/Documents/personal/tcc-ie-ufrj-2024/data/csv/dataset_mapbiomas_municipio_culturas_irrigadas_2003-2021_20251008.csv,105764,10602,5570,558,2003,2021,2025-11-12 12:08:12.953546

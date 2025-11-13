@@ -1,0 +1,2 @@
+label,method,control_group,att,se,z,p_value,ci_low,ci_high,n_obs,n_units,created_at
+dataset_mapbiomas_municipio_culturas_irrigadas_2003_2021_20251008_nyt,dr,notyettreated,0.056912659541544626,0.029249741162786943,1.9457491683362962,0.05168487730792932,-4.168331375177803e-4,0.11424215222060703,10602,558,2025-11-12 12:08:43.115833
