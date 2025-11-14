@@ -99,10 +99,18 @@ latex-values:  ## Generate LaTeX values from R outputs
 	@echo "LaTeX values updated in documents/drafts/latex_output/auto_values.tex"
 
 # Run the complete DiD analysis and update LaTeX values
-analysis: renv-restore  ## Run complete DiD analysis and update LaTeX values
-	@$(R) rscripts/did_v2.r
+# Usage: make analysis [NSIMS=50]
+# NSIMS: Number of Monte Carlo simulations (default: 5000, use 50-100 for quick tests)
+analysis: renv-restore  ## Run complete DiD analysis and update LaTeX values [NSIMS=50]
+	@if [ -n "$(NSIMS)" ]; then \
+		echo "🔬 Running analysis with $(NSIMS) Monte Carlo simulations..."; \
+		$(R) rscripts/did_v2.r --nsims $(NSIMS); \
+	else \
+		echo "🔬 Running analysis with default simulations (5000)..."; \
+		$(R) rscripts/did_v2.r; \
+	fi
 	@$(R) rscripts/generate_latex_values.r
-	@echo "Analysis complete and LaTeX values updated"
+	@echo "✅ Analysis complete and LaTeX values updated"
 
 # -----------------------------------------------------------------------------
 # LaTeX document compilation

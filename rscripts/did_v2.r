@@ -64,6 +64,142 @@ for (p in pkgs) {
   library(p, character.only = TRUE)
 }
 
+# ═══════════════════════════════════════════════════════════════════════════ #
+# 0.1 CONFIGURAÇÃO CENTRALIZADA DO PROJETO                                    #
+# ═══════════════════════════════════════════════════════════════════════════ #
+# Esta seção centraliza todas as configurações do projeto em um único lugar,  #
+# facilitando a modificação de especificações e tornando o código mais        #
+# manutenível. Ao invés de modificar múltiplas partes do código, você pode    #
+# ajustar aqui e as mudanças se propagam automaticamente.                     #
+# --------------------------------------------------------------------------- #
+
+# ┌─────────────────────────────────────────────────────────────────────────┐ #
+# │ ARGUMENTOS DE LINHA DE COMANDO                                          │ #
+# └─────────────────────────────────────────────────────────────────────────┘ #
+# Permite passar parâmetros ao script via Makefile ou terminal
+# Uso: Rscript did_v2.r --nsims 50
+# --------------------------------------------------------------------------- #
+args <- commandArgs(trailingOnly = TRUE)
+
+# Parse de argumentos nomeados (formato --nome valor)
+parse_args <- function(args) {
+  parsed <- list()
+  i <- 1
+  while (i <= length(args)) {
+    if (startsWith(args[i], "--")) {
+      arg_name <- sub("^--", "", args[i])
+      if (i < length(args) && !startsWith(args[i + 1], "--")) {
+        parsed[[arg_name]] <- args[i + 1]
+        i <- i + 2
+      } else {
+        parsed[[arg_name]] <- TRUE
+        i <- i + 1
+      }
+    } else {
+      i <- i + 1
+    }
+  }
+  return(parsed)
+}
+
+parsed_args <- parse_args(args)
+
+# ┌─────────────────────────────────────────────────────────────────────────┐ #
+# │ CONFIGURAÇÃO: COVARIÁVEIS DE CONTROLE                                   │ #
+# └─────────────────────────────────────────────────────────────────────────┘ #
+# FONTE ÚNICA DE VERDADE para todas as covariáveis usadas nas estimações.
+# Modificar aqui propaga automaticamente para todas as análises.
+#
+# COVARIÁVEIS SELECIONADAS (justificativa):
+#   - log_area_total: Tamanho da microrregião (escala da economia local)
+#   - log_populacao: Tamanho populacional (força de trabalho disponível)
+#   - log_pib_per_capita: Desenvolvimento econômico local
+#   - log_densidade_estacoes_uf: Spillovers espaciais de outras estações
+#   - log_precip_anual: Condições climáticas de base
+#
+# Para adicionar/remover covariáveis, modifique apenas esta lista.
+# --------------------------------------------------------------------------- #
+CONFIG_COVARIATES <- c(
+  "log_area_total",
+  "log_populacao",
+  "log_pib_per_capita",
+  "log_densidade_estacoes_uf",
+  "log_precip_anual",
+  "log_precip_media_mm",
+  "log_precip_maxima_mm"
+)
+
+# ┌─────────────────────────────────────────────────────────────────────────┐ #
+# │ CONFIGURAÇÃO: VARIÁVEIS DE OUTCOME (DESFECHO)                           │ #
+# └─────────────────────────────────────────────────────────────────────────┘ #
+# Define os outcomes disponíveis para análise.
+#
+# OUTCOME PRINCIPAL:
+#   - log_area_cana: Área plantada de cana-de-açúcar (km², log)
+#     Justificativa: Alta sensibilidade a informação climática
+#
+# OUTCOMES SECUNDÁRIOS (robustez e especificidade):
+#   - log_pib_agro: PIB agropecuário (medida agregada de valor)
+#   - log_area_soja: Área plantada de soja (especificidade entre culturas)
+#   - log_area_arroz: Área plantada de arroz (especificidade entre culturas)
+#   - log_pib_nao_agro: PIB não-agropecuário (teste placebo setorial)
+# --------------------------------------------------------------------------- #
+CONFIG_OUTCOME_PRINCIPAL <- "log_area_cana"
+
+CONFIG_OUTCOMES_SECUNDARIOS <- c(
+  "log_pib_agro",
+  "log_area_soja",
+  "log_area_arroz",
+  "log_pib_nao_agro"
+)
+
+# ┌─────────────────────────────────────────────────────────────────────────┐ #
+# │ CONFIGURAÇÃO: PARÂMETROS DE SIMULAÇÃO                                   │ #
+# └─────────────────────────────────────────────────────────────────────────┘ #
+# Número de simulações para o teste placebo de Monte Carlo.
+#
+# VALORES SUGERIDOS:
+#   - Desenvolvimento/testes: 50-100 (rápido, ~5-10 minutos)
+#   - Análise final: 5000-10000 (rigoroso, ~2-4 horas com paralelização)
+#
+# Pode ser sobrescrito via linha de comando: --nsims 50
+# --------------------------------------------------------------------------- #
+CONFIG_N_SIMS_DEFAULT <- 5000
+
+# Usar valor da linha de comando se fornecido, caso contrário usar padrão
+CONFIG_N_SIMS <- if (!is.null(parsed_args$nsims)) {
+  n_sims_arg <- as.integer(parsed_args$nsims)
+  cli::cli_alert_info("Usando n_sims = {n_sims_arg} (fornecido via linha de comando)")
+  n_sims_arg
+} else {
+  cli::cli_alert_info("Usando n_sims = {CONFIG_N_SIMS_DEFAULT} (valor padrão)")
+  CONFIG_N_SIMS_DEFAULT
+}
+
+# ┌─────────────────────────────────────────────────────────────────────────┐ #
+# │ CONFIGURAÇÃO: CAMINHOS DE ENTRADA E SAÍDA                               │ #
+# └─────────────────────────────────────────────────────────────────────────┘ #
+# Centraliza todos os caminhos de arquivos para facilitar manutenção.
+# --------------------------------------------------------------------------- #
+CONFIG_PATH_INPUT_DATA <- here::here("data", "csv", "microrregions_Cana-de-açúcar_2003-2023.csv")
+CONFIG_PATH_OUTPUT_DIR <- here::here("data", "outputs")
+
+# Criar diretório de saída se não existir
+if (!dir.exists(CONFIG_PATH_OUTPUT_DIR)) {
+  dir.create(CONFIG_PATH_OUTPUT_DIR, recursive = TRUE)
+  cli::cli_alert_success("Diretório de saída criado: {CONFIG_PATH_OUTPUT_DIR}")
+}
+
+# ┌─────────────────────────────────────────────────────────────────────────┐ #
+# │ RESUMO DA CONFIGURAÇÃO                                                  │ #
+# └─────────────────────────────────────────────────────────────────────────┘ #
+cli::cli_h1("CONFIGURAÇÃO DO PROJETO")
+cli::cli_alert_info("Outcome principal: {CONFIG_OUTCOME_PRINCIPAL}")
+cli::cli_alert_info("Covariáveis: {paste(CONFIG_COVARIATES, collapse = ', ')}")
+cli::cli_alert_info("Simulações Monte Carlo: {CONFIG_N_SIMS}")
+cli::cli_alert_info("Diretório de saída: {CONFIG_PATH_OUTPUT_DIR}")
+cli::cli_rule()
+
 # --------------------------------------------------------------------------- #
 # 1. Funções Auxiliares                                                       #
 # --------------------------------------------------------------------------- #
@@ -181,6 +317,10 @@ prep_data <- function(path_csv) {
       log_area_arroz = log1p(area_plantada_arroz),
       # Log de variáveis climáticas
       log_precip_anual = log1p(precip_total_anual_mm),
+      # Log de variáveis climáticas
+      log_precip_media_mm = log1p(precip_media_mensal_mm),
+      # Log de variáveis climáticas
+      log_precip_maxima_mm = log1p(precip_max_mensal_mm),
       # Log do valor agregado
       log_valor_agregado = log1p(valor_agregado)
     )
@@ -257,12 +397,9 @@ estimate_att <- function(df, method = "dr", seed = 42, control_grp = "notyettrea
   set.seed(seed)
   cli::cli_alert_info("Estimando ATT(g,t) com método {method} …")
 
-  # Seleção de covariáveis elegíveis - usando variáveis socioeconômicas e climáticas
-  base_covars <- c(
-    "log_area_total", "log_populacao", "log_pib_per_capita",
-    "log_densidade_estacoes_uf", "log_precip_anual"
-  )
-  covars_ok <- check_covariates(df, base_covars)
+  # Seleção de covariáveis elegíveis - usando configuração centralizada
+  # Para modificar covariáveis, altere CONFIG_COVARIATES no topo do script
+  covars_ok <- check_covariates(df, CONFIG_COVARIATES)
 
   # Construção de fórmula
   xform <- if (length(covars_ok) == 0) {
@@ -940,12 +1077,8 @@ robustness_analysis <- function(df) {
     if (is.null(spec$covars)) {
       # Sem covariáveis
       df_spec_temp <- df_spec
-      # Remover temporariamente as covariáveis do dataset
-      base_covars_original <- c(
-        "log_area_total", "log_populacao",
-        "log_pib_per_capita", "log_densidade_estacoes_uf", "log_precip_anual"
-      )
-      for (cv in base_covars_original) {
+      # Remover temporariamente as covariáveis do dataset (usa CONFIG_COVARIATES)
+      for (cv in CONFIG_COVARIATES) {
         df_spec_temp[[cv]] <- 0 # Zerar para forçar exclusão
       }
       res <- tryCatch(
@@ -2201,7 +2334,7 @@ uf_level_analysis <- function(df, method = "dr", outcome = "log_area_cana") {
         tname = "ano",
         idname = "id_uf",
         gname = "gname",
-        xformla = ~ log_area_total + log_populacao + log_pib_per_capita + log_densidade_estacoes_uf + log_precip_anual,
+        xformla = as.formula(paste("~", paste(CONFIG_COVARIATES, collapse = "+"))),
         data = df_uf,
         est_method = method,
         control_group = "notyettreated",
@@ -4572,7 +4705,7 @@ if (interactive() || sys.nframe() == 0) {
   cli::cli_h2("Teste Placebo Aleatório (Outcome: Área Cana)")
   placebo_random <- random_placebo_test(
     df_clean,
-    n_sims = 5000,
+    n_sims = CONFIG_N_SIMS,  # Usa configuração (pode ser sobrescrito via --nsims)
     method = "dr",
     outcome = "log_area_cana",  # Usar outcome principal
     parallel = TRUE, # Ativar paralelização
@@ -4692,9 +4825,10 @@ if (interactive() || sys.nframe() == 0) {
       {
         cli::cli_alert_info("1. Criando tabela de estatísticas descritivas comparativas")
         desc_comp_table <- create_descriptive_stats_table(df_clean)
+        cli::cli_alert_success("✓ Tabela descritiva criada com sucesso")
       },
       error = function(e) {
-        cli::cli_alert_warning("Erro na tabela descritiva: {e$message}")
+        cli::cli_alert_danger("✗ ERRO na tabela descritiva: {e$message}")
       }
     )
 
@@ -4714,9 +4848,10 @@ if (interactive() || sys.nframe() == 0) {
       {
         cli::cli_alert_info("3. Criando tabela de balanço de covariáveis")
         balance_table <- create_covariate_balance_table(df_clean)
+        cli::cli_alert_success("✓ Tabela de balanço criada com sucesso")
       },
       error = function(e) {
-        cli::cli_alert_warning("Erro na tabela de balanço: {e$message}")
+        cli::cli_alert_danger("✗ ERRO na tabela de balanço: {e$message}")
       }
     )
 
@@ -4762,21 +4897,23 @@ if (interactive() || sys.nframe() == 0) {
     tryCatch(
       {
         cli::cli_alert_info("7. Criando tabela de decomposição dos efeitos")
-        decomp_table <- create_effect_decomposition_table(res_main, df_clean)
+        decomp_table <- create_effect_decomposition_table(res_main_cana, df_clean)
+        cli::cli_alert_success("✓ Tabela de decomposição criada com sucesso")
       },
       error = function(e) {
-        cli::cli_alert_warning("Erro na decomposição: {e$message}")
+        cli::cli_alert_danger("✗ ERRO na decomposição: {e$message}")
       }
     )
 
-    # 8. Tendências por quartis de tamanho
+    # 8. Tendências por quartis de tamanho (USADO NA TESE - linha 1407)
     tryCatch(
       {
         cli::cli_alert_info("8. Criando análise por quartis de tamanho")
         quartile_plot <- plot_trends_by_size_quartile(df_clean)
+        cli::cli_alert_success("✓ Gráfico por quartis criado com sucesso")
       },
       error = function(e) {
-        cli::cli_alert_warning("Erro no gráfico por quartis: {e$message}")
+        cli::cli_alert_danger("✗ ERRO CRÍTICO no gráfico por quartils (USADO NA TESE): {e$message}")
       }
     )
 
@@ -4785,20 +4922,22 @@ if (interactive() || sys.nframe() == 0) {
       {
         cli::cli_alert_info("9. Criando dashboard de qualidade dos dados")
         quality_dash <- create_data_quality_dashboard(df_clean)
+        cli::cli_alert_success("✓ Dashboard de qualidade criado com sucesso")
       },
       error = function(e) {
-        cli::cli_alert_warning("Erro no dashboard de qualidade: {e$message}")
+        cli::cli_alert_danger("✗ ERRO no dashboard de qualidade: {e$message}")
       }
     )
 
-    # 10. Análise de poder estatístico
+    # 10. Análise de poder estatístico (USADO NA TESE - linha 1161)
     tryCatch(
       {
         cli::cli_alert_info("10. Realizando análise de poder estatístico")
         power_plot <- power_analysis_simulation(df_clean, n_sims = 100)
+        cli::cli_alert_success("✓ Análise de poder criada com sucesso")
       },
       error = function(e) {
-        cli::cli_alert_warning("Erro na análise de poder: {e$message}")
+        cli::cli_alert_danger("✗ ERRO CRÍTICO na análise de poder (USADO NA TESE): {e$message}")
       }
     )
 

@@ -50,10 +50,10 @@ create_descriptive_stats_table <- function(df) {
             pib_agro_median = median(pib_agropecuario / 1000, na.rm = TRUE),
             pib_agro_sd = sd(pib_agropecuario / 1000, na.rm = TRUE),
 
-            # Área Plantada
-            area_mean = mean(area_plantada, na.rm = TRUE),
-            area_median = median(area_plantada, na.rm = TRUE),
-            area_sd = sd(area_plantada, na.rm = TRUE),
+            # Área Plantada de Cana (outcome principal)
+            area_mean = mean(area_plantada_cana, na.rm = TRUE),
+            area_median = median(area_plantada_cana, na.rm = TRUE),
+            area_sd = sd(area_plantada_cana, na.rm = TRUE),
 
             # População
             pop_mean = mean(populacao_total / 1000, na.rm = TRUE),
@@ -79,8 +79,8 @@ create_descriptive_stats_table <- function(df) {
         )
 
         t_area <- t.test(
-            post_data$area_plantada,
-            pre_data$area_plantada,
+            post_data$area_plantada_cana,
+            pre_data$area_plantada_cana,
             var.equal = FALSE
         )
 
@@ -420,7 +420,7 @@ create_covariate_balance_table <- function(df) {
 
     # Covariáveis de interesse
     covars <- c(
-        "log_pib_agro", "log_area_plantada", "log_populacao",
+        "log_pib_agro", "log_area_cana", "log_populacao",
         "log_pib_per_capita", "prop_pib_agro", "log_densidade_estacoes_uf"
     )
 

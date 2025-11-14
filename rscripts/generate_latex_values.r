@@ -6,6 +6,11 @@ library(glue)
 
 # Função para formatar números para LaTeX
 format_number <- function(x, digits = 4, percent = FALSE) {
+    # Handle NA values
+    if (is.na(x)) {
+        return("NA")
+    }
+
     if (percent) {
         pct_value <- x * 100
         if (pct_value < 0.1) {
@@ -34,7 +39,13 @@ format_pvalue <- function(p) {
 # Ler dados do placebo
 placebo_data <- read_csv("data/outputs/placebo_random_summary.csv", show_col_types = FALSE)
 
-# Ler dados principais (se existir)
+# Ler dados principais detalhados (para z, p, CI)
+att_summary_path <- "data/outputs/att_summary_main_cana.csv"
+if (file.exists(att_summary_path)) {
+    att_summary <- read_csv(att_summary_path, show_col_types = FALSE)
+}
+
+# Ler dados principais (tabela completa com robustez)
 main_results_path <- "data/outputs/main_results_table.csv"
 if (file.exists(main_results_path)) {
     main_results <- read_csv(main_results_path, show_col_types = FALSE)
@@ -71,20 +82,85 @@ latex_content <- c(
     ""
 )
 
-# Se existirem resultados principais, adicionar também
-if (exists("main_results") && nrow(main_results) > 0) {
-    # Extrair valores da primeira linha (resultado principal)
-    att_main <- as.numeric(gsub("[^0-9.-]", "", main_results$ATT[1]))
-    se_main <- as.numeric(gsub("[^0-9.-]", "", gsub("\\(|\\)", "", main_results$`Erro Padrão`[1])))
-
+# Se existirem resultados principais detalhados, adicionar
+if (exists("att_summary") && nrow(att_summary) > 0) {
     latex_content <- c(
         latex_content,
-        "% Valores do modelo principal",
-        paste0("\\newcommand{\\mainatt}{", format_number(att_main), "}"),
-        paste0("\\newcommand{\\mainse}{", format_number(se_main), "}"),
-        paste0("\\newcommand{\\mainattpct}{", format_number(att_main, percent = TRUE), "}"),
+        "% Valores do modelo principal (resultado detalhado)",
+        paste0("\\newcommand{\\mainatt}{", format_number(att_summary$att[1]), "}"),
+        paste0("\\newcommand{\\mainse}{", format_number(att_summary$se[1]), "}"),
+        paste0("\\newcommand{\\mainz}{", format_number(att_summary$z[1], digits = 2), "}"),
+        paste0("\\newcommand{\\mainp}{", format_number(att_summary$p[1], digits = 4), "}"),
+        paste0("\\newcommand{\\maincilower}{", format_number(att_summary$ci_low[1]), "}"),
+        paste0("\\newcommand{\\mainciupper}{", format_number(att_summary$ci_high[1]), "}"),
+        paste0("\\newcommand{\\mainattpct}{", format_number(att_summary$att[1], percent = TRUE), "}"),
         ""
     )
+}
+
+# Se existirem resultados de robustez, adicionar
+if (exists("main_results") && nrow(main_results) > 0) {
+    # Helper function to parse CI string "[lower, upper]"
+    parse_ci <- function(ci_str) {
+        if (is.na(ci_str) || ci_str == "") return(c(NA, NA))
+        # Remove brackets and split by comma
+        ci_str <- gsub("\\[|\\]", "", ci_str)
+        values <- as.numeric(unlist(strsplit(ci_str, ",")))
+        return(values)
+    }
+
+    # Find robustness rows (they contain specific keywords)
+    for (i in 1:nrow(main_results)) {
+        analise <- main_results$Análise[i]
+
+        # Parse ATT and SE
+        att_val <- as.numeric(gsub("[^0-9.-]", "", main_results$ATT[i]))
+        se_val <- as.numeric(gsub("[^0-9.-]", "", gsub("\\(|\\)", "", main_results$`Erro Padrão`[i])))
+        ci_vals <- parse_ci(main_results$`IC 95%`[i])
+
+        # Generate macros based on analysis type
+        if (grepl("Sem Covariáveis", analise, ignore.case = TRUE)) {
+            latex_content <- c(
+                latex_content,
+                "% Especificação: Sem Covariáveis",
+                paste0("\\newcommand{\\nocovatt}{", format_number(att_val), "}"),
+                paste0("\\newcommand{\\nocovse}{", format_number(se_val), "}"),
+                paste0("\\newcommand{\\nocovlower}{", format_number(ci_vals[1]), "}"),
+                paste0("\\newcommand{\\nocover}{", format_number(ci_vals[2]), "}"),
+                ""
+            )
+        } else if (grepl("IPW", analise, ignore.case = TRUE)) {
+            latex_content <- c(
+                latex_content,
+                "% Especificação: IPW",
+                paste0("\\newcommand{\\ipwatt}{", format_number(att_val), "}"),
+                paste0("\\newcommand{\\ipwse}{", format_number(se_val), "}"),
+                paste0("\\newcommand{\\ipwlower}{", format_number(ci_vals[1]), "}"),
+                paste0("\\newcommand{\\ipwupper}{", format_number(ci_vals[2]), "}"),
+                ""
+            )
+        } else if (grepl("REG", analise, ignore.case = TRUE)) {
+            latex_content <- c(
+                latex_content,
+                "% Especificação: Regressão de Resultado",
+                paste0("\\newcommand{\\regatt}{", format_number(att_val), "}"),
+                paste0("\\newcommand{\\regse}{", format_number(se_val), "}"),
+                paste0("\\newcommand{\\reglower}{", format_number(ci_vals[1]), "}"),
+                paste0("\\newcommand{\\regupper}{", format_number(ci_vals[2]), "}"),
+                ""
+            )
+        } else if (grepl("Nevertreated", analise, ignore.case = TRUE)) {
+            latex_content <- c(
+                latex_content,
+                "% Grupo de Controle: Never-treated",
+                paste0("\\newcommand{\\nevertreatedatt}{", format_number(att_val), "}"),
+                paste0("\\newcommand{\\nevertreatedse}{", format_number(se_val), "}"),
+                paste0("\\newcommand{\\nevertreatedlower}{", format_number(ci_vals[1]), "}"),
+                paste0("\\newcommand{\\nevertreatedupper}{", format_number(ci_vals[2]), "}"),
+                ""
+            )
+        }
+    }
 }
 
 # Ler dados de sensibilidade temporal (se existir)

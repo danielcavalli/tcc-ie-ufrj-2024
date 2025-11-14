@@ -1,9 +1,9 @@
 Análise,ATT,Erro Padrão,IC 95%,N
-ATT Principal (Área Cana),0.137***,(0.041),"[0.056, 0.218]",10602
-Outcome Alternativo: PIB Agropecuário,0.005,(0.031),"[-0.057, 0.066]",10602
-Outcome Alternativo: Área Soja,0.019,(0.047),"[-0.073, 0.111]",10602
-Outcome Alternativo: Área Arroz,-0.004,(0.011),"[-0.025, 0.017]",10602
-Robustez - Nevertreated (Cana),0.154***,(0.055),"[0.047, 0.262]",10602
+ATT Principal (Área Cana),0.118***,(0.042),"[0.035, 0.201]",10602
+Outcome Alternativo: PIB Agropecuário,0.028,(0.031),"[-0.034, 0.090]",10602
+Outcome Alternativo: Área Soja,0.039,(0.045),"[-0.050, 0.127]",10602
+Outcome Alternativo: Área Arroz,-0.005,(0.012),"[-0.028, 0.018]",10602
+Robustez - Nevertreated (Cana),0.136**,(0.053),"[0.032, 0.240]",10602
 Robustez - Sem Covariáveis (Cana),0.124***,(0.042),"[0.042, 0.207]",10602
-Robustez - IPW (Cana),0.134***,(0.041),"[0.053, 0.215]",10602
-Robustez - REG (Cana),0.120***,(0.044),"[0.033, 0.206]",10602
+Robustez - IPW (Cana),0.122***,(0.042),"[0.041, 0.204]",10602
+Robustez - REG (Cana),0.114***,(0.043),"[0.031, 0.198]",10602
