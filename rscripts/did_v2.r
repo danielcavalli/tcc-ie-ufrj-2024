@@ -1675,8 +1675,15 @@ heterogeneity_analysis <- function(df, method = "dr", approach = "aggregate", ou
     cli::cli_alert_info("UFs tratadas: {sum(df_uf$gname > 0)} observações")
 
     # Estimar modelo agregado
-    if (sum(df_uf$gname == 0) < 10) {
-      cli::cli_alert_warning("Poucos controles no nível de UF. Usando abordagem alternativa...")
+    # NOTA CRÍTICA: A agregação por UF só funciona para log_pib_agro pois é o único
+    # outcome agregado na construção de df_uf. Para outros outcomes (cana, soja, arroz),
+    # usamos a abordagem regional que mantém dados no nível de microrregião.
+    if (sum(df_uf$gname == 0) < 10 || outcome != "log_pib_agro") {
+      if (outcome != "log_pib_agro") {
+        cli::cli_alert_info("Outcome {outcome} requer análise no nível de microrregião. Usando abordagem regional...")
+      } else {
+        cli::cli_alert_warning("Poucos controles no nível de UF. Usando abordagem alternativa...")
+      }
 
       # ABORDAGEM 2: Análise por região com dados originais
       regioes <- list(
@@ -1822,6 +1829,17 @@ heterogeneity_analysis <- function(df, method = "dr", approach = "aggregate", ou
       })
   }
 
+  # Garantir que todas as colunas necessárias existem
+  required_cols <- c("uf", "tipo", "att", "se", "p_value", "n_obs", "n_treated", "n_control")
+  missing_cols <- setdiff(required_cols, names(het_results))
+  
+  if (length(missing_cols) > 0) {
+    cli::cli_alert_warning("Colunas faltando em het_results: {paste(missing_cols, collapse = ', ')}")
+    for (col in missing_cols) {
+      het_results[[col]] <- NA
+    }
+  }
+  
   # Adicionar coluna significant se não existir
   if (!"significant" %in% names(het_results)) {
     het_results <- het_results %>%
@@ -2688,9 +2706,15 @@ descriptive_analysis <- function(df) {
   # Salvar tabela
   gtsave(desc_table, file.path(output_dir, "estatisticas_descritivas.html"))
 
-  # Salvar como PNG se webshot2 estiver disponível
+  # Salvar como PNG se webshot2 estiver disponível (pode falhar por problemas de porta)
   if (requireNamespace("webshot2", quietly = TRUE)) {
-    gtsave(desc_table, file.path(output_dir, "estatisticas_descritivas.png"))
+    tryCatch({
+      gtsave(desc_table, file.path(output_dir, "estatisticas_descritivas.png"))
+      cli::cli_alert_success("PNG salvo com sucesso")
+    }, error = function(e) {
+      cli::cli_alert_warning("Não foi possível salvar PNG (webshot2 erro): {e$message}")
+      cli::cli_alert_info("HTML salvo com sucesso - PNG não é crítico")
+    })
   } else {
     cli::cli_alert_warning("webshot2 não instalado - salvando apenas HTML")
   }
@@ -2797,7 +2821,11 @@ descriptive_analysis <- function(df) {
   gtsave(pre_treatment_table, file.path(output_dir, "comparacao_pre_tratamento.html"))
 
   if (requireNamespace("webshot2", quietly = TRUE)) {
-    gtsave(pre_treatment_table, file.path(output_dir, "comparacao_pre_tratamento.png"))
+    tryCatch({
+      gtsave(pre_treatment_table, file.path(output_dir, "comparacao_pre_tratamento.png"))
+    }, error = function(e) {
+      cli::cli_alert_warning("PNG não salvo (webshot2): {e$message}")
+    })
   }
 
   # ┌───────────────────────────────────────────────────────────────────────┐
@@ -2948,7 +2976,11 @@ descriptive_analysis <- function(df) {
   gtsave(uf_table, file.path(output_dir, "distribuicao_por_uf.html"))
 
   if (requireNamespace("webshot2", quietly = TRUE)) {
-    gtsave(uf_table, file.path(output_dir, "distribuicao_por_uf.png"))
+    tryCatch({
+      gtsave(uf_table, file.path(output_dir, "distribuicao_por_uf.png"))
+    }, error = function(e) {
+      cli::cli_alert_warning("PNG não salvo (webshot2): {e$message}")
+    })
   }
 
   # ┌───────────────────────────────────────────────────────────────────────┐
@@ -2999,7 +3031,11 @@ descriptive_analysis <- function(df) {
   gtsave(panel_table, file.path(output_dir, "estrutura_painel.html"))
 
   if (requireNamespace("webshot2", quietly = TRUE)) {
-    gtsave(panel_table, file.path(output_dir, "estrutura_painel.png"))
+    tryCatch({
+      gtsave(panel_table, file.path(output_dir, "estrutura_painel.png"))
+    }, error = function(e) {
+      cli::cli_alert_warning("PNG não salvo (webshot2): {e$message}")
+    })
   }
 
   # ┌───────────────────────────────────────────────────────────────────────┐
@@ -4517,7 +4553,7 @@ if (interactive() || sys.nframe() == 0) {
       cli::cli_alert_info("Testando agregação de coortes pequenas...")
       df_merged <- merge_small_cohorts(df_clean, min_size = 5, bin_width = 2)
       res_merged <- estimate_att(df_merged, method = "dr")
-      cli::cli_alert_info("ATT após agregação: {round(res_merged$att_global, 4)} (original: {round(res_main$att_global, 4)})")
+      cli::cli_alert_info("ATT após agregação: {round(res_merged$att_global, 4)} (original: {round(res_main_cana$att_global, 4)})")
     }
   }
 
@@ -4699,7 +4735,7 @@ if (interactive() || sys.nframe() == 0) {
     tryCatch(
       {
         cli::cli_alert_info("5. Criando distribuição dos efeitos ATT")
-        att_dist <- plot_att_distribution(res_main)
+        att_dist <- plot_att_distribution(res_main_cana)
       },
       error = function(e) {
         cli::cli_alert_warning("Erro na distribuição ATT: {e$message}")
