@@ -1464,7 +1464,7 @@ random_placebo_test_serial <- function(df, n_sims = 100, method = "dr", seed = 4
   ci_upper_pvalue <- min(1, p_value + 1.96 * se_pvalue)
 
   # Percentis para comparação
-  percentiles <- quantile(placebo_atts, c(0.025, 0.05, 0.95, 0.975))
+  percentiles <- quantile(placebo_atts, c(0.025, 0.05, 0.5, 0.95, 0.975))
 
   # Formatação do p-value empírico
   p_emp_formatted <- ifelse(p_value < 0.001,
@@ -4720,6 +4720,8 @@ if (interactive() || sys.nframe() == 0) {
     p_value_ci_lower = placebo_random$p_value_ci[1],
     p_value_ci_upper = placebo_random$p_value_ci[2],
     n_extremes = placebo_random$n_extremes,
+    placebo_mean = mean(placebo_random$placebo_atts),
+    placebo_sd = sd(placebo_random$placebo_atts),
     placebo_ci_95_lower = placebo_random$percentiles[1],
     placebo_ci_95_upper = placebo_random$percentiles[5],
     n_valid_sims = placebo_random$n_valid
@@ -4877,21 +4879,17 @@ if (interactive() || sys.nframe() == 0) {
       }
     )
 
-    # 6. Análise de sensibilidade ao período (opcional - pode demorar)
-    if (interactive()) {
-      resp <- readline("Executar análise de sensibilidade ao período? (pode demorar) [s/N]: ")
-      if (tolower(resp) == "s") {
-        tryCatch(
-          {
-            cli::cli_alert_info("6. Realizando análise de sensibilidade ao período")
-            sens_plot <- sensitivity_analysis_period(df_clean)
-          },
-          error = function(e) {
-            cli::cli_alert_warning("Erro na análise de sensibilidade: {e$message}")
-          }
-        )
+    # 6. Análise de sensibilidade ao período (USADO NA TESE - tabela de sensibilidade)
+    tryCatch(
+      {
+        cli::cli_alert_info("6. Realizando análise de sensibilidade ao período")
+        sens_plot <- sensitivity_analysis_period(df_clean)
+        cli::cli_alert_success("✓ Análise de sensibilidade concluída")
+      },
+      error = function(e) {
+        cli::cli_alert_danger("✗ ERRO CRÍTICO na análise de sensibilidade (USADO NA TESE): {e$message}")
       }
-    }
+    )
 
     # 7. Tabela de decomposição dos efeitos
     tryCatch(
@@ -4910,7 +4908,10 @@ if (interactive() || sys.nframe() == 0) {
       {
         cli::cli_alert_info("8. Criando análise por quartis de tamanho")
         quartile_plot <- plot_trends_by_size_quartile(df_clean)
-        cli::cli_alert_success("✓ Gráfico por quartis criado com sucesso")
+        ggsave(here::here("data", "outputs", "additional_figures", "trends_by_size_quartile.png"),
+          quartile_plot, width = 12, height = 8, dpi = 300
+        )
+        cli::cli_alert_success("✓ Gráfico por quartils criado e salvo com sucesso")
       },
       error = function(e) {
         cli::cli_alert_danger("✗ ERRO CRÍTICO no gráfico por quartils (USADO NA TESE): {e$message}")

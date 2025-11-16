@@ -120,11 +120,16 @@ analysis: renv-restore  ## Run complete DiD analysis and update LaTeX values [NS
 thesis: latex-values  ## Compile the thesis PDF (TCC)
 	@echo "📄 Compiling thesis document..."
 	@cd documents/drafts/latex_output && \
-	pdflatex -interaction=nonstopmode TCC_DanielCavalli_ABNT2.tex && \
-	bibtex TCC_DanielCavalli_ABNT2 && \
-	pdflatex -interaction=nonstopmode TCC_DanielCavalli_ABNT2.tex && \
-	pdflatex -interaction=nonstopmode TCC_DanielCavalli_ABNT2.tex
-	@echo "✅ Thesis compiled: documents/drafts/latex_output/TCC_DanielCavalli_ABNT2.pdf"
+	pdflatex -interaction=nonstopmode TCC_DanielCavalli_ABNT2.tex; \
+	bibtex TCC_DanielCavalli_ABNT2; \
+	pdflatex -interaction=nonstopmode TCC_DanielCavalli_ABNT2.tex; \
+	pdflatex -interaction=nonstopmode TCC_DanielCavalli_ABNT2.tex; \
+	if [ -f TCC_DanielCavalli_ABNT2.pdf ]; then \
+		echo "✅ Thesis compiled: documents/drafts/latex_output/TCC_DanielCavalli_ABNT2.pdf"; \
+	else \
+		echo "⚠️  Compilation completed with errors - PDF may not be generated"; \
+		exit 1; \
+	fi
 
 # Compile the defense presentation
 presentation: latex-values  ## Compile the defense presentation PDF

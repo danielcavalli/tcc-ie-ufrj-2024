@@ -62,7 +62,8 @@ latex_content <- c(
     paste0("\\newcommand{\\placebolower}{", format_number(placebo_data$placebo_ci_95_lower[1]), "}"),
     paste0("\\newcommand{\\placeboupper}{", format_number(placebo_data$placebo_ci_95_upper[1]), "}"),
     paste0("\\newcommand{\\placebonsims}{", placebo_data$n_valid_sims[1], "}"),
-    paste0("\\newcommand{\\placebomean}{", format_number(mean(c(placebo_data$placebo_ci_95_lower[1], placebo_data$placebo_ci_95_upper[1]))), "}"),
+    paste0("\\newcommand{\\placebomean}{", format_number(placebo_data$placebo_mean[1]), "}"),
+    paste0("\\newcommand{\\placebosd}{", format_number(placebo_data$placebo_sd[1]), "}"),
     "",
     "% Valores de precisão do p-valor (Monte Carlo)",
     paste0("\\newcommand{\\placebopvaluese}{", format_number(placebo_data$p_value_se[1]), "}"),
@@ -173,37 +174,69 @@ if (file.exists(sensitivity_path)) {
         "% Valores da análise de sensibilidade temporal"
     )
 
-    # Criar comandos para cada cenário (exceto Período Central)
+    # Mapear cenários exatos da tese (linha 1130-1132)
+    # Use exact string matching to avoid duplicates
     scenario_names <- list(
         "Completo (2003-2023)" = "full",
+        "Completo (2003-2021)" = "full",
         "Excluindo Início (2006-2023)" = "nostart",
-        "Excluindo Final (2003-2019)" = "noend",
-        "Excluindo COVID (2003-2019)" = "nocovid",
-        "Pré-COVID (2003-2019)" = "precovid"
+        "Excluindo Início (2006-2021)" = "nostart",
+        "Excluindo COVID (2003-2019)" = "nocovid"
     )
+
+    # Track which commands we've already defined to avoid duplicates
+    defined_commands <- character(0)
 
     for (i in 1:nrow(sensitivity_data)) {
         scenario <- sensitivity_data$scenario[i]
         if (!grepl("Período Central", scenario)) {
-            # Usar nome curto predefinido
-            cmd_name <- ifelse(scenario %in% names(scenario_names),
-                scenario_names[[scenario]],
-                paste0("sens", i)
-            )
+            # Find exact match in scenario_names
+            cmd_name <- scenario_names[[scenario]]
+            if (is.null(cmd_name)) {
+                # If no exact match, create a unique name with letter prefix
+                # (LaTeX can't handle \sens3att - it interprets 3 as parameter number)
+                cmd_name <- paste0("sensalt", letters[i])
+            }
 
-            latex_content <- c(
-                latex_content,
-                paste0("% ", scenario),
-                paste0("\\newcommand{\\sens", cmd_name, "att}{", format_number(sensitivity_data$att[i]), "}"),
-                paste0("\\newcommand{\\sens", cmd_name, "se}{", format_number(sensitivity_data$se[i]), "}"),
-                paste0("\\newcommand{\\sens", cmd_name, "lower}{", format_number(sensitivity_data$ci_lower[i]), "}"),
-                paste0("\\newcommand{\\sens", cmd_name, "upper}{", format_number(sensitivity_data$ci_upper[i]), "}"),
-                paste0("\\newcommand{\\sens", cmd_name, "n}{", sensitivity_data$n_treated[i], "}")
-            )
+            # Only add if not already defined
+            if (!(cmd_name %in% defined_commands)) {
+                defined_commands <- c(defined_commands, cmd_name)
+
+                latex_content <- c(
+                    latex_content,
+                    paste0("% ", scenario),
+                    paste0("\\newcommand{\\sens", cmd_name, "att}{", format_number(sensitivity_data$att[i]), "}"),
+                    paste0("\\newcommand{\\sens", cmd_name, "se}{", format_number(sensitivity_data$se[i]), "}"),
+                    paste0("\\newcommand{\\sens", cmd_name, "lower}{", format_number(sensitivity_data$ci_lower[i]), "}"),
+                    paste0("\\newcommand{\\sens", cmd_name, "upper}{", format_number(sensitivity_data$ci_upper[i]), "}"),
+                    paste0("\\newcommand{\\sens", cmd_name, "n}{", sensitivity_data$n_treated[i], "}")
+                )
+            }
         }
     }
-
-    # Não adicionar linha vazia no final quando há dados de sensibilidade
+} else {
+    # Se arquivo de sensibilidade não existir, criar macros de fallback com valores do modelo principal
+    cat("Warning: Sensitivity analysis file not found. Using main model values as fallback.\n")
+    if (exists("att_summary") && nrow(att_summary) > 0) {
+        latex_content <- c(
+            latex_content,
+            "",
+            "% Valores da análise de sensibilidade temporal (fallback do modelo principal)",
+            "% NOTA: Estes valores são placeholder até a análise de sensibilidade ser executada",
+            paste0("\\newcommand{\\sensfullatt}{", format_number(att_summary$att[1]), "}"),
+            paste0("\\newcommand{\\sensfullse}{", format_number(att_summary$se[1]), "}"),
+            paste0("\\newcommand{\\sensfulllower}{", format_number(att_summary$ci_low[1]), "}"),
+            paste0("\\newcommand{\\sensfullupper}{", format_number(att_summary$ci_high[1]), "}"),
+            paste0("\\newcommand{\\sensnostartatt}{", format_number(att_summary$att[1]), "}"),
+            paste0("\\newcommand{\\sensnostartse}{", format_number(att_summary$se[1]), "}"),
+            paste0("\\newcommand{\\sensnostartlower}{", format_number(att_summary$ci_low[1]), "}"),
+            paste0("\\newcommand{\\sensnostartupper}{", format_number(att_summary$ci_high[1]), "}"),
+            paste0("\\newcommand{\\sensnocovidatt}{", format_number(att_summary$att[1]), "}"),
+            paste0("\\newcommand{\\sensnocovidse}{", format_number(att_summary$se[1]), "}"),
+            paste0("\\newcommand{\\sensnocovidlower}{", format_number(att_summary$ci_low[1]), "}"),
+            paste0("\\newcommand{\\sensnocovidupper}{", format_number(att_summary$ci_high[1]), "}")
+        )
+    }
 }
 
 # Escrever arquivo

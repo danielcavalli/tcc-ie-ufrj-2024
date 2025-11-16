@@ -83,7 +83,7 @@
 % ---
 % Informações de dados para CAPA e FOLHA DE ROSTO
 % ---
-\titulo{IMPACTO DE ESTAÇÕES METEOROLÓGICAS NA PRODUTIVIDADE AGRÍCOLA: UMA APLICAÇÃO DE DIFERENÇAS EM DIFERENÇAS COM TRATAMENTO ESCALONADO}
+\titulo{IMPACTO DE ESTAÇÕES METEOROLÓGICAS NA CULTURA DE CANA-DE-AÇÚCAR: UMA APLICAÇÃO DE DIFERENÇAS EM DIFERENÇAS COM TRATAMENTO ESCALONADO}
 \autor{Daniel Cavalli}
 \local{Rio de Janeiro}
 \data{Dezembro 2025}
@@ -274,7 +274,7 @@ Agradeço à minha família, que sempre me apoiou durante toda a graduação sem
 % resumo em português
 \setlength{\absparsep}{18pt} % ajusta o espaçamento dos parágrafos do resumo
 \begin{resumo}
-Este estudo examina o impacto causal da instalação de estações meteorológicas automáticas sobre a área plantada de cana-de-açúcar no Brasil, utilizando dados em painel de 558 microrregiões brasileiras entre 2003 e 2021. As medidas de área plantada provêm do MapBiomas, derivadas de imagens de satélite processadas sistematicamente ao longo de todo o período analisado. A estratégia de identificação emprega o arcabouço de Diferenças em Diferenças com adoção escalonada de Callaway e Sant'Anna (2021), explorando a variação temporal e geográfica na instalação de estações entre microrregiões eventualmente tratadas. O método "not-yet-treated" fornece o grupo de controle dinâmico, comparando unidades já tratadas apenas com aquelas ainda não tratadas em cada período. Através do estimador doubly robust, encontramos um Efeito Médio do Tratamento sobre os Tratados (ATT) de 11,8\% (IC 95\%: [3,5\%; 20,1\%], p = 0,0053), indicando expansão significativa na área dedicada ao cultivo de cana-de-açúcar. A ausência de tendências pré-tratamento diferenciadas, revelada pela análise de event study, valida a estratégia de identificação, enquanto testes extensivos de robustez confirmam a validade causal: randomização múltipla com 5.000 permutações (p-valor empírico < 0,001), especificações alternativas (IPW: 12,2\%, REG: 11,4\%), ausência de efeitos sobre culturas alternativas (soja, arroz) e PIB não-agropecuário, além de estabilidade temporal dos resultados. O mecanismo identificado relaciona-se ao melhor planejamento de irrigação, recurso crítico para a cana-de-açúcar, viabilizando expansão da área cultivada em regiões anteriormente marginais. Complementarmente aos resultados substantivos, o trabalho documenta detalhadamente a implementação do arcabouço de Callaway e Sant'Anna, servindo como referência metodológica para avaliação de políticas públicas com adoção escalonada. A disponibilização completa do código e documentação reforça o compromisso com transparência e reprodutibilidade na pesquisa econométrica aplicada.
+Este estudo examina o impacto causal da instalação de estações meteorológicas automáticas sobre a área plantada de cana-de-açúcar no Brasil, utilizando dados em painel de 558 microrregiões brasileiras entre 2003 e 2021. As medidas de área plantada provêm do MapBiomas, derivadas de imagens de satélite processadas ao longo de todo o período analisado. A estratégia de identificação emprega o arcabouço de Diferenças em Diferenças com adoção escalonada de Callaway e Sant'Anna (2021), explorando a variação temporal e geográfica na instalação de estações entre microrregiões eventualmente tratadas. O método "not-yet-treated" fornece o grupo de controle dinâmico, comparando unidades já tratadas apenas com aquelas ainda não tratadas em cada período. Através do estimador doubly robust, encontramos um Efeito Médio do Tratamento sobre os Tratados (ATT) de 11,8\% (IC 95\%: [3,5\%; 20,1\%], p = 0,0053), indicando expansão significativa na área dedicada ao cultivo de cana-de-açúcar para as regiões tratadas. A ausência de tendências pré-tratamento diferenciadas, revelada pela análise de event study, valida a estratégia de identificação, enquanto testes extensivos de robustez confirmam a validade causal: randomização múltipla com 5.000 permutações (p-valor empírico < 0,001), especificações alternativas (IPW: 12,2\%, REG: 11,4\%), ausência de efeitos sobre culturas alternativas (soja, arroz) e PIB não-agropecuário, além de estabilidade temporal dos resultados. O mecanismo identificado relaciona-se ao melhor planejamento de irrigação, recurso crítico para a cana-de-açúcar, viabilizando expansão da área cultivada em regiões anteriormente marginais. Complementarmente aos resultados substantivos, o trabalho documenta detalhadamente a implementação do arcabouço de Callaway e Sant'Anna, servindo como referência metodológica para avaliação de políticas públicas com adoção escalonada. A disponibilização completa do código e documentação reforça o compromisso com transparência e reprodutibilidade na pesquisa econométrica aplicada.
 
  Palavras-chave: estações meteorológicas. área plantada. cana-de-açúcar. MapBiomas. irrigação. diferenças em diferenças escalonada. Callaway e Sant'Anna. informação climática. avaliação de políticas públicas.
 \end{resumo}
@@ -1520,19 +1520,6 @@ Período & Nunca Tratadas & Ainda Não Tratadas & Já Tratadas & Diferença \\
 \bottomrule
 \end{tabular}
 \end{table}
-
-\section{Tendências por Quartil de Área Plantada}
-
-A Figura \ref{fig:trends_quartile} apresenta a evolução do PIB agropecuário para grupos tratados e controle, separados por quartis de área plantada:
-
-\begin{figure}[h]
-\centering
-\caption{Tendências do PIB Agropecuário por Quartil de Área Plantada}
-\label{fig:trends_quartile}
-\includegraphics[width=0.85\textwidth]{../../../data/outputs/additional_figures/trends_by_size_quartile.png}
-
-Nota: Os gráficos mostram a evolução do log do PIB agropecuário para grupos tratados (azul) e controle (área sombreada) em cada quartil de área plantada (Q1 = menor área, Q4 = maior área). A linha vertical tracejada indica o período de início da instalação das estações.
-\end{figure}
 
 \section{Análises Descritivas Complementares}
 

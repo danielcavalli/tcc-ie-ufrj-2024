@@ -1,581 +1,969 @@
+Loading required package: renv
+
+Attaching package: ‘renv’
+
+The following objects are masked from ‘package:stats’:
+
+    embed, update
+
+The following objects are masked from ‘package:utils’:
+
+    history, upgrade
+
+The following objects are masked from ‘package:base’:
+
+    autoload, load, remove, use
+
+- The library is already synchronized with the lockfile.
+🔬 Running analysis with 50 Monte Carlo simulations...
+
+Attaching package: ‘dplyr’
+
+The following objects are masked from ‘package:stats’:
+
+    filter, lag
+
+The following objects are masked from ‘package:base’:
+
+    intersect, setdiff, setequal, union
+
+here() starts at /Users/daniel.cavalli/Documents/personal/tcc-claude
+
+Attaching package: ‘kableExtra’
+
+The following object is masked from ‘package:dplyr’:
+
+    group_rows
+
+
+Attaching package: ‘scales’
+
+The following object is masked from ‘package:purrr’:
+
+    discard
+
+The following object is masked from ‘package:readr’:
+
+    col_factor
+
+Loading required package: viridisLite
+
+Attaching package: ‘viridis’
+
+The following object is masked from ‘package:scales’:
+
+    viridis_pal
+
+corrplot 0.95 loaded
+Linking to GEOS 3.13.0, GDAL 3.8.5, PROJ 9.5.1; sf_use_s2() is TRUE
+
+Attaching package: ‘foreach’
+
+The following objects are masked from ‘package:purrr’:
+
+    accumulate, when
+
+Loading required package: iterators
+Loading required package: parallel
+ℹ Usando n_sims = 50 (fornecido via linha de comando)
+
+── CONFIGURAÇÃO DO PROJETO ─────────────────────────────────────────────────────
+ℹ Outcome principal: log_area_cana
+ℹ Covariáveis: log_area_total, log_populacao, log_pib_per_capita, log_densidade_estacoes_uf, log_precip_anual, log_precip_media_mm, log_precip_maxima_mm
+ℹ Simulações Monte Carlo: 50
+ℹ Diretório de saída: /Users/daniel.cavalli/Documents/personal/tcc-claude/data/outputs
+────────────────────────────────────────────────────────────────────────────────
+
+── Pipeline de Análise: Impacto de Estações Meteorológicas na Área Plantada de C
+ℹ Lendo dados de /Users/daniel.cavalli/Documents/personal/tcc-claude/data/csv/microrregions_Cana-de-açúcar-Soja-Arroz_2003-2021_mapbiomas.csv …
+ℹ Estrutura dos dados:
+ℹ   - Período: 2003 a 2021
+ℹ   - Microrregiões: 558
+✔ Microrregiões com dados pré-tratamento: 342 de 394
+ℹ Unidades adotantes precoces (tratadas até 2010): 336
+ℹ Total de unidades no dataset: 558
+✔ Dados preparados: 10602 observações, 558 unidades
+
+── Aplicando Ajustes de Balanceamento ──
+
+ℹ Carregando funções de ajuste de balanceamento...
+ℹ Dataset original: 10602 observações, 558 unidades
+
+── Aplicando Winsorização de Outliers 
+
+── Winsorização de Outliers 
+ℹ log_pib_agro: 213 valores < P2, 213 valores > P98
+ℹ log_populacao: 213 valores < P2, 213 valores > P98
+ℹ log_pib_per_capita: 213 valores < P2, 213 valores > P98
+ℹ prop_pib_agro: 213 valores < P2, 213 valores > P98
+✔ Winsorização aplicada (2% nas caudas)
+✔ Dataset ajustado: 10602 observações, 558 unidades
+✔ Ajustes de balanceamento concluídos
+
+── ═══ ANÁLISE PRINCIPAL: ÁREA PLANTADA DE CANA-DE-AÇÚCAR ═══ ──
+
+ℹ Estimando ATT(g,t) com método dr …
+ℹ Verificando colinearidade/variância das covariáveis…
+✔ Covariáveis elegíveis: log_area_total, log_populacao, log_pib_per_capita, log_densidade_estacoes_uf, log_precip_anual, log_precip_media_mm, log_precip_maxima_mm
+ℹ Tentando estimador dr com fórmula: ~log_area_total + log_populacao + log_pib_per_capita + log_densidade_estacoes_uf +  and     log_precip_anual + log_precip_media_mm + log_precip_maxima_mm para outcome log_area_cana
+! Alguns ATT(g,t) não foram estimados (NA). Eles foram removidos na agregação.
+✔ ATT = 0.1181, SE = 0.0423, z = 2.79, p = 0.0053, IC95% = [0.0351; 0.201]
+
+── Análise de Pesos de Adoção Escalonada (Outcome Principal: Cana) ──
+
+ℹ Analisando distribuição de pesos por coorte de adoção...
+ℹ Correlação entre peso e períodos pós-tratamento: 0.419
+
+── Comparação de Grupos de Controle (Outcome: Área Cana) ──
+
+ℹ Comparando grupos de controle...
+ℹ Unidades nunca tratadas: 164 (29.4% do total)
+
+── Estimando com controle 'not-yet-treated' 
+ℹ Estimando ATT(g,t) com método dr …
+ℹ Verificando colinearidade/variância das covariáveis…
+✔ Covariáveis elegíveis: log_area_total, log_populacao, log_pib_per_capita, log_densidade_estacoes_uf, log_precip_anual, log_precip_media_mm, log_precip_maxima_mm
+ℹ Tentando estimador dr com fórmula: ~log_area_total + log_populacao + log_pib_per_capita + log_densidade_estacoes_uf +  and     log_precip_anual + log_precip_media_mm + log_precip_maxima_mm para outcome log_area_cana
+! Alguns ATT(g,t) não foram estimados (NA). Eles foram removidos na agregação.
+✔ ATT = 0.1181, SE = 0.0423, z = 2.79, p = 0.0053, IC95% = [0.0351; 0.201]
+
+── Estimando com controle 'nevertreated' (para validação) 
+! Nota: Como todas unidades são eventualmente tratadas, 'nevertreated' tratará unidades de controle temporário como nunca tratadas
+ℹ Estimando ATT(g,t) com método dr …
+ℹ Verificando colinearidade/variância das covariáveis…
+✔ Covariáveis elegíveis: log_area_total, log_populacao, log_pib_per_capita, log_densidade_estacoes_uf, log_precip_anual, log_precip_media_mm, log_precip_maxima_mm
+ℹ Tentando estimador dr com fórmula: ~log_area_total + log_populacao + log_pib_per_capita + log_densidade_estacoes_uf +  and     log_precip_anual + log_precip_media_mm + log_precip_maxima_mm para outcome log_area_cana
+! Alguns ATT(g,t) não foram estimados (NA). Eles foram removidos na agregação.
+✔ ATT = 0.1361, SE = 0.053, z = 2.57, p = 0.0102, IC95% = [0.0323; 0.2399]
+ℹ Diferença entre grupos de controle: 0.018 (15.3%)
+
+── Diagnóstico de Valores NA (Outcome: Área Cana) ──
+
+ℹ Diagnosticando valores NA em ATT(g,t)...
+! Encontrados 49 casos de ATT(g,t) = NA
+! Coortes pequenas (<5 unidades): 2019, 2005, 2013, 2015
+ℹ Testando agregação de coortes pequenas...
+ℹ Agregando coortes pequenas...
+✔ Agregados 3 anos em 3 bins
+ℹ Estimando ATT(g,t) com método dr …
+ℹ Verificando colinearidade/variância das covariáveis…
+✔ Covariáveis elegíveis: log_area_total, log_populacao, log_pib_per_capita, log_densidade_estacoes_uf, log_precip_anual, log_precip_media_mm, log_precip_maxima_mm
+ℹ Tentando estimador dr com fórmula: ~log_area_total + log_populacao + log_pib_per_capita + log_densidade_estacoes_uf +  and     log_precip_anual + log_precip_media_mm + log_precip_maxima_mm para outcome log_area_cana
+! Alguns ATT(g,t) não foram estimados (NA). Eles foram removidos na agregação.
+✔ ATT = 0.122, SE = 0.0444, z = 2.75, p = 0.0060, IC95% = [0.035; 0.2091]
+ℹ ATT após agregação: 0.122 (original: 0.1181)
+
+── Verificação de Clustering ──
+
+ℹ Com 558 clusters, o clustering padrão por microrregião é adequado
+ℹ Para maior robustez, considere wild bootstrap em análises futuras
+
+── Teste Placebo Aleatório (Outcome: Área Cana) ──
+
+ℹ Executando em modo serial (parallel = TRUE, n_sims = 50)
+ℹ Executando 50 testes placebo aleatórios...
+ℹ Outcome testado: log_area_cana
+ℹ Estimando ATT(g,t) com método dr …
+ℹ Verificando colinearidade/variância das covariáveis…
+✔ Covariáveis elegíveis: log_area_total, log_populacao, log_pib_per_capita, log_densidade_estacoes_uf, log_precip_anual, log_precip_media_mm, log_precip_maxima_mm
+ℹ Tentando estimador dr com fórmula: ~log_area_total + log_populacao + log_pib_per_capita + log_densidade_estacoes_uf +  and     log_precip_anual + log_precip_media_mm + log_precip_maxima_mm para outcome log_area_cana
+! Alguns ATT(g,t) não foram estimados (NA). Eles foram removidos na agregação.
+✔ ATT = 0.1181, SE = 0.0423, z = 2.79, p = 0.0053, IC95% = [0.0351; 0.201]
+ℹ Estimando ATT(g,t) com método dr …
+ℹ Verificando colinearidade/variância das covariáveis…
+✔ Covariáveis elegíveis: log_area_total, log_populacao, log_pib_per_capita, log_densidade_estacoes_uf, log_precip_anual, log_precip_media_mm, log_precip_maxima_mm
+ℹ Tentando estimador dr com fórmula: ~log_area_total + log_populacao + log_pib_per_capita + log_densidade_estacoes_uf +  and     log_precip_anual + log_precip_media_mm + log_precip_maxima_mm para outcome log_area_cana
+✔ ATT = 0.0307, SE = 0.0288, z = 1.07, p = 0.2864, IC95% = [-0.0258; 0.0873]
+Simulando placebos ■■                                 4% | ETA:  1m
+ℹ Estimando ATT(g,t) com método dr …
+Simulando placebos ■■                                 4% | ETA:  1mℹ Verificando colinearidade/variância das covariáveis…
+Simulando placebos ■■                                 4% | ETA:  1m✔ Covariáveis elegíveis: log_area_total, log_populacao, log_pib_per_capita, log_densidade_estacoes_uf, log_precip_anual, log_precip_media_mm, log_precip_maxima_mm
+Simulando placebos ■■                                 4% | ETA:  1mℹ Tentando estimador dr com fórmula: ~log_area_total + log_populacao + log_pib_per_capita + log_densidade_estacoes_uf +  and     log_precip_anual + log_precip_media_mm + log_precip_maxima_mm para outcome log_area_cana
+Simulando placebos ■■                                 4% | ETA:  1m✔ ATT = -0.0095, SE = 0.0261, z = -0.36, p = 0.7167, IC95% = [-0.0607; 0.0417]
+Simulando placebos ■■                                 4% | ETA:  1mSimulando placebos ■■■                                6% | ETA:  1m
+ℹ Estimando ATT(g,t) com método dr …
+Simulando placebos ■■■                                6% | ETA:  1mℹ Verificando colinearidade/variância das covariáveis…
+Simulando placebos ■■■                                6% | ETA:  1m✔ Covariáveis elegíveis: log_area_total, log_populacao, log_pib_per_capita, log_densidade_estacoes_uf, log_precip_anual, log_precip_media_mm, log_precip_maxima_mm
+Simulando placebos ■■■                                6% | ETA:  1mℹ Tentando estimador dr com fórmula: ~log_area_total + log_populacao + log_pib_per_capita + log_densidade_estacoes_uf +  and     log_precip_anual + log_precip_media_mm + log_precip_maxima_mm para outcome log_area_cana
+Simulando placebos ■■■                                6% | ETA:  1m✔ ATT = 0.0187, SE = 0.0302, z = 0.62, p = 0.5349, IC95% = [-0.0404; 0.0779]
+Simulando placebos ■■■                                6% | ETA:  1mSimulando placebos ■■■                                8% | ETA:  1m
+ℹ Estimando ATT(g,t) com método dr …
+Simulando placebos ■■■                                8% | ETA:  1mℹ Verificando colinearidade/variância das covariáveis…
+Simulando placebos ■■■                                8% | ETA:  1m✔ Covariáveis elegíveis: log_area_total, log_populacao, log_pib_per_capita, log_densidade_estacoes_uf, log_precip_anual, log_precip_media_mm, log_precip_maxima_mm
+Simulando placebos ■■■                                8% | ETA:  1mℹ Tentando estimador dr com fórmula: ~log_area_total + log_populacao + log_pib_per_capita + log_densidade_estacoes_uf +  and     log_precip_anual + log_precip_media_mm + log_precip_maxima_mm para outcome log_area_cana
+Simulando placebos ■■■                                8% | ETA:  1m✔ ATT = -0.0292, SE = 0.0242, z = -1.21, p = 0.2281, IC95% = [-0.0766; 0.0183]
+Simulando placebos ■■■                                8% | ETA:  1mSimulando placebos ■■■■                              10% | ETA:  1m
+ℹ Estimando ATT(g,t) com método dr …
+Simulando placebos ■■■■                              10% | ETA:  1mℹ Verificando colinearidade/variância das covariáveis…
+Simulando placebos ■■■■                              10% | ETA:  1m✔ Covariáveis elegíveis: log_area_total, log_populacao, log_pib_per_capita, log_densidade_estacoes_uf, log_precip_anual, log_precip_media_mm, log_precip_maxima_mm
+Simulando placebos ■■■■                              10% | ETA:  1mℹ Tentando estimador dr com fórmula: ~log_area_total + log_populacao + log_pib_per_capita + log_densidade_estacoes_uf +  and     log_precip_anual + log_precip_media_mm + log_precip_maxima_mm para outcome log_area_cana
+Simulando placebos ■■■■                              10% | ETA:  1m✔ ATT = 0.0278, SE = 0.0308, z = 0.9, p = 0.3662, IC95% = [-0.0325; 0.0881]
+Simulando placebos ■■■■                              10% | ETA:  1mℹ Estimando ATT(g,t) com método dr …
+Simulando placebos ■■■■                              10% | ETA:  1mℹ Verificando colinearidade/variância das covariáveis…
+Simulando placebos ■■■■                              10% | ETA:  1m✔ Covariáveis elegíveis: log_area_total, log_populacao, log_pib_per_capita, log_densidade_estacoes_uf, log_precip_anual, log_precip_media_mm, log_precip_maxima_mm
+Simulando placebos ■■■■                              10% | ETA:  1mℹ Tentando estimador dr com fórmula: ~log_area_total + log_populacao + log_pib_per_capita + log_densidade_estacoes_uf +  and     log_precip_anual + log_precip_media_mm + log_precip_maxima_mm para outcome log_area_cana
+Simulando placebos ■■■■                              10% | ETA:  1m✔ ATT = 0.0051, SE = 0.0276, z = 0.18, p = 0.8538, IC95% = [-0.049; 0.0592]
+Simulando placebos ■■■■                              10% | ETA:  1mSimulando placebos ■■■■■                             14% | ETA:  1m
+ℹ Estimando ATT(g,t) com método dr …
+Simulando placebos ■■■■■                             14% | ETA:  1mℹ Verificando colinearidade/variância das covariáveis…
+Simulando placebos ■■■■■                             14% | ETA:  1m✔ Covariáveis elegíveis: log_area_total, log_populacao, log_pib_per_capita, log_densidade_estacoes_uf, log_precip_anual, log_precip_media_mm, log_precip_maxima_mm
+Simulando placebos ■■■■■                             14% | ETA:  1mℹ Tentando estimador dr com fórmula: ~log_area_total + log_populacao + log_pib_per_capita + log_densidade_estacoes_uf +  and     log_precip_anual + log_precip_media_mm + log_precip_maxima_mm para outcome log_area_cana
+Simulando placebos ■■■■■                             14% | ETA:  1m✔ ATT = -0.0271, SE = 0.0254, z = -1.07, p = 0.2860, IC95% = [-0.077; 0.0227]
+Simulando placebos ■■■■■                             14% | ETA:  1mSimulando placebos ■■■■■■                            16% | ETA:  1m
+ℹ Estimando ATT(g,t) com método dr …
+Simulando placebos ■■■■■■                            16% | ETA:  1mℹ Verificando colinearidade/variância das covariáveis…
+Simulando placebos ■■■■■■                            16% | ETA:  1m✔ Covariáveis elegíveis: log_area_total, log_populacao, log_pib_per_capita, log_densidade_estacoes_uf, log_precip_anual, log_precip_media_mm, log_precip_maxima_mm
+Simulando placebos ■■■■■■                            16% | ETA:  1mℹ Tentando estimador dr com fórmula: ~log_area_total + log_populacao + log_pib_per_capita + log_densidade_estacoes_uf +  and     log_precip_anual + log_precip_media_mm + log_precip_maxima_mm para outcome log_area_cana
+Simulando placebos ■■■■■■                            16% | ETA:  1m✔ ATT = -0.0418, SE = 0.0259, z = -1.61, p = 0.1067, IC95% = [-0.0925; 0.009]
+Simulando placebos ■■■■■■                            16% | ETA:  1mSimulando placebos ■■■■■■                            18% | ETA:  1m
+ℹ Estimando ATT(g,t) com método dr …
+Simulando placebos ■■■■■■                            18% | ETA:  1mℹ Verificando colinearidade/variância das covariáveis…
+Simulando placebos ■■■■■■                            18% | ETA:  1m✔ Covariáveis elegíveis: log_area_total, log_populacao, log_pib_per_capita, log_densidade_estacoes_uf, log_precip_anual, log_precip_media_mm, log_precip_maxima_mm
+Simulando placebos ■■■■■■                            18% | ETA:  1mℹ Tentando estimador dr com fórmula: ~log_area_total + log_populacao + log_pib_per_capita + log_densidade_estacoes_uf +  and     log_precip_anual + log_precip_media_mm + log_precip_maxima_mm para outcome log_area_cana
+Simulando placebos ■■■■■■                            18% | ETA:  1m✔ ATT = 0.0059, SE = 0.0231, z = 0.26, p = 0.7968, IC95% = [-0.0392; 0.0511]
+Simulando placebos ■■■■■■                            18% | ETA:  1mSimulando placebos ■■■■■■■                           20% | ETA:  1m
+ℹ Estimando ATT(g,t) com método dr …
+Simulando placebos ■■■■■■■                           20% | ETA:  1mℹ Verificando colinearidade/variância das covariáveis…
+Simulando placebos ■■■■■■■                           20% | ETA:  1m✔ Covariáveis elegíveis: log_area_total, log_populacao, log_pib_per_capita, log_densidade_estacoes_uf, log_precip_anual, log_precip_media_mm, log_precip_maxima_mm
+Simulando placebos ■■■■■■■                           20% | ETA:  1mℹ Tentando estimador dr com fórmula: ~log_area_total + log_populacao + log_pib_per_capita + log_densidade_estacoes_uf +  and     log_precip_anual + log_precip_media_mm + log_precip_maxima_mm para outcome log_area_cana
+Simulando placebos ■■■■■■■                           20% | ETA:  1m✔ ATT = -0.0209, SE = 0.0308, z = -0.68, p = 0.4986, IC95% = [-0.0813; 0.0396]
+Simulando placebos ■■■■■■■                           20% | ETA:  1mℹ Estimando ATT(g,t) com método dr …
+Simulando placebos ■■■■■■■                           20% | ETA:  1mℹ Verificando colinearidade/variância das covariáveis…
+Simulando placebos ■■■■■■■                           20% | ETA:  1m✔ Covariáveis elegíveis: log_area_total, log_populacao, log_pib_per_capita, log_densidade_estacoes_uf, log_precip_anual, log_precip_media_mm, log_precip_maxima_mm
+Simulando placebos ■■■■■■■                           20% | ETA:  1mℹ Tentando estimador dr com fórmula: ~log_area_total + log_populacao + log_pib_per_capita + log_densidade_estacoes_uf +  and     log_precip_anual + log_precip_media_mm + log_precip_maxima_mm para outcome log_area_cana
+Simulando placebos ■■■■■■■                           20% | ETA:  1m✔ ATT = -0.0208, SE = 0.0264, z = -0.79, p = 0.4300, IC95% = [-0.0725; 0.0309]
+Simulando placebos ■■■■■■■                           20% | ETA:  1mSimulando placebos ■■■■■■■■                          24% | ETA:  1m
+ℹ Estimando ATT(g,t) com método dr …
+Simulando placebos ■■■■■■■■                          24% | ETA:  1mℹ Verificando colinearidade/variância das covariáveis…
+Simulando placebos ■■■■■■■■                          24% | ETA:  1m✔ Covariáveis elegíveis: log_area_total, log_populacao, log_pib_per_capita, log_densidade_estacoes_uf, log_precip_anual, log_precip_media_mm, log_precip_maxima_mm
+Simulando placebos ■■■■■■■■                          24% | ETA:  1mℹ Tentando estimador dr com fórmula: ~log_area_total + log_populacao + log_pib_per_capita + log_densidade_estacoes_uf +  and     log_precip_anual + log_precip_media_mm + log_precip_maxima_mm para outcome log_area_cana
+Simulando placebos ■■■■■■■■                          24% | ETA:  1m✔ ATT = -0.0553, SE = 0.0307, z = -1.8, p = 0.0720, IC95% = [-0.1156; 0.0049]
+Simulando placebos ■■■■■■■■                          24% | ETA:  1mSimulando placebos ■■■■■■■■■                         26% | ETA:  1m
+ℹ Estimando ATT(g,t) com método dr …
+Simulando placebos ■■■■■■■■■                         26% | ETA:  1mℹ Verificando colinearidade/variância das covariáveis…
+Simulando placebos ■■■■■■■■■                         26% | ETA:  1m✔ Covariáveis elegíveis: log_area_total, log_populacao, log_pib_per_capita, log_densidade_estacoes_uf, log_precip_anual, log_precip_media_mm, log_precip_maxima_mm
+Simulando placebos ■■■■■■■■■                         26% | ETA:  1mℹ Tentando estimador dr com fórmula: ~log_area_total + log_populacao + log_pib_per_capita + log_densidade_estacoes_uf +  and     log_precip_anual + log_precip_media_mm + log_precip_maxima_mm para outcome log_area_cana
+Simulando placebos ■■■■■■■■■                         26% | ETA:  1m✔ ATT = -0.0119, SE = 0.0276, z = -0.43, p = 0.6655, IC95% = [-0.066; 0.0422]
+Simulando placebos ■■■■■■■■■                         26% | ETA:  1mSimulando placebos ■■■■■■■■■                         28% | ETA:  1m
+ℹ Estimando ATT(g,t) com método dr …
+Simulando placebos ■■■■■■■■■                         28% | ETA:  1mℹ Verificando colinearidade/variância das covariáveis…
+Simulando placebos ■■■■■■■■■                         28% | ETA:  1m✔ Covariáveis elegíveis: log_area_total, log_populacao, log_pib_per_capita, log_densidade_estacoes_uf, log_precip_anual, log_precip_media_mm, log_precip_maxima_mm
+Simulando placebos ■■■■■■■■■                         28% | ETA:  1mℹ Tentando estimador dr com fórmula: ~log_area_total + log_populacao + log_pib_per_capita + log_densidade_estacoes_uf +  and     log_precip_anual + log_precip_media_mm + log_precip_maxima_mm para outcome log_area_cana
+Simulando placebos ■■■■■■■■■                         28% | ETA:  1m✔ ATT = -0.0059, SE = 0.0206, z = -0.28, p = 0.7768, IC95% = [-0.0463; 0.0346]
+Simulando placebos ■■■■■■■■■                         28% | ETA:  1mSimulando placebos ■■■■■■■■■■                        30% | ETA:  1m
+ℹ Estimando ATT(g,t) com método dr …
+Simulando placebos ■■■■■■■■■■                        30% | ETA:  1mℹ Verificando colinearidade/variância das covariáveis…
+Simulando placebos ■■■■■■■■■■                        30% | ETA:  1m✔ Covariáveis elegíveis: log_area_total, log_populacao, log_pib_per_capita, log_densidade_estacoes_uf, log_precip_anual, log_precip_media_mm, log_precip_maxima_mm
+Simulando placebos ■■■■■■■■■■                        30% | ETA:  1mℹ Tentando estimador dr com fórmula: ~log_area_total + log_populacao + log_pib_per_capita + log_densidade_estacoes_uf +  and     log_precip_anual + log_precip_media_mm + log_precip_maxima_mm para outcome log_area_cana
+Simulando placebos ■■■■■■■■■■                        30% | ETA:  1m✔ ATT = -0.0085, SE = 0.0275, z = -0.31, p = 0.7568, IC95% = [-0.0624; 0.0453]
+Simulando placebos ■■■■■■■■■■                        30% | ETA:  1mℹ Estimando ATT(g,t) com método dr …
+Simulando placebos ■■■■■■■■■■                        30% | ETA:  1mℹ Verificando colinearidade/variância das covariáveis…
+Simulando placebos ■■■■■■■■■■                        30% | ETA:  1m✔ Covariáveis elegíveis: log_area_total, log_populacao, log_pib_per_capita, log_densidade_estacoes_uf, log_precip_anual, log_precip_media_mm, log_precip_maxima_mm
+Simulando placebos ■■■■■■■■■■                        30% | ETA:  1mℹ Tentando estimador dr com fórmula: ~log_area_total + log_populacao + log_pib_per_capita + log_densidade_estacoes_uf +  and     log_precip_anual + log_precip_media_mm + log_precip_maxima_mm para outcome log_area_cana
+Simulando placebos ■■■■■■■■■■                        30% | ETA:  1m✔ ATT = -0.0197, SE = 0.0251, z = -0.78, p = 0.4331, IC95% = [-0.0689; 0.0295]
+Simulando placebos ■■■■■■■■■■                        30% | ETA:  1mSimulando placebos ■■■■■■■■■■■                       34% | ETA:  1m
+ℹ Estimando ATT(g,t) com método dr …
+Simulando placebos ■■■■■■■■■■■                       34% | ETA:  1mℹ Verificando colinearidade/variância das covariáveis…
+Simulando placebos ■■■■■■■■■■■                       34% | ETA:  1m✔ Covariáveis elegíveis: log_area_total, log_populacao, log_pib_per_capita, log_densidade_estacoes_uf, log_precip_anual, log_precip_media_mm, log_precip_maxima_mm
+Simulando placebos ■■■■■■■■■■■                       34% | ETA:  1mℹ Tentando estimador dr com fórmula: ~log_area_total + log_populacao + log_pib_per_capita + log_densidade_estacoes_uf +  and     log_precip_anual + log_precip_media_mm + log_precip_maxima_mm para outcome log_area_cana
+Simulando placebos ■■■■■■■■■■■                       34% | ETA:  1m✔ ATT = 0.0214, SE = 0.0292, z = 0.73, p = 0.4632, IC95% = [-0.0358; 0.0787]
+Simulando placebos ■■■■■■■■■■■                       34% | ETA:  1mSimulando placebos ■■■■■■■■■■■■                      36% | ETA:  1m
+ℹ Estimando ATT(g,t) com método dr …
+Simulando placebos ■■■■■■■■■■■■                      36% | ETA:  1mℹ Verificando colinearidade/variância das covariáveis…
+Simulando placebos ■■■■■■■■■■■■                      36% | ETA:  1m✔ Covariáveis elegíveis: log_area_total, log_populacao, log_pib_per_capita, log_densidade_estacoes_uf, log_precip_anual, log_precip_media_mm, log_precip_maxima_mm
+Simulando placebos ■■■■■■■■■■■■                      36% | ETA:  1mℹ Tentando estimador dr com fórmula: ~log_area_total + log_populacao + log_pib_per_capita + log_densidade_estacoes_uf +  and     log_precip_anual + log_precip_media_mm + log_precip_maxima_mm para outcome log_area_cana
+Simulando placebos ■■■■■■■■■■■■                      36% | ETA:  1m✔ ATT = -0.0195, SE = 0.0257, z = -0.76, p = 0.4477, IC95% = [-0.0699; 0.0308]
+Simulando placebos ■■■■■■■■■■■■                      36% | ETA:  1mSimulando placebos ■■■■■■■■■■■■                      38% | ETA:  1m
+ℹ Estimando ATT(g,t) com método dr …
+Simulando placebos ■■■■■■■■■■■■                      38% | ETA:  1mℹ Verificando colinearidade/variância das covariáveis…
+Simulando placebos ■■■■■■■■■■■■                      38% | ETA:  1m✔ Covariáveis elegíveis: log_area_total, log_populacao, log_pib_per_capita, log_densidade_estacoes_uf, log_precip_anual, log_precip_media_mm, log_precip_maxima_mm
+Simulando placebos ■■■■■■■■■■■■                      38% | ETA:  1mℹ Tentando estimador dr com fórmula: ~log_area_total + log_populacao + log_pib_per_capita + log_densidade_estacoes_uf +  and     log_precip_anual + log_precip_media_mm + log_precip_maxima_mm para outcome log_area_cana
+Simulando placebos ■■■■■■■■■■■■                      38% | ETA:  1m✔ ATT = 0.0392, SE = 0.0267, z = 1.47, p = 0.1421, IC95% = [-0.0131; 0.0915]
+Simulando placebos ■■■■■■■■■■■■                      38% | ETA:  1mSimulando placebos ■■■■■■■■■■■■■                     40% | ETA:  1m
+ℹ Estimando ATT(g,t) com método dr …
+Simulando placebos ■■■■■■■■■■■■■                     40% | ETA:  1mℹ Verificando colinearidade/variância das covariáveis…
+Simulando placebos ■■■■■■■■■■■■■                     40% | ETA:  1m✔ Covariáveis elegíveis: log_area_total, log_populacao, log_pib_per_capita, log_densidade_estacoes_uf, log_precip_anual, log_precip_media_mm, log_precip_maxima_mm
+Simulando placebos ■■■■■■■■■■■■■                     40% | ETA:  1mℹ Tentando estimador dr com fórmula: ~log_area_total + log_populacao + log_pib_per_capita + log_densidade_estacoes_uf +  and     log_precip_anual + log_precip_media_mm + log_precip_maxima_mm para outcome log_area_cana
+Simulando placebos ■■■■■■■■■■■■■                     40% | ETA:  1m✔ ATT = 0.0069, SE = 0.0284, z = 0.24, p = 0.8086, IC95% = [-0.0487; 0.0625]
+Simulando placebos ■■■■■■■■■■■■■                     40% | ETA:  1mℹ Estimando ATT(g,t) com método dr …
+Simulando placebos ■■■■■■■■■■■■■                     40% | ETA:  1mℹ Verificando colinearidade/variância das covariáveis…
+Simulando placebos ■■■■■■■■■■■■■                     40% | ETA:  1m✔ Covariáveis elegíveis: log_area_total, log_populacao, log_pib_per_capita, log_densidade_estacoes_uf, log_precip_anual, log_precip_media_mm, log_precip_maxima_mm
+Simulando placebos ■■■■■■■■■■■■■                     40% | ETA:  1mℹ Tentando estimador dr com fórmula: ~log_area_total + log_populacao + log_pib_per_capita + log_densidade_estacoes_uf +  and     log_precip_anual + log_precip_media_mm + log_precip_maxima_mm para outcome log_area_cana
+Simulando placebos ■■■■■■■■■■■■■                     40% | ETA:  1m✔ ATT = 0.0068, SE = 0.0264, z = 0.26, p = 0.7957, IC95% = [-0.0449; 0.0585]
+Simulando placebos ■■■■■■■■■■■■■                     40% | ETA:  1mSimulando placebos ■■■■■■■■■■■■■■                    44% | ETA:  1m
+ℹ Estimando ATT(g,t) com método dr …
+Simulando placebos ■■■■■■■■■■■■■■                    44% | ETA:  1mℹ Verificando colinearidade/variância das covariáveis…
+Simulando placebos ■■■■■■■■■■■■■■                    44% | ETA:  1m✔ Covariáveis elegíveis: log_area_total, log_populacao, log_pib_per_capita, log_densidade_estacoes_uf, log_precip_anual, log_precip_media_mm, log_precip_maxima_mm
+Simulando placebos ■■■■■■■■■■■■■■                    44% | ETA:  1mℹ Tentando estimador dr com fórmula: ~log_area_total + log_populacao + log_pib_per_capita + log_densidade_estacoes_uf +  and     log_precip_anual + log_precip_media_mm + log_precip_maxima_mm para outcome log_area_cana
+Simulando placebos ■■■■■■■■■■■■■■                    44% | ETA:  1m✔ ATT = -5e-04, SE = 0.0239, z = -0.02, p = 0.9842, IC95% = [-0.0474; 0.0465]
+Simulando placebos ■■■■■■■■■■■■■■                    44% | ETA:  1mSimulando placebos ■■■■■■■■■■■■■■■                   46% | ETA:  1m
+ℹ Estimando ATT(g,t) com método dr …
+Simulando placebos ■■■■■■■■■■■■■■■                   46% | ETA:  1mℹ Verificando colinearidade/variância das covariáveis…
+Simulando placebos ■■■■■■■■■■■■■■■                   46% | ETA:  1m✔ Covariáveis elegíveis: log_area_total, log_populacao, log_pib_per_capita, log_densidade_estacoes_uf, log_precip_anual, log_precip_media_mm, log_precip_maxima_mm
+Simulando placebos ■■■■■■■■■■■■■■■                   46% | ETA:  1mℹ Tentando estimador dr com fórmula: ~log_area_total + log_populacao + log_pib_per_capita + log_densidade_estacoes_uf +  and     log_precip_anual + log_precip_media_mm + log_precip_maxima_mm para outcome log_area_cana
+Simulando placebos ■■■■■■■■■■■■■■■                   46% | ETA:  1m✔ ATT = 0.0233, SE = 0.0234, z = 1, p = 0.3189, IC95% = [-0.0225; 0.0692]
+Simulando placebos ■■■■■■■■■■■■■■■                   46% | ETA:  1mSimulando placebos ■■■■■■■■■■■■■■■                   48% | ETA:  1m
+ℹ Estimando ATT(g,t) com método dr …
+Simulando placebos ■■■■■■■■■■■■■■■                   48% | ETA:  1mℹ Verificando colinearidade/variância das covariáveis…
+Simulando placebos ■■■■■■■■■■■■■■■                   48% | ETA:  1m✔ Covariáveis elegíveis: log_area_total, log_populacao, log_pib_per_capita, log_densidade_estacoes_uf, log_precip_anual, log_precip_media_mm, log_precip_maxima_mm
+Simulando placebos ■■■■■■■■■■■■■■■                   48% | ETA:  1mℹ Tentando estimador dr com fórmula: ~log_area_total + log_populacao + log_pib_per_capita + log_densidade_estacoes_uf +  and     log_precip_anual + log_precip_media_mm + log_precip_maxima_mm para outcome log_area_cana
+Simulando placebos ■■■■■■■■■■■■■■■                   48% | ETA:  1m✔ ATT = -0.0068, SE = 0.0307, z = -0.22, p = 0.8246, IC95% = [-0.067; 0.0534]
+Simulando placebos ■■■■■■■■■■■■■■■                   48% | ETA:  1mSimulando placebos ■■■■■■■■■■■■■■■■                  50% | ETA:  1m
+ℹ Estimando ATT(g,t) com método dr …
+Simulando placebos ■■■■■■■■■■■■■■■■                  50% | ETA:  1mℹ Verificando colinearidade/variância das covariáveis…
+Simulando placebos ■■■■■■■■■■■■■■■■                  50% | ETA:  1m✔ Covariáveis elegíveis: log_area_total, log_populacao, log_pib_per_capita, log_densidade_estacoes_uf, log_precip_anual, log_precip_media_mm, log_precip_maxima_mm
+Simulando placebos ■■■■■■■■■■■■■■■■                  50% | ETA:  1mℹ Tentando estimador dr com fórmula: ~log_area_total + log_populacao + log_pib_per_capita + log_densidade_estacoes_uf +  and     log_precip_anual + log_precip_media_mm + log_precip_maxima_mm para outcome log_area_cana
+Simulando placebos ■■■■■■■■■■■■■■■■                  50% | ETA:  1m✔ ATT = -0.0192, SE = 0.0214, z = -0.9, p = 0.3694, IC95% = [-0.061; 0.0227]
+Simulando placebos ■■■■■■■■■■■■■■■■                  50% | ETA:  1mℹ Estimando ATT(g,t) com método dr …
+Simulando placebos ■■■■■■■■■■■■■■■■                  50% | ETA:  1mℹ Verificando colinearidade/variância das covariáveis…
+Simulando placebos ■■■■■■■■■■■■■■■■                  50% | ETA:  1m✔ Covariáveis elegíveis: log_area_total, log_populacao, log_pib_per_capita, log_densidade_estacoes_uf, log_precip_anual, log_precip_media_mm, log_precip_maxima_mm
+Simulando placebos ■■■■■■■■■■■■■■■■                  50% | ETA:  1mℹ Tentando estimador dr com fórmula: ~log_area_total + log_populacao + log_pib_per_capita + log_densidade_estacoes_uf +  and     log_precip_anual + log_precip_media_mm + log_precip_maxima_mm para outcome log_area_cana
+Simulando placebos ■■■■■■■■■■■■■■■■                  50% | ETA:  1m✔ ATT = -0.0218, SE = 0.0299, z = -0.73, p = 0.4666, IC95% = [-0.0805; 0.0369]
+Simulando placebos ■■■■■■■■■■■■■■■■                  50% | ETA:  1mSimulando placebos ■■■■■■■■■■■■■■■■■                 54% | ETA:  1m
+ℹ Estimando ATT(g,t) com método dr …
+Simulando placebos ■■■■■■■■■■■■■■■■■                 54% | ETA:  1mℹ Verificando colinearidade/variância das covariáveis…
+Simulando placebos ■■■■■■■■■■■■■■■■■                 54% | ETA:  1m✔ Covariáveis elegíveis: log_area_total, log_populacao, log_pib_per_capita, log_densidade_estacoes_uf, log_precip_anual, log_precip_media_mm, log_precip_maxima_mm
+Simulando placebos ■■■■■■■■■■■■■■■■■                 54% | ETA:  1mℹ Tentando estimador dr com fórmula: ~log_area_total + log_populacao + log_pib_per_capita + log_densidade_estacoes_uf +  and     log_precip_anual + log_precip_media_mm + log_precip_maxima_mm para outcome log_area_cana
+Simulando placebos ■■■■■■■■■■■■■■■■■                 54% | ETA:  1m✔ ATT = 0.0285, SE = 0.0242, z = 1.18, p = 0.2380, IC95% = [-0.0189; 0.0759]
+Simulando placebos ■■■■■■■■■■■■■■■■■                 54% | ETA:  1mSimulando placebos ■■■■■■■■■■■■■■■■■■                56% | ETA:  1m
+ℹ Estimando ATT(g,t) com método dr …
+Simulando placebos ■■■■■■■■■■■■■■■■■■                56% | ETA:  1mℹ Verificando colinearidade/variância das covariáveis…
+Simulando placebos ■■■■■■■■■■■■■■■■■■                56% | ETA:  1m✔ Covariáveis elegíveis: log_area_total, log_populacao, log_pib_per_capita, log_densidade_estacoes_uf, log_precip_anual, log_precip_media_mm, log_precip_maxima_mm
+Simulando placebos ■■■■■■■■■■■■■■■■■■                56% | ETA:  1mℹ Tentando estimador dr com fórmula: ~log_area_total + log_populacao + log_pib_per_capita + log_densidade_estacoes_uf +  and     log_precip_anual + log_precip_media_mm + log_precip_maxima_mm para outcome log_area_cana
+Simulando placebos ■■■■■■■■■■■■■■■■■■                56% | ETA:  1m✔ ATT = 0.0438, SE = 0.0309, z = 1.42, p = 0.1559, IC95% = [-0.0167; 0.1043]
+Simulando placebos ■■■■■■■■■■■■■■■■■■                56% | ETA:  1mSimulando placebos ■■■■■■■■■■■■■■■■■■                58% | ETA: 49s
+ℹ Estimando ATT(g,t) com método dr …
+Simulando placebos ■■■■■■■■■■■■■■■■■■                58% | ETA: 49sℹ Verificando colinearidade/variância das covariáveis…
+Simulando placebos ■■■■■■■■■■■■■■■■■■                58% | ETA: 49s✔ Covariáveis elegíveis: log_area_total, log_populacao, log_pib_per_capita, log_densidade_estacoes_uf, log_precip_anual, log_precip_media_mm, log_precip_maxima_mm
+Simulando placebos ■■■■■■■■■■■■■■■■■■                58% | ETA: 49sℹ Tentando estimador dr com fórmula: ~log_area_total + log_populacao + log_pib_per_capita + log_densidade_estacoes_uf +  and     log_precip_anual + log_precip_media_mm + log_precip_maxima_mm para outcome log_area_cana
+Simulando placebos ■■■■■■■■■■■■■■■■■■                58% | ETA: 49s✔ ATT = -0.013, SE = 0.0248, z = -0.52, p = 0.5998, IC95% = [-0.0616; 0.0356]
+Simulando placebos ■■■■■■■■■■■■■■■■■■                58% | ETA: 49sSimulando placebos ■■■■■■■■■■■■■■■■■■■               60% | ETA: 47s
+ℹ Estimando ATT(g,t) com método dr …
+Simulando placebos ■■■■■■■■■■■■■■■■■■■               60% | ETA: 47sℹ Verificando colinearidade/variância das covariáveis…
+Simulando placebos ■■■■■■■■■■■■■■■■■■■               60% | ETA: 47s✔ Covariáveis elegíveis: log_area_total, log_populacao, log_pib_per_capita, log_densidade_estacoes_uf, log_precip_anual, log_precip_media_mm, log_precip_maxima_mm
+Simulando placebos ■■■■■■■■■■■■■■■■■■■               60% | ETA: 47sℹ Tentando estimador dr com fórmula: ~log_area_total + log_populacao + log_pib_per_capita + log_densidade_estacoes_uf +  and     log_precip_anual + log_precip_media_mm + log_precip_maxima_mm para outcome log_area_cana
+Simulando placebos ■■■■■■■■■■■■■■■■■■■               60% | ETA: 47s✔ ATT = 0.0145, SE = 0.028, z = 0.52, p = 0.6030, IC95% = [-0.0403; 0.0693]
+Simulando placebos ■■■■■■■■■■■■■■■■■■■               60% | ETA: 47sℹ Estimando ATT(g,t) com método dr …
+Simulando placebos ■■■■■■■■■■■■■■■■■■■               60% | ETA: 47sℹ Verificando colinearidade/variância das covariáveis…
+Simulando placebos ■■■■■■■■■■■■■■■■■■■               60% | ETA: 47s✔ Covariáveis elegíveis: log_area_total, log_populacao, log_pib_per_capita, log_densidade_estacoes_uf, log_precip_anual, log_precip_media_mm, log_precip_maxima_mm
+Simulando placebos ■■■■■■■■■■■■■■■■■■■               60% | ETA: 47sℹ Tentando estimador dr com fórmula: ~log_area_total + log_populacao + log_pib_per_capita + log_densidade_estacoes_uf +  and     log_precip_anual + log_precip_media_mm + log_precip_maxima_mm para outcome log_area_cana
+Simulando placebos ■■■■■■■■■■■■■■■■■■■               60% | ETA: 47s✔ ATT = -0.0032, SE = 0.0257, z = -0.12, p = 0.9018, IC95% = [-0.0535; 0.0471]
+Simulando placebos ■■■■■■■■■■■■■■■■■■■               60% | ETA: 47sSimulando placebos ■■■■■■■■■■■■■■■■■■■■              64% | ETA: 42s
+ℹ Estimando ATT(g,t) com método dr …
+Simulando placebos ■■■■■■■■■■■■■■■■■■■■              64% | ETA: 42sℹ Verificando colinearidade/variância das covariáveis…
+Simulando placebos ■■■■■■■■■■■■■■■■■■■■              64% | ETA: 42s✔ Covariáveis elegíveis: log_area_total, log_populacao, log_pib_per_capita, log_densidade_estacoes_uf, log_precip_anual, log_precip_media_mm, log_precip_maxima_mm
+Simulando placebos ■■■■■■■■■■■■■■■■■■■■              64% | ETA: 42sℹ Tentando estimador dr com fórmula: ~log_area_total + log_populacao + log_pib_per_capita + log_densidade_estacoes_uf +  and     log_precip_anual + log_precip_media_mm + log_precip_maxima_mm para outcome log_area_cana
+Simulando placebos ■■■■■■■■■■■■■■■■■■■■              64% | ETA: 42s✔ ATT = -0.0084, SE = 0.0271, z = -0.31, p = 0.7567, IC95% = [-0.0615; 0.0447]
+Simulando placebos ■■■■■■■■■■■■■■■■■■■■              64% | ETA: 42sSimulando placebos ■■■■■■■■■■■■■■■■■■■■■             66% | ETA: 40s
+ℹ Estimando ATT(g,t) com método dr …
+Simulando placebos ■■■■■■■■■■■■■■■■■■■■■             66% | ETA: 40sℹ Verificando colinearidade/variância das covariáveis…
+Simulando placebos ■■■■■■■■■■■■■■■■■■■■■             66% | ETA: 40s✔ Covariáveis elegíveis: log_area_total, log_populacao, log_pib_per_capita, log_densidade_estacoes_uf, log_precip_anual, log_precip_media_mm, log_precip_maxima_mm
+Simulando placebos ■■■■■■■■■■■■■■■■■■■■■             66% | ETA: 40sℹ Tentando estimador dr com fórmula: ~log_area_total + log_populacao + log_pib_per_capita + log_densidade_estacoes_uf +  and     log_precip_anual + log_precip_media_mm + log_precip_maxima_mm para outcome log_area_cana
+Simulando placebos ■■■■■■■■■■■■■■■■■■■■■             66% | ETA: 40s✔ ATT = -0.0036, SE = 0.0255, z = -0.14, p = 0.8867, IC95% = [-0.0537; 0.0464]
+Simulando placebos ■■■■■■■■■■■■■■■■■■■■■             66% | ETA: 40sSimulando placebos ■■■■■■■■■■■■■■■■■■■■■             68% | ETA: 37s
+ℹ Estimando ATT(g,t) com método dr …
+Simulando placebos ■■■■■■■■■■■■■■■■■■■■■             68% | ETA: 37sℹ Verificando colinearidade/variância das covariáveis…
+Simulando placebos ■■■■■■■■■■■■■■■■■■■■■             68% | ETA: 37s✔ Covariáveis elegíveis: log_area_total, log_populacao, log_pib_per_capita, log_densidade_estacoes_uf, log_precip_anual, log_precip_media_mm, log_precip_maxima_mm
+Simulando placebos ■■■■■■■■■■■■■■■■■■■■■             68% | ETA: 37sℹ Tentando estimador dr com fórmula: ~log_area_total + log_populacao + log_pib_per_capita + log_densidade_estacoes_uf +  and     log_precip_anual + log_precip_media_mm + log_precip_maxima_mm para outcome log_area_cana
+Simulando placebos ■■■■■■■■■■■■■■■■■■■■■             68% | ETA: 37s✔ ATT = -0.008, SE = 0.0256, z = -0.31, p = 0.7557, IC95% = [-0.0581; 0.0422]
+Simulando placebos ■■■■■■■■■■■■■■■■■■■■■             68% | ETA: 37sSimulando placebos ■■■■■■■■■■■■■■■■■■■■■■            70% | ETA: 35s
+ℹ Estimando ATT(g,t) com método dr …
+Simulando placebos ■■■■■■■■■■■■■■■■■■■■■■            70% | ETA: 35sℹ Verificando colinearidade/variância das covariáveis…
+Simulando placebos ■■■■■■■■■■■■■■■■■■■■■■            70% | ETA: 35s✔ Covariáveis elegíveis: log_area_total, log_populacao, log_pib_per_capita, log_densidade_estacoes_uf, log_precip_anual, log_precip_media_mm, log_precip_maxima_mm
+Simulando placebos ■■■■■■■■■■■■■■■■■■■■■■            70% | ETA: 35sℹ Tentando estimador dr com fórmula: ~log_area_total + log_populacao + log_pib_per_capita + log_densidade_estacoes_uf +  and     log_precip_anual + log_precip_media_mm + log_precip_maxima_mm para outcome log_area_cana
+Simulando placebos ■■■■■■■■■■■■■■■■■■■■■■            70% | ETA: 35s✔ ATT = -0.0194, SE = 0.0358, z = -0.54, p = 0.5878, IC95% = [-0.0895; 0.0507]
+Simulando placebos ■■■■■■■■■■■■■■■■■■■■■■            70% | ETA: 35sℹ Estimando ATT(g,t) com método dr …
+Simulando placebos ■■■■■■■■■■■■■■■■■■■■■■            70% | ETA: 35sℹ Verificando colinearidade/variância das covariáveis…
+Simulando placebos ■■■■■■■■■■■■■■■■■■■■■■            70% | ETA: 35s✔ Covariáveis elegíveis: log_area_total, log_populacao, log_pib_per_capita, log_densidade_estacoes_uf, log_precip_anual, log_precip_media_mm, log_precip_maxima_mm
+Simulando placebos ■■■■■■■■■■■■■■■■■■■■■■            70% | ETA: 35sℹ Tentando estimador dr com fórmula: ~log_area_total + log_populacao + log_pib_per_capita + log_densidade_estacoes_uf +  and     log_precip_anual + log_precip_media_mm + log_precip_maxima_mm para outcome log_area_cana
+Simulando placebos ■■■■■■■■■■■■■■■■■■■■■■            70% | ETA: 35s✔ ATT = -0.0052, SE = 0.031, z = -0.17, p = 0.8666, IC95% = [-0.0659; 0.0555]
+Simulando placebos ■■■■■■■■■■■■■■■■■■■■■■            70% | ETA: 35sSimulando placebos ■■■■■■■■■■■■■■■■■■■■■■■           74% | ETA: 30s
+ℹ Estimando ATT(g,t) com método dr …
+Simulando placebos ■■■■■■■■■■■■■■■■■■■■■■■           74% | ETA: 30sℹ Verificando colinearidade/variância das covariáveis…
+Simulando placebos ■■■■■■■■■■■■■■■■■■■■■■■           74% | ETA: 30s✔ Covariáveis elegíveis: log_area_total, log_populacao, log_pib_per_capita, log_densidade_estacoes_uf, log_precip_anual, log_precip_media_mm, log_precip_maxima_mm
+Simulando placebos ■■■■■■■■■■■■■■■■■■■■■■■           74% | ETA: 30sℹ Tentando estimador dr com fórmula: ~log_area_total + log_populacao + log_pib_per_capita + log_densidade_estacoes_uf +  and     log_precip_anual + log_precip_media_mm + log_precip_maxima_mm para outcome log_area_cana
+Simulando placebos ■■■■■■■■■■■■■■■■■■■■■■■           74% | ETA: 30s✔ ATT = -0.0164, SE = 0.0276, z = -0.6, p = 0.5517, IC95% = [-0.0705; 0.0377]
+Simulando placebos ■■■■■■■■■■■■■■■■■■■■■■■           74% | ETA: 30sSimulando placebos ■■■■■■■■■■■■■■■■■■■■■■■■          76% | ETA: 28s
+ℹ Estimando ATT(g,t) com método dr …
+Simulando placebos ■■■■■■■■■■■■■■■■■■■■■■■■          76% | ETA: 28sℹ Verificando colinearidade/variância das covariáveis…
+Simulando placebos ■■■■■■■■■■■■■■■■■■■■■■■■          76% | ETA: 28s✔ Covariáveis elegíveis: log_area_total, log_populacao, log_pib_per_capita, log_densidade_estacoes_uf, log_precip_anual, log_precip_media_mm, log_precip_maxima_mm
+Simulando placebos ■■■■■■■■■■■■■■■■■■■■■■■■          76% | ETA: 28sℹ Tentando estimador dr com fórmula: ~log_area_total + log_populacao + log_pib_per_capita + log_densidade_estacoes_uf +  and     log_precip_anual + log_precip_media_mm + log_precip_maxima_mm para outcome log_area_cana
+Simulando placebos ■■■■■■■■■■■■■■■■■■■■■■■■          76% | ETA: 28s✔ ATT = -0.0074, SE = 0.024, z = -0.31, p = 0.7591, IC95% = [-0.0545; 0.0398]
+Simulando placebos ■■■■■■■■■■■■■■■■■■■■■■■■          76% | ETA: 28sSimulando placebos ■■■■■■■■■■■■■■■■■■■■■■■■          78% | ETA: 26s
+ℹ Estimando ATT(g,t) com método dr …
+Simulando placebos ■■■■■■■■■■■■■■■■■■■■■■■■          78% | ETA: 26sℹ Verificando colinearidade/variância das covariáveis…
+Simulando placebos ■■■■■■■■■■■■■■■■■■■■■■■■          78% | ETA: 26s✔ Covariáveis elegíveis: log_area_total, log_populacao, log_pib_per_capita, log_densidade_estacoes_uf, log_precip_anual, log_precip_media_mm, log_precip_maxima_mm
+Simulando placebos ■■■■■■■■■■■■■■■■■■■■■■■■          78% | ETA: 26sℹ Tentando estimador dr com fórmula: ~log_area_total + log_populacao + log_pib_per_capita + log_densidade_estacoes_uf +  and     log_precip_anual + log_precip_media_mm + log_precip_maxima_mm para outcome log_area_cana
+Simulando placebos ■■■■■■■■■■■■■■■■■■■■■■■■          78% | ETA: 26s✔ ATT = -0.0359, SE = 0.0206, z = -1.75, p = 0.0810, IC95% = [-0.0763; 0.0044]
+Simulando placebos ■■■■■■■■■■■■■■■■■■■■■■■■          78% | ETA: 26sSimulando placebos ■■■■■■■■■■■■■■■■■■■■■■■■■         80% | ETA: 23s
+ℹ Estimando ATT(g,t) com método dr …
+Simulando placebos ■■■■■■■■■■■■■■■■■■■■■■■■■         80% | ETA: 23sℹ Verificando colinearidade/variância das covariáveis…
+Simulando placebos ■■■■■■■■■■■■■■■■■■■■■■■■■         80% | ETA: 23s✔ Covariáveis elegíveis: log_area_total, log_populacao, log_pib_per_capita, log_densidade_estacoes_uf, log_precip_anual, log_precip_media_mm, log_precip_maxima_mm
+Simulando placebos ■■■■■■■■■■■■■■■■■■■■■■■■■         80% | ETA: 23sℹ Tentando estimador dr com fórmula: ~log_area_total + log_populacao + log_pib_per_capita + log_densidade_estacoes_uf +  and     log_precip_anual + log_precip_media_mm + log_precip_maxima_mm para outcome log_area_cana
+Simulando placebos ■■■■■■■■■■■■■■■■■■■■■■■■■         80% | ETA: 23s✔ ATT = -0.019, SE = 0.0211, z = -0.9, p = 0.3674, IC95% = [-0.0603; 0.0223]
+Simulando placebos ■■■■■■■■■■■■■■■■■■■■■■■■■         80% | ETA: 23sℹ Estimando ATT(g,t) com método dr …
+Simulando placebos ■■■■■■■■■■■■■■■■■■■■■■■■■         80% | ETA: 23sℹ Verificando colinearidade/variância das covariáveis…
+Simulando placebos ■■■■■■■■■■■■■■■■■■■■■■■■■         80% | ETA: 23s✔ Covariáveis elegíveis: log_area_total, log_populacao, log_pib_per_capita, log_densidade_estacoes_uf, log_precip_anual, log_precip_media_mm, log_precip_maxima_mm
+Simulando placebos ■■■■■■■■■■■■■■■■■■■■■■■■■         80% | ETA: 23sℹ Tentando estimador dr com fórmula: ~log_area_total + log_populacao + log_pib_per_capita + log_densidade_estacoes_uf +  and     log_precip_anual + log_precip_media_mm + log_precip_maxima_mm para outcome log_area_cana
+Simulando placebos ■■■■■■■■■■■■■■■■■■■■■■■■■         80% | ETA: 23s✔ ATT = 0.0268, SE = 0.0307, z = 0.87, p = 0.3830, IC95% = [-0.0334; 0.087]
+Simulando placebos ■■■■■■■■■■■■■■■■■■■■■■■■■         80% | ETA: 23sSimulando placebos ■■■■■■■■■■■■■■■■■■■■■■■■■■        84% | ETA: 19s
+ℹ Estimando ATT(g,t) com método dr …
+Simulando placebos ■■■■■■■■■■■■■■■■■■■■■■■■■■        84% | ETA: 19sℹ Verificando colinearidade/variância das covariáveis…
+Simulando placebos ■■■■■■■■■■■■■■■■■■■■■■■■■■        84% | ETA: 19s✔ Covariáveis elegíveis: log_area_total, log_populacao, log_pib_per_capita, log_densidade_estacoes_uf, log_precip_anual, log_precip_media_mm, log_precip_maxima_mm
+Simulando placebos ■■■■■■■■■■■■■■■■■■■■■■■■■■        84% | ETA: 19sℹ Tentando estimador dr com fórmula: ~log_area_total + log_populacao + log_pib_per_capita + log_densidade_estacoes_uf +  and     log_precip_anual + log_precip_media_mm + log_precip_maxima_mm para outcome log_area_cana
+Simulando placebos ■■■■■■■■■■■■■■■■■■■■■■■■■■        84% | ETA: 19s✔ ATT = 0.0222, SE = 0.0272, z = 0.82, p = 0.4142, IC95% = [-0.0311; 0.0756]
+Simulando placebos ■■■■■■■■■■■■■■■■■■■■■■■■■■        84% | ETA: 19sSimulando placebos ■■■■■■■■■■■■■■■■■■■■■■■■■■■       86% | ETA: 16s
+ℹ Estimando ATT(g,t) com método dr …
+Simulando placebos ■■■■■■■■■■■■■■■■■■■■■■■■■■■       86% | ETA: 16sℹ Verificando colinearidade/variância das covariáveis…
+Simulando placebos ■■■■■■■■■■■■■■■■■■■■■■■■■■■       86% | ETA: 16s✔ Covariáveis elegíveis: log_area_total, log_populacao, log_pib_per_capita, log_densidade_estacoes_uf, log_precip_anual, log_precip_media_mm, log_precip_maxima_mm
+Simulando placebos ■■■■■■■■■■■■■■■■■■■■■■■■■■■       86% | ETA: 16sℹ Tentando estimador dr com fórmula: ~log_area_total + log_populacao + log_pib_per_capita + log_densidade_estacoes_uf +  and     log_precip_anual + log_precip_media_mm + log_precip_maxima_mm para outcome log_area_cana
+Simulando placebos ■■■■■■■■■■■■■■■■■■■■■■■■■■■       86% | ETA: 16s✔ ATT = -0.0192, SE = 0.0247, z = -0.78, p = 0.4367, IC95% = [-0.0677; 0.0292]
+Simulando placebos ■■■■■■■■■■■■■■■■■■■■■■■■■■■       86% | ETA: 16sSimulando placebos ■■■■■■■■■■■■■■■■■■■■■■■■■■■       88% | ETA: 14s
+ℹ Estimando ATT(g,t) com método dr …
+Simulando placebos ■■■■■■■■■■■■■■■■■■■■■■■■■■■       88% | ETA: 14sℹ Verificando colinearidade/variância das covariáveis…
+Simulando placebos ■■■■■■■■■■■■■■■■■■■■■■■■■■■       88% | ETA: 14s✔ Covariáveis elegíveis: log_area_total, log_populacao, log_pib_per_capita, log_densidade_estacoes_uf, log_precip_anual, log_precip_media_mm, log_precip_maxima_mm
+Simulando placebos ■■■■■■■■■■■■■■■■■■■■■■■■■■■       88% | ETA: 14sℹ Tentando estimador dr com fórmula: ~log_area_total + log_populacao + log_pib_per_capita + log_densidade_estacoes_uf +  and     log_precip_anual + log_precip_media_mm + log_precip_maxima_mm para outcome log_area_cana
+Simulando placebos ■■■■■■■■■■■■■■■■■■■■■■■■■■■       88% | ETA: 14s✔ ATT = 0.0466, SE = 0.0308, z = 1.51, p = 0.1298, IC95% = [-0.0137; 0.1069]
+Simulando placebos ■■■■■■■■■■■■■■■■■■■■■■■■■■■       88% | ETA: 14sSimulando placebos ■■■■■■■■■■■■■■■■■■■■■■■■■■■■      90% | ETA: 12s
+ℹ Estimando ATT(g,t) com método dr …
+Simulando placebos ■■■■■■■■■■■■■■■■■■■■■■■■■■■■      90% | ETA: 12sℹ Verificando colinearidade/variância das covariáveis…
+Simulando placebos ■■■■■■■■■■■■■■■■■■■■■■■■■■■■      90% | ETA: 12s✔ Covariáveis elegíveis: log_area_total, log_populacao, log_pib_per_capita, log_densidade_estacoes_uf, log_precip_anual, log_precip_media_mm, log_precip_maxima_mm
+Simulando placebos ■■■■■■■■■■■■■■■■■■■■■■■■■■■■      90% | ETA: 12sℹ Tentando estimador dr com fórmula: ~log_area_total + log_populacao + log_pib_per_capita + log_densidade_estacoes_uf +  and     log_precip_anual + log_precip_media_mm + log_precip_maxima_mm para outcome log_area_cana
+Simulando placebos ■■■■■■■■■■■■■■■■■■■■■■■■■■■■      90% | ETA: 12s✔ ATT = 0.0159, SE = 0.029, z = 0.55, p = 0.5835, IC95% = [-0.0409; 0.0726]
+Simulando placebos ■■■■■■■■■■■■■■■■■■■■■■■■■■■■      90% | ETA: 12sℹ Estimando ATT(g,t) com método dr …
+Simulando placebos ■■■■■■■■■■■■■■■■■■■■■■■■■■■■      90% | ETA: 12sℹ Verificando colinearidade/variância das covariáveis…
+Simulando placebos ■■■■■■■■■■■■■■■■■■■■■■■■■■■■      90% | ETA: 12s✔ Covariáveis elegíveis: log_area_total, log_populacao, log_pib_per_capita, log_densidade_estacoes_uf, log_precip_anual, log_precip_media_mm, log_precip_maxima_mm
+Simulando placebos ■■■■■■■■■■■■■■■■■■■■■■■■■■■■      90% | ETA: 12sℹ Tentando estimador dr com fórmula: ~log_area_total + log_populacao + log_pib_per_capita + log_densidade_estacoes_uf +  and     log_precip_anual + log_precip_media_mm + log_precip_maxima_mm para outcome log_area_cana
+Simulando placebos ■■■■■■■■■■■■■■■■■■■■■■■■■■■■      90% | ETA: 12s✔ ATT = -0.0364, SE = 0.0314, z = -1.16, p = 0.2464, IC95% = [-0.0978; 0.0251]
+Simulando placebos ■■■■■■■■■■■■■■■■■■■■■■■■■■■■      90% | ETA: 12sSimulando placebos ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■     94% | ETA:  7s
+ℹ Estimando ATT(g,t) com método dr …
+Simulando placebos ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■     94% | ETA:  7sℹ Verificando colinearidade/variância das covariáveis…
+Simulando placebos ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■     94% | ETA:  7s✔ Covariáveis elegíveis: log_area_total, log_populacao, log_pib_per_capita, log_densidade_estacoes_uf, log_precip_anual, log_precip_media_mm, log_precip_maxima_mm
+Simulando placebos ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■     94% | ETA:  7sℹ Tentando estimador dr com fórmula: ~log_area_total + log_populacao + log_pib_per_capita + log_densidade_estacoes_uf +  and     log_precip_anual + log_precip_media_mm + log_precip_maxima_mm para outcome log_area_cana
+Simulando placebos ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■     94% | ETA:  7s✔ ATT = 0.0035, SE = 0.0263, z = 0.13, p = 0.8932, IC95% = [-0.0479; 0.055]
+Simulando placebos ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■     94% | ETA:  7sSimulando placebos ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■    96% | ETA:  5s
+ℹ Estimando ATT(g,t) com método dr …
+Simulando placebos ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■    96% | ETA:  5sℹ Verificando colinearidade/variância das covariáveis…
+Simulando placebos ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■    96% | ETA:  5s✔ Covariáveis elegíveis: log_area_total, log_populacao, log_pib_per_capita, log_densidade_estacoes_uf, log_precip_anual, log_precip_media_mm, log_precip_maxima_mm
+Simulando placebos ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■    96% | ETA:  5sℹ Tentando estimador dr com fórmula: ~log_area_total + log_populacao + log_pib_per_capita + log_densidade_estacoes_uf +  and     log_precip_anual + log_precip_media_mm + log_precip_maxima_mm para outcome log_area_cana
+Simulando placebos ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■    96% | ETA:  5s✔ ATT = -0.0034, SE = 0.0248, z = -0.14, p = 0.8922, IC95% = [-0.0519; 0.0452]
+Simulando placebos ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■    96% | ETA:  5sSimulando placebos ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■    98% | ETA:  2s
+ℹ Estimando ATT(g,t) com método dr …
+Simulando placebos ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■    98% | ETA:  2sℹ Verificando colinearidade/variância das covariáveis…
+Simulando placebos ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■    98% | ETA:  2s✔ Covariáveis elegíveis: log_area_total, log_populacao, log_pib_per_capita, log_densidade_estacoes_uf, log_precip_anual, log_precip_media_mm, log_precip_maxima_mm
+Simulando placebos ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■    98% | ETA:  2sℹ Tentando estimador dr com fórmula: ~log_area_total + log_populacao + log_pib_per_capita + log_densidade_estacoes_uf +  and     log_precip_anual + log_precip_media_mm + log_precip_maxima_mm para outcome log_area_cana
+Simulando placebos ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■    98% | ETA:  2s✔ ATT = 0.0159, SE = 0.0298, z = 0.53, p = 0.5930, IC95% = [-0.0425; 0.0743]
+Simulando placebos ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■    98% | ETA:  2sSimulando placebos ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■  100% | ETA:  0s
+ℹ Estimando ATT(g,t) com método dr …
+ℹ Verificando colinearidade/variância das covariáveis…
+✔ Covariáveis elegíveis: log_area_total, log_populacao, log_pib_per_capita, log_densidade_estacoes_uf, log_precip_anual, log_precip_media_mm, log_precip_maxima_mm
+ℹ Tentando estimador dr com fórmula: ~log_area_total + log_populacao + log_pib_per_capita + log_densidade_estacoes_uf +  and     log_precip_anual + log_precip_media_mm + log_precip_maxima_mm para outcome log_area_cana
+✔ ATT = -0.0015, SE = 0.026, z = -0.06, p = 0.9548, IC95% = [-0.0524; 0.0495]
+✔ P-valor empírico (com correção): 0.0196
+ℹ IC 95% do p-valor: [0.0000, 0.0580]
+ℹ ATT verdadeiro: 0.1181
+ℹ Extremos: 0 de 50 (0%)
+ℹ Intervalo 95% placebos: [-0.0406, 0.0428]
+
+── Teste de Balanceamento Pós-DR (Outcome: Área Cana) ──
+
+ℹ Verificando balanceamento das covariáveis pós-DR...
+ℹ Diferenças padronizadas nas covariáveis:
+# A tibble: 5 × 3
+  variable                  std_diff balanced
+  <chr>                        <dbl> <lgl>   
+1 log_area_total               0.907 FALSE   
+2 log_populacao                0.461 FALSE   
+3 log_pib_per_capita          -0.569 FALSE   
+4 log_densidade_estacoes_uf    0.901 FALSE   
+5 log_precip_anual             0.542 FALSE   
+! ⚠️ 5 de 5 covariáveis com desbalanceamento
+
+── ═══ ANÁLISE SECUNDÁRIA: OUTCOMES ALTERNATIVOS ═══ ──
+
+── Análise DiD: Outcomes Alternativos (Robustez e Especificidade) ──
+
+── Estimando efeito para PIB Agropecuário (robustez) 
+ℹ Observações válidas: 10602 (100%)
+ℹ Valor médio: 19.194
+ℹ Estimando ATT(g,t) com método dr …
+ℹ Verificando colinearidade/variância das covariáveis…
+✔ Covariáveis elegíveis: log_area_total, log_populacao, log_pib_per_capita, log_densidade_estacoes_uf, log_precip_anual, log_precip_media_mm, log_precip_maxima_mm
+ℹ Tentando estimador dr com fórmula: ~log_area_total + log_populacao + log_pib_per_capita + log_densidade_estacoes_uf +  and     log_precip_anual + log_precip_media_mm + log_precip_maxima_mm para outcome log_pib_agro
+! Alguns ATT(g,t) não foram estimados (NA). Eles foram removidos na agregação.
+✔ ATT = 0.0282, SE = 0.0315, z = 0.9, p = 0.3704, IC95% = [-0.0335; 0.0899]
+
+── Estimando efeito para Área Soja (especificidade) 
+ℹ Observações válidas: 6514 (61.4%)
+ℹ Valor médio: 2.814
+ℹ Estimando ATT(g,t) com método dr …
+ℹ Verificando colinearidade/variância das covariáveis…
+✔ Covariáveis elegíveis: log_area_total, log_populacao, log_pib_per_capita, log_densidade_estacoes_uf, log_precip_anual, log_precip_media_mm, log_precip_maxima_mm
+ℹ Tentando estimador dr com fórmula: ~log_area_total + log_populacao + log_pib_per_capita + log_densidade_estacoes_uf +  and     log_precip_anual + log_precip_media_mm + log_precip_maxima_mm para outcome log_area_soja
+! Alguns ATT(g,t) não foram estimados (NA). Eles foram removidos na agregação.
+✔ ATT = 0.0386, SE = 0.045, z = 0.86, p = 0.3920, IC95% = [-0.0497; 0.1269]
+
+── Estimando efeito para Área Arroz (especificidade) 
+ℹ Observações válidas: 881 (8.3%)
+ℹ Valor médio: 0.314
+ℹ Estimando ATT(g,t) com método dr …
+ℹ Verificando colinearidade/variância das covariáveis…
+✔ Covariáveis elegíveis: log_area_total, log_populacao, log_pib_per_capita, log_densidade_estacoes_uf, log_precip_anual, log_precip_media_mm, log_precip_maxima_mm
+ℹ Tentando estimador dr com fórmula: ~log_area_total + log_populacao + log_pib_per_capita + log_densidade_estacoes_uf +  and     log_precip_anual + log_precip_media_mm + log_precip_maxima_mm para outcome log_area_arroz
+! Alguns ATT(g,t) não foram estimados (NA). Eles foram removidos na agregação.
+✔ ATT = -0.0051, SE = 0.0116, z = -0.44, p = 0.6582, IC95% = [-0.0278; 0.0175]
+✔ Gráfico salvo: alternative_outcomes_effects.png
+ℹ Resumo dos Outcomes Alternativos:
+# A tibble: 3 × 5
+  outcome_label                    att     se p_value significant
+  <chr>                          <dbl>  <dbl>   <dbl> <lgl>      
+1 PIB Agropecuário (robustez)  0.0282  0.0315   0.370 FALSE      
+2 Área Soja (especificidade)   0.0386  0.0450   0.392 FALSE      
+3 Área Arroz (especificidade) -0.00511 0.0116   0.658 FALSE      
+! ⚠ Efeito no PIB agro não é significativo - pode indicar efeito concentrado em margens específicas
+✔ ✓ Efeito específico à cana: outras culturas não mostram impacto significativo
+
+── Análise de Robustez: Métodos Alternativos (Outcome: Área Cana) ──
+
+── Análise de Robustez - Múltiplas Especificações ──
+
+ℹ Estimando: Baseline (DR)
+ℹ Estimando ATT(g,t) com método dr …
+ℹ Verificando colinearidade/variância das covariáveis…
+✔ Covariáveis elegíveis: log_area_total, log_populacao, log_pib_per_capita, log_densidade_estacoes_uf, log_precip_anual, log_precip_media_mm, log_precip_maxima_mm
+ℹ Tentando estimador dr com fórmula: ~log_area_total + log_populacao + log_pib_per_capita + log_densidade_estacoes_uf +  and     log_precip_anual + log_precip_media_mm + log_precip_maxima_mm para outcome log_area_cana
+! Alguns ATT(g,t) não foram estimados (NA). Eles foram removidos na agregação.
+✔ ATT = 0.1181, SE = 0.0423, z = 2.79, p = 0.0053, IC95% = [0.0351; 0.201]
+ℹ Estimando: Sem covariáveis
+ℹ Estimando ATT(g,t) com método dr …
+ℹ Verificando colinearidade/variância das covariáveis…
+✔ Covariáveis elegíveis: 
+ℹ Tentando estimador dr com fórmula: ~1 para outcome log_area_cana
+✔ ATT = 0.1244, SE = 0.0421, z = 2.95, p = 0.0031, IC95% = [0.0419; 0.2069]
+ℹ Estimando: Covariáveis básicas
+ℹ Estimando ATT(g,t) com método dr …
+ℹ Verificando colinearidade/variância das covariáveis…
+✔ Covariáveis elegíveis: log_area_total, log_populacao, log_precip_anual, log_precip_media_mm, log_precip_maxima_mm
+ℹ Tentando estimador dr com fórmula: ~log_area_total + log_populacao + log_precip_anual + log_precip_media_mm +  and     log_precip_maxima_mm para outcome log_area_cana
+! Alguns ATT(g,t) não foram estimados (NA). Eles foram removidos na agregação.
+✔ ATT = 0.1346, SE = 0.0412, z = 3.26, p = 0.0011, IC95% = [0.0538; 0.2154]
+ℹ Estimando: IPW
+ℹ Estimando ATT(g,t) com método ipw …
+ℹ Verificando colinearidade/variância das covariáveis…
+✔ Covariáveis elegíveis: log_area_total, log_populacao, log_pib_per_capita, log_densidade_estacoes_uf, log_precip_anual, log_precip_media_mm, log_precip_maxima_mm
+ℹ Tentando estimador ipw com fórmula: ~log_area_total + log_populacao + log_pib_per_capita + log_densidade_estacoes_uf +  and     log_precip_anual + log_precip_media_mm + log_precip_maxima_mm para outcome log_area_cana
+! Alguns ATT(g,t) não foram estimados (NA). Eles foram removidos na agregação.
+✔ ATT = 0.1224, SE = 0.0417, z = 2.94, p = 0.0033, IC95% = [0.0407; 0.2041]
+ℹ Estimando: REG
+ℹ Estimando ATT(g,t) com método reg …
+ℹ Verificando colinearidade/variância das covariáveis…
+✔ Covariáveis elegíveis: log_area_total, log_populacao, log_pib_per_capita, log_densidade_estacoes_uf, log_precip_anual, log_precip_media_mm, log_precip_maxima_mm
+ℹ Tentando estimador reg com fórmula: ~log_area_total + log_populacao + log_pib_per_capita + log_densidade_estacoes_uf +  and     log_precip_anual + log_precip_media_mm + log_precip_maxima_mm para outcome log_area_cana
+✔ ATT = 0.1143, SE = 0.0426, z = 2.68, p = 0.0074, IC95% = [0.0307; 0.1978]
+ℹ Estimando: Excl. 2022-23
+ℹ Estimando ATT(g,t) com método dr …
+ℹ Verificando colinearidade/variância das covariáveis…
+✔ Covariáveis elegíveis: log_area_total, log_populacao, log_pib_per_capita, log_densidade_estacoes_uf, log_precip_anual, log_precip_media_mm, log_precip_maxima_mm
+ℹ Tentando estimador dr com fórmula: ~log_area_total + log_populacao + log_pib_per_capita + log_densidade_estacoes_uf +  and     log_precip_anual + log_precip_media_mm + log_precip_maxima_mm para outcome log_area_cana
+! Alguns ATT(g,t) não foram estimados (NA). Eles foram removidos na agregação.
+✔ ATT = 0.1181, SE = 0.0423, z = 2.79, p = 0.0053, IC95% = [0.0351; 0.201]
+✔ Análise de robustez completa:
+# A tibble: 6 × 5
+  specification         att     se p_value significant
+  <chr>               <dbl>  <dbl>   <dbl> <lgl>      
+1 Baseline (DR)       0.118 0.0423 0.00528 TRUE       
+2 Sem covariáveis     0.124 0.0421 0.00313 TRUE       
+3 Covariáveis básicas 0.135 0.0412 0.00110 TRUE       
+4 IPW                 0.122 0.0417 0.00331 TRUE       
+5 REG                 0.114 0.0426 0.00737 TRUE       
+6 Excl. 2022-23       0.118 0.0423 0.00528 TRUE       
+✔ ✓ ATT significativo em TODAS as especificações testadas
+✔ ✓ ATT positivo em TODAS as especificações
+ℹ Range do ATT: [0.114, 0.135]
+
+── Heterogeneidade Regional (Outcome: Área Cana) ──
+
+── Análise de Heterogeneidade Regional ──
+
+ℹ Usando abordagem de agregação por UF...
+ℹ UFs no controle: 57 observações
+ℹ UFs tratadas: 456 observações
+ℹ Outcome log_area_cana requer análise no nível de microrregião. Usando abordagem regional...
+ℹ Estimando ATT para região Norte...
+ℹ   Região Norte: 1045 tratados, 171 controles
+ℹ Estimando ATT(g,t) com método dr …
+ℹ Verificando colinearidade/variância das covariáveis…
+✔ Covariáveis elegíveis: log_area_total, log_populacao, log_pib_per_capita, log_densidade_estacoes_uf, log_precip_anual, log_precip_media_mm, log_precip_maxima_mm
+ℹ Tentando estimador dr com fórmula: ~log_area_total + log_populacao + log_pib_per_capita + log_densidade_estacoes_uf +  and     log_precip_anual + log_precip_media_mm + log_precip_maxima_mm para outcome log_area_cana
+! Alguns ATT(g,t) não foram estimados (NA). Eles foram removidos na agregação.
+✔ ATT = -5e-04, SE = 7e-04, z = -0.7, p = 0.4865, IC95% = [-0.0018; 9e-04]
+ℹ Estimando ATT para região Nordeste...
+ℹ   Região Nordeste: 2090 tratados, 1482 controles
+ℹ Estimando ATT(g,t) com método dr …
+ℹ Verificando colinearidade/variância das covariáveis…
+✔ Covariáveis elegíveis: log_area_total, log_populacao, log_pib_per_capita, log_densidade_estacoes_uf, log_precip_anual, log_precip_media_mm, log_precip_maxima_mm
+ℹ Tentando estimador dr com fórmula: ~log_area_total + log_populacao + log_pib_per_capita + log_densidade_estacoes_uf +  and     log_precip_anual + log_precip_media_mm + log_precip_maxima_mm para outcome log_area_cana
+! Alguns ATT(g,t) não foram estimados (NA). Eles foram removidos na agregação.
+✔ ATT = 0.0785, SE = 0.0543, z = 1.45, p = 0.1484, IC95% = [-0.028; 0.185]
+ℹ Estimando ATT para região Centro-Oeste...
+ℹ   Região Centro-Oeste: 912 tratados, 76 controles
+ℹ Estimando ATT(g,t) com método dr …
+ℹ Verificando colinearidade/variância das covariáveis…
+✔ Covariáveis elegíveis: log_area_total, log_populacao, log_pib_per_capita, log_densidade_estacoes_uf, log_precip_anual, log_precip_media_mm, log_precip_maxima_mm
+ℹ Tentando estimador dr com fórmula: ~log_area_total + log_populacao + log_pib_per_capita + log_densidade_estacoes_uf +  and     log_precip_anual + log_precip_media_mm + log_precip_maxima_mm para outcome log_area_cana
+! Alguns ATT(g,t) não foram estimados (NA). Eles foram removidos na agregação.
+✔ ATT = -0.0079, SE = 0.2717, z = -0.03, p = 0.9768, IC95% = [-0.5405; 0.5247]
+ℹ Estimando ATT para região Sudeste...
+ℹ   Região Sudeste: 2166 tratados, 874 controles
+ℹ Estimando ATT(g,t) com método dr …
+ℹ Verificando colinearidade/variância das covariáveis…
+✔ Covariáveis elegíveis: log_area_total, log_populacao, log_pib_per_capita, log_densidade_estacoes_uf, log_precip_anual, log_precip_media_mm, log_precip_maxima_mm
+ℹ Tentando estimador dr com fórmula: ~log_area_total + log_populacao + log_pib_per_capita + log_densidade_estacoes_uf +  and     log_precip_anual + log_precip_media_mm + log_precip_maxima_mm para outcome log_area_cana
+! Alguns ATT(g,t) não foram estimados (NA). Eles foram removidos na agregação.
+✔ ATT = 0.1108, SE = 0.0892, z = 1.24, p = 0.2140, IC95% = [-0.064; 0.2855]
+ℹ Estimando ATT para região Sul...
+ℹ   Região Sul: 1273 tratados, 513 controles
+ℹ Estimando ATT(g,t) com método dr …
+ℹ Verificando colinearidade/variância das covariáveis…
+✔ Covariáveis elegíveis: log_area_total, log_populacao, log_pib_per_capita, log_densidade_estacoes_uf, log_precip_anual, log_precip_media_mm, log_precip_maxima_mm
+ℹ Tentando estimador dr com fórmula: ~log_area_total + log_populacao + log_pib_per_capita + log_densidade_estacoes_uf +  and     log_precip_anual + log_precip_media_mm + log_precip_maxima_mm para outcome log_area_cana
+! Alguns ATT(g,t) não foram estimados (NA). Eles foram removidos na agregação.
+✔ ATT = 0.0281, SE = 0.0348, z = 0.81, p = 0.4205, IC95% = [-0.0402; 0.0963]
+ℹ Resumo da heterogeneidade:
+ℹ   - 3/5 unidades com efeito positivo
+ℹ   - 0/5 unidades com efeito significativo (5%)
+! ⚠️ Heterogeneidade substancial entre regiões
+
+── Análise DiD Agregada por UF ──
+
+ℹ Análise UF requer agregação outcome-específica. Pulando para outcome cana.
+ℹ Para análise UF completa, use uf_level_analysis(df_clean, outcome = 'log_pib_agro')
+
+── Visualizando Tendências Paralelas Completas ──
+
+── Gerando Visualização Completa de Tendências Paralelas para log_area_cana 
+✔ Gráfico salvo: data/outputs/parallel_trends_complete_area_cana_normalized.png
+ℹ Teste de Tendências Paralelas Pré-Tratamento:
+ℹ H0: Slopes iguais entre coortes antes do tratamento
+ℹ F-statistic: 0.115, p-valor: 0.8918
+✔ ✓ Forte evidência de tendências paralelas (p > 0.10)
+ℹ Efeitos Médios por Coorte (pós - pré):
+# A tibble: 3 × 4
+  cohort                        pre_mean post_mean effect
+  <fct>                            <dbl>     <dbl>  <dbl>
+1 "Early Adopters\n(2003-2007)"  -0.0963    0.185  0.281 
+2 "Mid Adopters\n(2008-2012)"    -0.0517    0.0818 0.134 
+3 "Late Adopters\n(2013-2017)"   -0.0263    0.0512 0.0775
+
+── Gerando Visualização Completa de Tendências Paralelas para log_pib_agro 
+✔ Gráfico salvo: data/outputs/parallel_trends_complete_pib_agro_normalized.png
+ℹ Teste de Tendências Paralelas Pré-Tratamento:
+ℹ H0: Slopes iguais entre coortes antes do tratamento
+ℹ F-statistic: 1.115, p-valor: 0.3282
+✔ ✓ Forte evidência de tendências paralelas (p > 0.10)
+ℹ Efeitos Médios por Coorte (pós - pré):
+# A tibble: 3 × 4
+  cohort                        pre_mean post_mean effect
+  <fct>                            <dbl>     <dbl>  <dbl>
+1 "Early Adopters\n(2003-2007)"  -0.0118     0.333  0.345
+2 "Mid Adopters\n(2008-2012)"    -0.123      0.408  0.532
+3 "Late Adopters\n(2013-2017)"   -0.221      0.207  0.428
+
+── Gerando Visualização Completa de Tendências Paralelas para log_pib_nao_agro 
+✔ Gráfico salvo: data/outputs/parallel_trends_complete_pib_nao_agro_normalized.png
+ℹ Teste de Tendências Paralelas Pré-Tratamento:
+ℹ H0: Slopes iguais entre coortes antes do tratamento
+ℹ F-statistic: 1.266, p-valor: 0.2823
+✔ ✓ Forte evidência de tendências paralelas (p > 0.10)
+ℹ Efeitos Médios por Coorte (pós - pré):
+# A tibble: 3 × 4
+  cohort                        pre_mean post_mean effect
+  <fct>                            <dbl>     <dbl>  <dbl>
+1 "Early Adopters\n(2003-2007)"   -0.254     0.503  0.757
+2 "Mid Adopters\n(2008-2012)"     -0.258     0.441  0.700
+3 "Late Adopters\n(2013-2017)"    -0.145     0.176  0.321
+
+── Teste Formal de Tendências Paralelas 
+
+── Criando Tabela de Teste Formal de Tendências Paralelas 
+! Não foi possível calcular graus de liberdade automaticamente
+✔ Arquivos CSV de teste de tendências paralelas criados!
+ℹ - teste_tendencias_paralelas_formatado.csv (tabela formatada)
+ℹ - teste_tendencias_paralelas_dados.csv (dados brutos)
+ℹ - teste_tendencias_paralelas_coortes.csv (informações das coortes)
+
+── Criando Visualização de Tendências por Grupo de Tratamento (gname) 
+✔ Gráfico salvo: data/outputs/parallel_trends_by_gname_area_cana.png
+ℹ Teste Formal de Tendências Paralelas Pré-Tratamento
+ℹ Teste de interação ano × grupo no período pré-tratamento:
+ℹ F-statistic: 0.024, p-valor: 1
+✔ ✓ Não há evidência contra tendências paralelas (p > 0.10)
+ℹ Resumo por Grupo de Tratamento:
+# A tibble: 19 × 7
+   gname n_periodos n_pre n_post   mean_pre mean_post       diff
+   <dbl>      <int> <int>  <int>      <dbl>     <dbl>      <dbl>
+ 1  2000         19     0     19 NaN         0.184    NaN       
+ 2  2001         19     0     19 NaN         2.68     NaN       
+ 3  2002         19     0     19 NaN         1.85     NaN       
+ 4  2003         19     0     19 NaN         1.14     NaN       
+ 5  2004         19     1     18   1.04      1.74       0.708   
+ 6  2005         19     2     17   0         0          0       
+ 7  2006         19     3     16   1.10      1.65       0.548   
+ 8  2007         19     4     15   0.915     1.15       0.233   
+ 9  2008         19     5     14   0.943     1.13       0.188   
+10  2009         19     6     13   0         0.001000   0.001000
+11  2010         19     7     12   0.929     1.03       0.0991  
+12  2011         19     8     11   0.00102   0.000357  -0.000665
+13  2012         19     9     10   0.173     0.516      0.343   
+14  2013         19    10      9   1.92      3.02       1.10    
+15  2015         19    12      7   1.64      1.61      -0.0258  
+16  2016         19    13      6   1.06      1.28       0.219   
+17  2017         19    14      5   0.755     0.892      0.137   
+18  2018         19    15      4   0.000280  0         -0.000280
+19  2019         19    16      3   0.0382    0.0205    -0.0177  
+
+── Criando Visualização de Tendências por Grupo de Tratamento (gname) 
+✔ Gráfico salvo: data/outputs/parallel_trends_by_gname_pib_agro.png
+ℹ Teste Formal de Tendências Paralelas Pré-Tratamento
+ℹ Teste de interação ano × grupo no período pré-tratamento:
+ℹ F-statistic: 0.087, p-valor: 1
+✔ ✓ Não há evidência contra tendências paralelas (p > 0.10)
+ℹ Resumo por Grupo de Tratamento:
+# A tibble: 19 × 7
+   gname n_periodos n_pre n_post mean_pre mean_post    diff
+   <dbl>      <int> <int>  <int>    <dbl>     <dbl>   <dbl>
+ 1  2000         19     0     19    NaN        19.1 NaN    
+ 2  2001         19     0     19    NaN        20.5 NaN    
+ 3  2002         19     0     19    NaN        19.8 NaN    
+ 4  2003         19     0     19    NaN        19.5 NaN    
+ 5  2004         19     1     18     18.2      18.9   0.725
+ 6  2005         19     2     17     18.6      19.5   0.943
+ 7  2006         19     3     16     19.0      19.8   0.760
+ 8  2007         19     4     15     18.8      19.6   0.784
+ 9  2008         19     5     14     18.8      19.6   0.817
+10  2009         19     6     13     18.3      19.3   0.968
+11  2010         19     7     12     18.5      19.2   0.654
+12  2011         19     8     11     19.0      20.0   0.978
+13  2012         19     9     10     18.9      20.1   1.16 
+14  2013         19    10      9     18.7      19.9   1.14 
+15  2015         19    12      7     18.4      19.0   0.541
+16  2016         19    13      6     18.8      19.6   0.851
+17  2017         19    14      5     18.6      19.3   0.736
+18  2018         19    15      4     18.4      19.2   0.800
+19  2019         19    16      3     18.0      19.0   0.957
+
+── Criando Visualização de Tendências por Grupo de Tratamento (gname) 
+✔ Gráfico salvo: data/outputs/parallel_trends_by_gname_pib_nao_agro.png
+ℹ Teste Formal de Tendências Paralelas Pré-Tratamento
+ℹ Teste de interação ano × grupo no período pré-tratamento:
+ℹ F-statistic: 0.007, p-valor: 1
+✔ ✓ Não há evidência contra tendências paralelas (p > 0.10)
+ℹ Resumo por Grupo de Tratamento:
+# A tibble: 19 × 7
+   gname n_periodos n_pre n_post mean_pre mean_post    diff
+   <dbl>      <int> <int>  <int>    <dbl>     <dbl>   <dbl>
+ 1  2000         19     0     19    NaN        24.7 NaN    
+ 2  2001         19     0     19    NaN        22.7 NaN    
+ 3  2002         19     0     19    NaN        22.4 NaN    
+ 4  2003         19     0     19    NaN        22.8 NaN    
+ 5  2004         19     1     18     21.0      22.2   1.20 
+ 6  2005         19     2     17     19.9      21.1   1.12 
+ 7  2006         19     3     16     21.4      22.4   0.987
+ 8  2007         19     4     15     20.6      21.6   1.04 
+ 9  2008         19     5     14     20.4      21.5   1.08 
+10  2009         19     6     13     20.1      21.2   1.08 
+11  2010         19     7     12     21.3      22.3   1.05 
+12  2011         19     8     11     21.4      22.4   0.989
+13  2012         19     9     10     20.5      21.5   0.983
+14  2013         19    10      9     20.3      21.2   0.881
+15  2015         19    12      7     21.4      22.0   0.522
+16  2016         19    13      6     20.7      21.6   0.886
+17  2017         19    14      5     21.4      22.2   0.829
+18  2018         19    15      4     20.3      21.1   0.855
+19  2019         19    16      3     19.2      20.0   0.820
+
+── Gerando Análise Descritiva para o TCC ──
+
+── Gerando Análise Descritiva Completa para TCC ──
+
+── 1. Estatísticas Descritivas das Variáveis Principais 
+! Não foi possível salvar PNG (webshot2 erro): Cannot find an available port. Please try again.
+ℹ HTML salvo com sucesso - PNG não é crítico
+
+── 2. Distribuição Temporal do Tratamento 
+
+── 3. Comparação entre Grupos de Adoção (Pré-Tratamento) 
+! PNG não salvo (webshot2): Cannot find an available port. Please try again.
+
+── 4. Evolução Temporal das Variáveis Principais 
+
+── 5. Matriz de Correlação 
+
+── 6. Distribuição Geográfica do Tratamento 
+! PNG não salvo (webshot2): Cannot find an available port. Please try again.
+
+── 7. Estrutura do Painel 
+! PNG não salvo (webshot2): Cannot find an available port. Please try again.
+
+── 8. Criando Sumário Executivo 
+✔ Análise descritiva completa!
+ℹ Arquivos salvos em: /Users/daniel.cavalli/Documents/personal/tcc-claude/data/outputs/descriptive_analysis
+
+── Gerando Visualizações e Tabelas Complementares ──
+
+ℹ Carregando funções complementares...
+ℹ 1. Criando tabela de estatísticas descritivas comparativas
+
+── Criando Tabela de Estatísticas Descritivas Comparativas 
+✖ ✗ ERRO na tabela descritiva: In argument: `Diferença (Pós - Pré) = ifelse(...)`.
+ℹ 2. Criando visualização de timing de adoção
+
+── Criando Mapa de Timing de Adoção 
+ℹ 3. Criando tabela de balanço de covariáveis
+
+── Criando Tabela de Balanço de Covariáveis 
+✖ ✗ ERRO na tabela de balanço: Cannot find an available port. Please try again.
+ℹ 4. Criando gráfico de composição dinâmica
+
+── Criando Gráfico de Composição Dinâmica do Tratamento 
+✔ Gráfico salvo em: /Users/daniel.cavalli/Documents/personal/tcc-claude/data/outputs/additional_figures
+ℹ 5. Criando distribuição dos efeitos ATT
+
+── Criando Gráfico de Distribuição dos Efeitos ATT(g,t) 
+! Objeto att_res não é do tipo esperado (classe: list)
+ℹ 6. Realizando análise de sensibilidade ao período
+
+── Realizando Análise de Sensibilidade ao Período 
+ℹ Calculando ATT para: Completo (2003-2023)
+ℹ Calculando ATT para: Excluindo Início (2006-2023)
+ℹ Calculando ATT para: Excluindo Final (2003-2019)
+ℹ Calculando ATT para: Excluindo COVID (2003-2019)
+ℹ Calculando ATT para: Período Central (2010-2019)
+ℹ Calculando ATT para: Pré-COVID (2003-2019)
+✔ Análise de sensibilidade salva em: /Users/daniel.cavalli/Documents/personal/tcc-claude/data/outputs/additional_figures
+✔ ✓ Análise de sensibilidade concluída
+ℹ 7. Criando tabela de decomposição dos efeitos
+
+── Criando Tabela de Decomposição dos Efeitos 
+! Objeto att_res não é do tipo esperado (classe: list)
+✔ ✓ Tabela de decomposição criada com sucesso
+ℹ 8. Criando análise por quartis de tamanho
+
+── Criando Gráfico de Tendências por Quartis de Tamanho 
+✖ ✗ ERRO CRÍTICO no gráfico por quartils (USADO NA TESE): In argument: `quartile = cut(...)`.
+ℹ 9. Criando dashboard de qualidade dos dados
+
+── Criando Dashboard de Qualidade dos Dados 
+✔ Dashboard de qualidade salvo em: /Users/daniel.cavalli/Documents/personal/tcc-claude/data/outputs/additional_figures
+✔ ✓ Dashboard de qualidade criado com sucesso
+ℹ 10. Realizando análise de poder estatístico
+
+── Realizando Análise de Poder Estatístico 
+ℹ N tratados: 7486, N controles: 3116
+ℹ Desvio padrão do outcome: 1.133
+ℹ Poder para efeito observado (8.3%):
+  effect_size alpha     power alpha_label
+1        0.08  0.01 0.7691629    α = 0.01
+2        0.08  0.05 0.9118340    α = 0.05
+3        0.08  0.10 0.9522697     α = 0.1
+✔ Análise de poder salva em: /Users/daniel.cavalli/Documents/personal/tcc-claude/data/outputs/additional_figures
+✔ ✓ Análise de poder criada com sucesso
+✔ Visualizações complementares concluídas!
+ℹ Arquivos salvos em: data/outputs/additional_figures/
+
+── Teste de Tendências Paralelas (Outcome: Área Cana) ──
+
+✔ Teste manual de tendências paralelas: média PRE = 0.0125, p-valor = 0.0356
+
+── Placebo Test Fixo (2015) - Outcome: Área Cana ──
+
+ℹ Executando placebo test fixo (ano fictício = 2015)…
+ℹ Total de unidades: 558
+ℹ Unidades aleatoriamente atribuídas ao tratamento placebo: 279 (50%)
+ℹ Verificação: 279 tratadas, 279 controles
+ℹ Estimando ATT(g,t) com método dr …
+ℹ Verificando colinearidade/variância das covariáveis…
+✔ Covariáveis elegíveis: log_area_total, log_populacao, log_pib_per_capita, log_densidade_estacoes_uf, log_precip_anual, log_precip_media_mm, log_precip_maxima_mm
+ℹ Tentando estimador dr com fórmula: ~log_area_total + log_populacao + log_pib_per_capita + log_densidade_estacoes_uf +  and     log_precip_anual + log_precip_media_mm + log_precip_maxima_mm para outcome log_area_cana
+✔ ATT = 0.0245, SE = 0.0156, z = 1.57, p = 0.1166, IC95% = [-0.0061; 0.055]
+✔ Placebo fixo: ATT = 0.0245, SE = 0.0156, p = 0.1166, IC95% = [-0.0061; 0.055]
+
+── Robustez: Métodos Alternativos (Outcome: Área Cana) ──
+
+ℹ Estimando ATT(g,t) com método dr …
+ℹ Verificando colinearidade/variância das covariáveis…
+✔ Covariáveis elegíveis: log_area_total, log_populacao, log_pib_per_capita, log_densidade_estacoes_uf, log_precip_anual, log_precip_media_mm, log_precip_maxima_mm
+ℹ Tentando estimador dr com fórmula: ~log_area_total + log_populacao + log_pib_per_capita + log_densidade_estacoes_uf +  and     log_precip_anual + log_precip_media_mm + log_precip_maxima_mm para outcome log_area_cana
+! Alguns ATT(g,t) não foram estimados (NA). Eles foram removidos na agregação.
+✔ ATT = 0.1181, SE = 0.0423, z = 2.79, p = 0.0053, IC95% = [0.0351; 0.201]
+ℹ Estimando ATT(g,t) com método ipw …
+ℹ Verificando colinearidade/variância das covariáveis…
+✔ Covariáveis elegíveis: log_area_total, log_populacao, log_pib_per_capita, log_densidade_estacoes_uf, log_precip_anual, log_precip_media_mm, log_precip_maxima_mm
+ℹ Tentando estimador ipw com fórmula: ~log_area_total + log_populacao + log_pib_per_capita + log_densidade_estacoes_uf +  and     log_precip_anual + log_precip_media_mm + log_precip_maxima_mm para outcome log_area_cana
+! Alguns ATT(g,t) não foram estimados (NA). Eles foram removidos na agregação.
+✔ ATT = 0.1224, SE = 0.0417, z = 2.94, p = 0.0033, IC95% = [0.0407; 0.2041]
+ℹ Estimando ATT(g,t) com método reg …
+ℹ Verificando colinearidade/variância das covariáveis…
+✔ Covariáveis elegíveis: log_area_total, log_populacao, log_pib_per_capita, log_densidade_estacoes_uf, log_precip_anual, log_precip_media_mm, log_precip_maxima_mm
+ℹ Tentando estimador reg com fórmula: ~log_area_total + log_populacao + log_pib_per_capita + log_densidade_estacoes_uf +  and     log_precip_anual + log_precip_media_mm + log_precip_maxima_mm para outcome log_area_cana
+✔ ATT = 0.1143, SE = 0.0426, z = 2.68, p = 0.0074, IC95% = [0.0307; 0.1978]
+ℹ Gerando gráficos…
+
+── Criando Tabela de Resultados Consolidada ──
+
+✔ Tabela de Resultados Principais:
+# A tibble: 8 × 5
+  Análise                               ATT      `Erro Padrão` `IC 95%`        N
+  <chr>                                 <chr>    <chr>         <chr>       <int>
+1 ATT Principal (Área Cana)             0.118*** (0.042)       [0.035, 0.… 10602
+2 Outcome Alternativo: PIB Agropecuário 0.028    (0.031)       [-0.034, 0… 10602
+3 Outcome Alternativo: Área Soja        0.039    (0.045)       [-0.050, 0… 10602
+4 Outcome Alternativo: Área Arroz       -0.005   (0.012)       [-0.028, 0… 10602
+5 Robustez - Nevertreated (Cana)        0.136**  (0.053)       [0.032, 0.… 10602
+6 Robustez - Sem Covariáveis (Cana)     0.124*** (0.042)       [0.042, 0.… 10602
+7 Robustez - IPW (Cana)                 0.122*** (0.042)       [0.041, 0.… 10602
+8 Robustez - REG (Cana)                 0.114*** (0.043)       [0.031, 0.… 10602
+ℹ Notas: *** p<0.01, ** p<0.05, * p<0.1
+ℹ Outcome principal: Área Plantada de Cana-de-açúcar (km², log)
+ℹ Método: Doubly Robust (DR) com covariáveis socioeconômicas e climáticas
+ℹ Covariáveis: área total, população, PIB pc, densidade estações UF, precipitação
+
+── Consolidação dos Resultados e Geração de Apresentação ──
+
+── Gerando Apresentação Profissional dos Resultados ────────────────────────────
+ℹ Criando tabela de estatísticas descritivas...
+ℹ Criando tabela de evolução temporal...
+ℹ Criando visualização de event study aprimorada...
+ℹ Criando mapa de calor da heterogeneidade regional...
+ℹ Criando visualização antes/depois do tratamento...
+`geom_smooth()` using formula = 'y ~ x'
+ℹ Criando visualização de análise de robustez...
+ℹ Criando visualização da distribuição de pesos...
+ℹ Criando tabela de resultados principais...
+ℹ Criando visualização de tendências pré-tratamento...
+ℹ Criando dashboard HTML consolidado...
+
+── Arquivos Gerados ──
+
+✔ Tabelas:
+ℹ   - tabela_estatisticas_descritivas.html
+ℹ   - tabela_evolucao_temporal.html
+ℹ   - tabela_resultados_principais.html
+✔ Visualizações:
+ℹ   - event_study_enhanced.png
+ℹ   - heatmap_heterogeneidade.png
+ℹ   - comparacao_antes_depois.png
+ℹ   - forest_plot_robustez.png
+ℹ   - distribuicao_pesos.png
+ℹ   - tendencias_pre_tratamento.png
+✔ Dashboard:
+ℹ   - dashboard_resultados.html
+✔ Apresentação profissional gerada com sucesso em: /Users/daniel.cavalli/Documents/personal/tcc-claude/data/outputs/presentation
+✔ Pipeline de análise concluído com sucesso!
+ℹ Outcome principal: Área plantada de cana-de-açúcar
+ℹ Resultados salvos em: data/outputs/
+ℹ Apresentação disponível em: data/outputs/presentation/
+There were 50 or more warnings (use warnings() to see the first 50)
 Arquivo auto_values.tex gerado com sucesso!
 Adicione \input{auto_values} no preâmbulo do seu documento LaTeX.
-LaTeX values updated in documents/drafts/latex_output/auto_values.tex
-📄 Compiling thesis document...
-This is pdfTeX, Version 3.141592653-2.6-1.40.27 (TeX Live 2025) (preloaded format=pdflatex)
- restricted \write18 enabled.
-entering extended mode
-(./TCC_DanielCavalli_ABNT2.tex
-LaTeX2e <2024-11-01> patch level 2
-L3 programming layer <2025-01-18>
-(/usr/local/texlive/2025/texmf-dist/tex/latex/abntex2/abntex2.cls
-Document Class: abntex2 2018/11/24 v-1.9.7 abnTeX2
-(/usr/local/texlive/2025/texmf-dist/tex/latex/base/ifthen.sty)
-(/usr/local/texlive/2025/texmf-dist/tex/latex/memoir/memoir.cls
-Document Class: memoir 2025/03/06 v3.8.3 configurable book, report, article doc
-ument class
-(/usr/local/texlive/2025/texmf-dist/tex/latex/xpatch/xpatch.sty
-(/usr/local/texlive/2025/texmf-dist/tex/latex/l3kernel/expl3.sty
-(/usr/local/texlive/2025/texmf-dist/tex/latex/l3backend/l3backend-pdftex.def))
-(/usr/local/texlive/2025/texmf-dist/tex/latex/l3packages/xparse/xparse.sty)
-(/usr/local/texlive/2025/texmf-dist/tex/latex/etoolbox/etoolbox.sty))
-(/usr/local/texlive/2025/texmf-dist/tex/generic/iftex/iftex.sty)
-(/usr/local/texlive/2025/texmf-dist/tex/latex/memoir/mem12.clo)
-(/usr/local/texlive/2025/texmf-dist/tex/latex/tools/array.sty)
-(/usr/local/texlive/2025/texmf-dist/tex/latex/tools/dcolumn.sty)
-(/usr/local/texlive/2025/texmf-dist/tex/latex/tools/delarray.sty)
-(/usr/local/texlive/2025/texmf-dist/tex/latex/tools/tabularx.sty)
-(/usr/local/texlive/2025/texmf-dist/tex/latex/booktabs/booktabs.sty)
-(/usr/local/texlive/2025/texmf-dist/tex/latex/hyperref/nameref.sty
-(/usr/local/texlive/2025/texmf-dist/tex/latex/refcount/refcount.sty
-(/usr/local/texlive/2025/texmf-dist/tex/generic/ltxcmds/ltxcmds.sty)
-(/usr/local/texlive/2025/texmf-dist/tex/generic/infwarerr/infwarerr.sty))
-(/usr/local/texlive/2025/texmf-dist/tex/generic/gettitlestring/gettitlestring.s
-ty (/usr/local/texlive/2025/texmf-dist/tex/latex/kvoptions/kvoptions.sty
-(/usr/local/texlive/2025/texmf-dist/tex/latex/graphics/keyval.sty)
-(/usr/local/texlive/2025/texmf-dist/tex/latex/kvsetkeys/kvsetkeys.sty))))
-(/usr/local/texlive/2025/texmf-dist/tex/latex/tools/verbatim.sty)
-(/usr/local/texlive/2025/texmf-dist/tex/latex/base/shortvrb.sty)
-(/usr/local/texlive/2025/texmf-dist/tex/latex/textcase/textcase.sty))
-(/usr/local/texlive/2025/texmf-dist/tex/latex/hyperref/hyperref.sty
-(/usr/local/texlive/2025/texmf-dist/tex/generic/kvdefinekeys/kvdefinekeys.sty)
-(/usr/local/texlive/2025/texmf-dist/tex/generic/pdfescape/pdfescape.sty
-(/usr/local/texlive/2025/texmf-dist/tex/generic/pdftexcmds/pdftexcmds.sty))
-(/usr/local/texlive/2025/texmf-dist/tex/latex/hycolor/hycolor.sty)
-(/usr/local/texlive/2025/texmf-dist/tex/generic/stringenc/stringenc.sty)
-(/usr/local/texlive/2025/texmf-dist/tex/latex/hyperref/pd1enc.def)
-(/usr/local/texlive/2025/texmf-dist/tex/generic/intcalc/intcalc.sty)
-(/usr/local/texlive/2025/texmf-dist/tex/latex/hyperref/puenc.def)
-(/usr/local/texlive/2025/texmf-dist/tex/latex/url/url.sty)
-(/usr/local/texlive/2025/texmf-dist/tex/generic/bitset/bitset.sty
-(/usr/local/texlive/2025/texmf-dist/tex/generic/bigintcalc/bigintcalc.sty))
-(/usr/local/texlive/2025/texmf-dist/tex/latex/base/atbegshi-ltx.sty))
-(/usr/local/texlive/2025/texmf-dist/tex/latex/hyperref/hpdftex.def
-(/usr/local/texlive/2025/texmf-dist/tex/latex/base/atveryend-ltx.sty)
-(/usr/local/texlive/2025/texmf-dist/tex/latex/rerunfilecheck/rerunfilecheck.sty
-
-(/usr/local/texlive/2025/texmf-dist/tex/generic/uniquecounter/uniquecounter.sty
-))) (/usr/local/texlive/2025/texmf-dist/tex/latex/memoir/memhfixc.sty)
-(/usr/local/texlive/2025/texmf-dist/tex/latex/bookmark/bookmark.sty
-(/usr/local/texlive/2025/texmf-dist/tex/latex/bookmark/bkm-pdftex.def))
-(/usr/local/texlive/2025/texmf-dist/tex/generic/babel/babel.sty
-(/usr/local/texlive/2025/texmf-dist/tex/generic/babel/txtbabel.def)
-(/usr/local/texlive/2025/texmf-dist/tex/generic/babel-english/english.ldf)
-(/usr/local/texlive/2025/texmf-dist/tex/generic/babel-french/french.ldf)
-(/usr/local/texlive/2025/texmf-dist/tex/generic/babel-spanish/spanish.ldf)
-(/usr/local/texlive/2025/texmf-dist/tex/generic/babel-portuges/brazil.ldf))
-(/usr/local/texlive/2025/texmf-dist/tex/generic/babel/locale/es/babel-spanish.t
-ex)
-(/usr/local/texlive/2025/texmf-dist/tex/generic/babel/locale/fr/babel-french.te
-x)
-(/usr/local/texlive/2025/texmf-dist/tex/generic/babel/locale/en/babel-english.t
-ex) (/usr/local/texlive/2025/texmf-dist/tex/latex/carlisle/scalefnt.sty)
-(/usr/local/texlive/2025/texmf-dist/tex/latex/enumitem/enumitem.sty)
-(/usr/local/texlive/2025/texmf-dist/tex/latex/tools/calc.sty)
-
-******************************************************
-Stock height and width: 845.04684pt by 597.50787pt
-Top and edge trims: 0pt and 0pt
-Page height and width: 845.04684pt by 597.50787pt
-Text height and width: 708pt by 455pt
-Spine and edge margins: 85.35826pt and 56.9055pt
-Upper and lower margins: 85.35826pt and 51.68858pt
-Headheight and headsep: 14.5pt and 19.8738pt
-Footskip: 30pt
-Columnsep and columnseprule: 10pt and 0pt
-Marginparsep and marginparwidth: 7pt and 42.9055pt
-Sidecapsep and sidecapwidth: 7pt and 42pt
-Sidebarhsep and sidebarwidth: 7pt and 42pt
-Sidebarvsep and sidebartopsep: 14.5pt and 0pt
-Sidebarheight: 590.14995pt
-Sidefoothsep and sidefootwidth: 7pt and 42pt
-Sidefootvsep and sidefootheight: 14.5pt and 590.14995pt
-******************************************************
-
-) (/usr/local/texlive/2025/texmf-dist/tex/latex/lm/lmodern.sty)
-(/usr/local/texlive/2025/texmf-dist/tex/latex/base/fontenc.sty
-(/usr/local/texlive/2025/texmf-dist/tex/latex/lm/t1lmr.fd))
-(/usr/local/texlive/2025/texmf-dist/tex/latex/base/inputenc.sty)
-(/usr/local/texlive/2025/texmf-dist/tex/latex/tools/indentfirst.sty)
-(/usr/local/texlive/2025/texmf-dist/tex/latex/base/textcomp.sty)
-(/usr/local/texlive/2025/texmf-dist/tex/latex/graphics/color.sty
-(/usr/local/texlive/2025/texmf-dist/tex/latex/graphics-cfg/color.cfg)
-(/usr/local/texlive/2025/texmf-dist/tex/latex/graphics-def/pdftex.def)
-(/usr/local/texlive/2025/texmf-dist/tex/latex/graphics/mathcolor.ltx))
-(/usr/local/texlive/2025/texmf-dist/tex/latex/graphics/graphicx.sty
-(/usr/local/texlive/2025/texmf-dist/tex/latex/graphics/graphics.sty
-(/usr/local/texlive/2025/texmf-dist/tex/latex/graphics/trig.sty)
-(/usr/local/texlive/2025/texmf-dist/tex/latex/graphics-cfg/graphics.cfg)))
-(/usr/local/texlive/2025/texmf-dist/tex/latex/microtype/microtype.sty
-(/usr/local/texlive/2025/texmf-dist/tex/latex/microtype/microtype-pdftex.def)
-(/usr/local/texlive/2025/texmf-dist/tex/latex/microtype/microtype.cfg))
-(/usr/local/texlive/2025/texmf-dist/tex/latex/amsmath/amsmath.sty
-For additional information on amsmath, use the `?' option.
-(/usr/local/texlive/2025/texmf-dist/tex/latex/amsmath/amstext.sty
-(/usr/local/texlive/2025/texmf-dist/tex/latex/amsmath/amsgen.sty))
-(/usr/local/texlive/2025/texmf-dist/tex/latex/amsmath/amsbsy.sty)
-(/usr/local/texlive/2025/texmf-dist/tex/latex/amsmath/amsopn.sty))
-(/usr/local/texlive/2025/texmf-dist/tex/latex/amsfonts/amssymb.sty
-(/usr/local/texlive/2025/texmf-dist/tex/latex/amsfonts/amsfonts.sty))
-(/usr/local/texlive/2025/texmf-dist/tex/latex/mathtools/mathtools.sty
-(/usr/local/texlive/2025/texmf-dist/tex/latex/mathtools/mhsetup.sty))
-(/usr/local/texlive/2025/texmf-dist/tex/latex/tools/longtable.sty)
-(/usr/local/texlive/2025/texmf-dist/tex/latex/multirow/multirow.sty)
-(/usr/local/texlive/2025/texmf-dist/tex/latex/csquotes/csquotes.sty
-(/usr/local/texlive/2025/texmf-dist/tex/latex/csquotes/csquotes.def)
-(/usr/local/texlive/2025/texmf-dist/tex/latex/csquotes/csquotes.cfg))
-(/usr/local/texlive/2025/texmf-dist/tex/latex/float/float.sty)
-(/usr/local/texlive/2025/texmf-dist/tex/latex/placeins/placeins.sty)
-(/usr/local/texlive/2025/texmf-dist/tex/latex/hyperref/backref.sty)
-(/usr/local/texlive/2025/texmf-dist/tex/latex/abntex2/abntex2cite.sty
-(/usr/local/texlive/2025/texmf-dist/tex/latex/abntex2/abntex2abrev.sty)
-(/usr/local/texlive/2025/texmf-dist/tex/generic/iftex/ifpdf.sty)
-(/usr/local/texlive/2025/texmf-dist/tex/generic/iftex/ifxetex.sty)
-(/usr/local/texlive/2025/texmf-dist/tex/latex/relsize/relsize.sty))
-Writing index file TCC_DanielCavalli_ABNT2.idx 
-(./auto_values.tex) (./TCC_DanielCavalli_ABNT2.aux)
-(/usr/local/texlive/2025/texmf-dist/tex/context/base/mkii/supp-pdf.mkii
-[Loading MPS to PDF converter (version 2006.09.02).]
-) (/usr/local/texlive/2025/texmf-dist/tex/latex/epstopdf-pkg/epstopdf-base.sty
-(/usr/local/texlive/2025/texmf-dist/tex/latex/latexconfig/epstopdf-sys.cfg))
-(/usr/local/texlive/2025/texmf-dist/tex/latex/microtype/mt-cmr.cfg)
-(/usr/local/texlive/2025/texmf-dist/tex/latex/lm/t1lmss.fd)
-[1{/usr/local/texlive/2025/texmf-var/fonts/map/pdftex/updmap/pdftex.map}{/usr/l
-ocal/texlive/2025/texmf-dist/fonts/enc/dvips/lm/lm-ec.enc}]
-(/usr/local/texlive/2025/texmf-dist/tex/latex/lm/ot1lmr.fd)
-(/usr/local/texlive/2025/texmf-dist/tex/latex/lm/omllmm.fd)
-(/usr/local/texlive/2025/texmf-dist/tex/latex/lm/omslmsy.fd)
-(/usr/local/texlive/2025/texmf-dist/tex/latex/lm/omxlmex.fd)
-(/usr/local/texlive/2025/texmf-dist/tex/latex/amsfonts/umsa.fd)
-(/usr/local/texlive/2025/texmf-dist/tex/latex/microtype/mt-msa.cfg)
-(/usr/local/texlive/2025/texmf-dist/tex/latex/amsfonts/umsb.fd)
-(/usr/local/texlive/2025/texmf-dist/tex/latex/microtype/mt-msb.cfg)
-
-pdfTeX warning (ext4): destination with the same identifier (name{page.1}) has 
-been already used, duplicate ignored
-<to be read again> 
-                   \relax 
-l.198 
-       [1]
-[2]
-[3]
-[4]
-[5]
-[6] (./TCC_DanielCavalli_ABNT2.lof)
-[7] (./TCC_DanielCavalli_ABNT2.lot)
-[8] (./TCC_DanielCavalli_ABNT2.toc
-[9]
-[10])
-[11]
-
-LaTeX Warning: Citation `monteiro2009' on page 12 undefined on input line 327.
-
-
-LaTeX Warning: Citation `ortiz2020' on page 12 undefined on input line 327.
-
-
-LaTeX Warning: Citation `mavi2004' on page 12 undefined on input line 330.
-
-
-LaTeX Warning: Citation `weiss2000' on page 12 undefined on input line 330.
-
-
-LaTeX Warning: Citation `rijks2000' on page 12 undefined on input line 330.
-
-
-LaTeX Warning: Citation `vianna2016' on page 12 undefined on input line 335.
-
-
-[12]
-
-LaTeX Warning: Citation `goodman2021' on page 13 undefined on input line 343.
-
-
-LaTeX Warning: Citation `sun2021' on page 13 undefined on input line 343.
-
-
-LaTeX Warning: Citation `callaway2021' on page 13 undefined on input line 346.
-
-
-[13]
-
-LaTeX Warning: Citation `burke2021' on page 14 undefined on input line 364.
-
-
-LaTeX Warning: Citation `monteiro2017' on page 14 undefined on input line 364.
-
-
-LaTeX Warning: Citation `crost2018' on page 14 undefined on input line 364.
-
-
-LaTeX Warning: Citation `gatti2021' on page 14 undefined on input line 364.
-
-
-LaTeX Warning: Citation `callaway2021' on page 14 undefined on input line 367.
-
-
-[14]
-
-LaTeX Warning: Citation `callaway2021' on page 15 undefined on input line 374.
-
-
-LaTeX Warning: Citation `callaway2021' on page 15 undefined on input line 380.
-
-
-[15] (/usr/local/texlive/2025/texmf-dist/tex/latex/lm/ts1lmr.fd)
-
-LaTeX Warning: Citation `callaway2021' on page 16 undefined on input line 407.
-
-
-[16{/usr/local/texlive/2025/texmf-dist/fonts/enc/dvips/lm/lm-ts1.enc}]
-[17]
-
-LaTeX Warning: Citation `callaway2021' on page 18 undefined on input line 445.
-
-
-LaTeX Warning: Citation `callaway2021' on page 18 undefined on input line 461.
-
-
-[18{/usr/local/texlive/2025/texmf-dist/fonts/enc/dvips/lm/lm-mathit.enc}{/usr/l
-ocal/texlive/2025/texmf-dist/fonts/enc/dvips/lm/lm-rm.enc}{/usr/local/texlive/2
-025/texmf-dist/fonts/enc/dvips/lm/lm-mathex.enc}{/usr/local/texlive/2025/texmf-
-dist/fonts/enc/dvips/lm/lm-mathsy.enc}]
-
-LaTeX Warning: Citation `callaway2021' on page 19 undefined on input line 493.
-
-
-[19]
-
-LaTeX Warning: Citation `callaway2021' on page 20 undefined on input line 510.
-
-
-[20]
-[21]
-
-LaTeX Warning: Citation `santanna2020' on page 22 undefined on input line 562.
-
-
-LaTeX Warning: Citation `callaway2021' on page 22 undefined on input line 574.
-
-(/usr/local/texlive/2025/texmf-dist/tex/latex/lm/t1lmtt.fd)
-[22]
-[23]
-
-LaTeX Warning: Citation `callaway2021' on page 24 undefined on input line 616.
-
-
-[24]
-
-LaTeX Warning: Citation `rcoreteam2024' on page 25 undefined on input line 627.
-
-
-
-LaTeX Warning: Citation `callaway2021' on page 25 undefined on input line 627.
-
-
-[25]
-[26]
-[27]
-! Undefined control sequence.
-l.732 ...ATT = \mainatt} (EP = \mainse, z = \mainz
-                                                  , p = \mainp, IC 95\%: [\m...
-
-! Undefined control sequence.
-l.732 ...tt} (EP = \mainse, z = \mainz, p = \mainp
-                                                  , IC 95\%: [\maincilower; ...
-
-! Undefined control sequence.
-l.732 ...mainz, p = \mainp, IC 95\%: [\maincilower
-                                                  ; \mainciupper])
-! Undefined control sequence.
-l.732 ...inp, IC 95\%: [\maincilower; \mainciupper
-                                                  ])
-! Undefined control sequence.
-l.746 ...& \mainatt*** & (\mainse) & [\maincilower
-                                                  ; \mainciupper] \\
-! Undefined control sequence.
-l.746 ...& (\mainse) & [\maincilower; \mainciupper
-                                                  ] \\
-! Undefined control sequence.
-l.749 Sem Covariáveis & \nocovatt
-                                  *** & (\nocovse) & [\nocovlower; \nocover] \\
-
-! Undefined control sequence.
-l.749 Sem Covariáveis & \nocovatt*** & (\nocovse
-                                                 ) & [\nocovlower; \nocover] \\
-
-! Undefined control sequence.
-l.749 ... \nocovatt*** & (\nocovse) & [\nocovlower
-                                                  ; \nocover] \\
-! Undefined control sequence.
-l.749 ...*** & (\nocovse) & [\nocovlower; \nocover
-                                                  ] \\
-! Undefined control sequence.
-l.750 IPW & \ipwatt
-                   *** & (\ipwse) & [\ipwlower; \ipwupper] \\
-! Undefined control sequence.
-l.750 IPW & \ipwatt*** & (\ipwse
-                                ) & [\ipwlower; \ipwupper] \\
-! Undefined control sequence.
-l.750 IPW & \ipwatt*** & (\ipwse) & [\ipwlower
-                                              ; \ipwupper] \\
-! Undefined control sequence.
-l.750 ...att*** & (\ipwse) & [\ipwlower; \ipwupper
-                                                  ] \\
-! Undefined control sequence.
-l.751 Regressão de Resultado & \regatt
-                                       *** & (\regse) & [\reglower; \reguppe...
-
-! Undefined control sequence.
-l.751 ...ssão de Resultado & \regatt*** & (\regse
-                                                  ) & [\reglower; \regupper] \\
-
-! Undefined control sequence.
-l.751 ...tado & \regatt*** & (\regse) & [\reglower
-                                                  ; \regupper] \\
-! Undefined control sequence.
-l.751 ...att*** & (\regse) & [\reglower; \regupper
-                                                  ] \\
-! Undefined control sequence.
-l.754 Never-treated & \nevertreatedatt
-                                      ** & (\nevertreatedse) & [\nevertreate...
-
-! Undefined control sequence.
-l.754 ...d & \nevertreatedatt** & (\nevertreatedse
-                                                  ) & [\nevertreatedlower; \...
-
-! Undefined control sequence.
-l.754 ...& (\nevertreatedse) & [\nevertreatedlower
-                                                  ; \nevertreatedupper] \\
-! Undefined control sequence.
-l.754 ...& [\nevertreatedlower; \nevertreatedupper
-                                                  ] \\
-
-[28]
-[29
-pdfTeX warning (ext4): destination with the same identifier (name{table.3.1}) h
-as been already used, duplicate ignored
-<argument> ...shipout:D \box_use:N \l_shipout_box 
-                                                  \__shipout_drop_firstpage_...
-l.779 
-      
-pdfTeX warning (ext4): destination with the same identifier (name{figure.3.1}) 
-has been already used, duplicate ignored
-<argument> ...shipout:D \box_use:N \l_shipout_box 
-                                                  \__shipout_drop_firstpage_...
-l.779 
-       <../../../data/outputs/presentation/event_study_enhanced.png>]
-[30]
-[31]
-[32
-pdfTeX warning (ext4): destination with the same identifier (name{figure.3.2}) 
-has been already used, duplicate ignored
-<argument> ...shipout:D \box_use:N \l_shipout_box 
-                                                  \__shipout_drop_firstpage_...
-l.869 \item
-            Não há viés de seleção diferencial significativo entre grupos 
-<../../../data/outputs/parallel_trends_complete_area_cana_normalized.png>]
-[33
-pdfTeX warning (ext4): destination with the same identifier (name{table.3.2}) h
-as been already used, duplicate ignored
-<argument> ...shipout:D \box_use:N \l_shipout_box 
-                                                  \__shipout_drop_firstpage_...
-l.900 \paragraph
-                {Formalização do Teste}]
-
-LaTeX Warning: Citation `davison1997' on page 34 undefined on input line 936.
-
-
-[34]
-[35]
-[36
-pdfTeX warning (ext4): destination with the same identifier (name{table.3.3}) h
-as been already used, duplicate ignored
-<argument> ...shipout:D \box_use:N \l_shipout_box 
-                                                  \__shipout_drop_firstpage_...
-l.1003 \item P
-              odemos rejeitar com alta confiança a hipótese de que o trata...
-
-pdfTeX warning (ext4): destination with the same identifier (name{figure.3.3}) 
-has been already used, duplicate ignored
-<argument> ...shipout:D \box_use:N \l_shipout_box 
-                                                  \__shipout_drop_firstpage_...
-l.1003 \item P
-              odemos rejeitar com alta confiança a hipótese de que o trata...
- <../../../data/outputs/placebo_distribution.png>]
-[37
-pdfTeX warning (ext4): destination with the same identifier (name{table.3.4}) h
-as been already used, duplicate ignored
-<argument> ...shipout:D \box_use:N \l_shipout_box 
-                                                  \__shipout_drop_firstpage_...
-l.1045 \item \textbf
-                    {Culturas alternativas}: Nem soja (p = 0,392) nem arroz ...
-]
-[38]
-[39
-pdfTeX warning (ext4): destination with the same identifier (name{figure.3.4}) 
-has been already used, duplicate ignored
-<argument> ...shipout:D \box_use:N \l_shipout_box 
-                                                  \__shipout_drop_firstpage_...
-l.1079 \end{enumerate}
-                       <../../../data/outputs/alternative_outcomes_effects.png>
-]
-[40
-pdfTeX warning (ext4): destination with the same identifier (name{table.3.5}) h
-as been already used, duplicate ignored
-<argument> ...shipout:D \box_use:N \l_shipout_box 
-                                                  \__shipout_drop_firstpage_...
-l.1119 \end{itemize}
-                    ]
-[41
-pdfTeX warning (ext4): destination with the same identifier (name{table.3.6}) h
-as been already used, duplicate ignored
-<argument> ...shipout:D \box_use:N \l_shipout_box 
-                                                  \__shipout_drop_firstpage_...
-l.1159 
-       ]
-[42
-pdfTeX warning (ext4): destination with the same identifier (name{figure.3.5}) 
-has been already used, duplicate ignored
-<argument> ...shipout:D \box_use:N \l_shipout_box 
-                                                  \__shipout_drop_firstpage_...
-l.1182 
-        <../../../data/outputs/robustness_plot.png>]
-
-LaTeX Warning: Citation `mapa2024' on page 43 undefined on input line 1185.
-
-
-LaTeX Warning: Citation `ana2017atlas' on page 43 undefined on input line 1196.
-
-
-
-[43]
-[44]
-[45]
-
-LaTeX Warning: Citation `callaway2021' on page 46 undefined on input line 1284.
-
-
-
-[46]
-[47
-pdfTeX warning (ext4): destination with the same identifier (name{figure.3.6}) 
-has been already used, duplicate ignored
-<argument> ...shipout:D \box_use:N \l_shipout_box 
-                                                  \__shipout_drop_firstpage_...
-l.1298 \subsubsection
-                     {Desbalanceamento de Covariáveis} <../../../data/outputs/
-additional_figures/power_analysis_simulation.png>]
-[48]
-[49]
-[50]
-No file TCC_DanielCavalli_ABNT2.bbl.
-
-[51]
-
-Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `\uppercase' on input line 1413.
-
-
-[52]
-[53]
-
-LaTeX Warning: `h' float specifier changed to `ht'.
-
-
-LaTeX Warning: `h' float specifier changed to `ht'.
-
-
-LaTeX Warning: `h' float specifier changed to `ht'.
-
-
-[54
-pdfTeX warning (ext4): destination with the same identifier (name{figure.B.7}) 
-has been already used, duplicate ignored
-<argument> ...shipout:D \box_use:N \l_shipout_box 
-                                                  \__shipout_drop_firstpage_...
-l.1530 \end{figure}
-                    <../../../data/outputs/descriptive_analysis/distribuicao_te
-mporal_tratamento.png>]
-
-LaTeX Warning: `h' float specifier changed to `ht'.
-
-
-[55
-pdfTeX warning (ext4): destination with the same identifier (name{table.B.7}) h
-as been already used, duplicate ignored
-<argument> ...shipout:D \box_use:N \l_shipout_box 
-                                                  \__shipout_drop_firstpage_...
-l.1543 \end{figure}
-                   
-pdfTeX warning (ext4): destination with the same identifier (name{table.B.8}) h
-as been already used, duplicate ignored
-<argument> ...shipout:D \box_use:N \l_shipout_box 
-                                                  \__shipout_drop_firstpage_...
-l.1543 \end{figure}
-                   ]
-
-LaTeX Warning: `h' float specifier changed to `ht'.
-
-
-LaTeX Warning: `h' float specifier changed to `ht'.
-
-No file TCC_DanielCavalli_ABNT2.ind.
-
-[56
-pdfTeX warning (ext4): destination with the same identifier (name{table.B.9}) h
-as been already used, duplicate ignored
-<argument> ...shipout:D \box_use:N \l_shipout_box 
-                                                  \__shipout_drop_firstpage_...
-l.1566 \end{document}
-                     
-pdfTeX warning (ext4): destination with the same identifier (name{figure.B.8}) 
-has been already used, duplicate ignored
-<argument> ...shipout:D \box_use:N \l_shipout_box 
-                                                  \__shipout_drop_firstpage_...
-l.1566 \end{document}
-                      <../../../data/outputs/additional_figures/trends_by_size_
-quartile.png>]
-[57
-pdfTeX warning (ext4): destination with the same identifier (name{figure.B.9}) 
-has been already used, duplicate ignored
-<argument> ...shipout:D \box_use:N \l_shipout_box 
-                                                  \__shipout_drop_firstpage_...
-l.1566 \end{document}
-                      <../../../data/outputs/descriptive_analysis/evolucao_temp
-oral_pib.png>]
-[58
-pdfTeX warning (ext4): destination with the same identifier (name{figure.B.10})
- has been already used, duplicate ignored
-<argument> ...shipout:D \box_use:N \l_shipout_box 
-                                                  \__shipout_drop_firstpage_...
-l.1566 \end{document}
-                      <../../../data/outputs/descriptive_analysis/matriz_correl
-acao.png>] (./TCC_DanielCavalli_ABNT2.aux)
-
-LaTeX Warning: There were undefined references.
-
-
-LaTeX Warning: Label(s) may have changed. Rerun to get cross-references right.
-
- )
-(see the transcript file for additional information)</usr/local/texlive/2025/te
-xmf-dist/fonts/type1/public/lm/lmbx12.pfb></usr/local/texlive/2025/texmf-dist/f
-onts/type1/public/lm/lmex10.pfb></usr/local/texlive/2025/texmf-dist/fonts/type1
-/public/lm/lmmi12.pfb></usr/local/texlive/2025/texmf-dist/fonts/type1/public/lm
-/lmmi8.pfb></usr/local/texlive/2025/texmf-dist/fonts/type1/public/lm/lmr10.pfb>
-</usr/local/texlive/2025/texmf-dist/fonts/type1/public/lm/lmr12.pfb></usr/local
-/texlive/2025/texmf-dist/fonts/type1/public/lm/lmr6.pfb></usr/local/texlive/202
-5/texmf-dist/fonts/type1/public/lm/lmr8.pfb></usr/local/texlive/2025/texmf-dist
-/fonts/type1/public/lm/lmri10.pfb></usr/local/texlive/2025/texmf-dist/fonts/typ
-e1/public/lm/lmri12.pfb></usr/local/texlive/2025/texmf-dist/fonts/type1/public/
-lm/lmss10.pfb></usr/local/texlive/2025/texmf-dist/fonts/type1/public/lm/lmss12.
-pfb></usr/local/texlive/2025/texmf-dist/fonts/type1/public/lm/lmss17.pfb></usr/
-local/texlive/2025/texmf-dist/fonts/type1/public/lm/lmssbx10.pfb></usr/local/te
-xlive/2025/texmf-dist/fonts/type1/public/lm/lmsy10.pfb></usr/local/texlive/2025
-/texmf-dist/fonts/type1/public/lm/lmsy8.pfb></usr/local/texlive/2025/texmf-dist
-/fonts/type1/public/lm/lmtt10.pfb></usr/local/texlive/2025/texmf-dist/fonts/typ
-e1/public/lm/lmtt12.pfb>
-Output written on TCC_DanielCavalli_ABNT2.pdf (59 pages, 2863316 bytes).
-Transcript written on TCC_DanielCavalli_ABNT2.log.
-make: *** [thesis] Error 1
+✅ Analysis complete and LaTeX values updated
