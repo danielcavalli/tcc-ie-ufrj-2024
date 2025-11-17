@@ -64,6 +64,17 @@ for (p in pkgs) {
   library(p, character.only = TRUE)
 }
 
+# --------------------------------------------------------------------------- #
+# CARREGAR FUNÇÕES DE FILTRO DE CULTURAS                                     #
+# --------------------------------------------------------------------------- #
+# Carrega funções genéricas para filtrar microrregiões produtoras de culturas
+# específicas (cana, soja, arroz). Estas funções serão usadas para aplicar
+# filtros crop-specific em todo o pipeline de análise.
+# --------------------------------------------------------------------------- #
+cli::cli_alert_info("Carregando funções de filtro de culturas...")
+source(here::here("rscripts", "data_prep_crop_filters.R"))
+cli::cli_alert_success("Funções de filtro carregadas: filter_crop_producers(), filter_cana_producers(), filter_soja_producers(), filter_arroz_producers()")
+
 # ═══════════════════════════════════════════════════════════════════════════ #
 # 0.1 CONFIGURAÇÃO CENTRALIZADA DO PROJETO                                    #
 # ═══════════════════════════════════════════════════════════════════════════ #
@@ -243,14 +254,22 @@ prep_data <- function(path_csv) {
 
   df <- readr::read_csv(path_csv, show_col_types = FALSE) %>%
     # Conversão explícita para evitar fatores escondidos
-    mutate(across(where(is.character), ~ trimws(.x))) %>%
-    # Converter variáveis numéricas
-    mutate(across(c(
-      area_plantada_cana, area_plantada_soja, area_plantada_arroz,
-      area_total_km2, valor_agregado, populacao_total, pib_total, 
-      pib_per_capita, pib_agropecuario, precip_total_anual_mm,
-      precip_media_mensal_mm, precip_max_mensal_mm
-    ), as.numeric))
+    mutate(across(where(is.character), ~ trimws(.x)))
+
+  # Converter variáveis numéricas (conditionally based on what exists)
+  numeric_vars <- c(
+    "area_plantada_cana", "area_plantada_soja", "area_plantada_arroz",
+    "area_total_km2", "populacao_total", "pib_total",
+    "pib_per_capita", "pib_agropecuario", "precip_total_anual_mm",
+    "precip_media_mensal_mm", "precip_max_mensal_mm"
+  )
+
+  # Add valor variables if they exist
+  valor_vars <- c("valor_agregado", "valor_producao_cana", "valor_producao_soja", "valor_producao_arroz")
+  numeric_vars <- c(numeric_vars, intersect(valor_vars, names(df)))
+
+  df <- df %>%
+    mutate(across(all_of(numeric_vars), as.numeric))
 
   # Diagnóstico inicial
   cli::cli_alert_info("Estrutura dos dados:")
@@ -317,13 +336,36 @@ prep_data <- function(path_csv) {
       log_area_arroz = log1p(area_plantada_arroz),
       # Log de variáveis climáticas
       log_precip_anual = log1p(precip_total_anual_mm),
-      # Log de variáveis climáticas
       log_precip_media_mm = log1p(precip_media_mensal_mm),
-      # Log de variáveis climáticas
-      log_precip_maxima_mm = log1p(precip_max_mensal_mm),
-      # Log do valor agregado
-      log_valor_agregado = log1p(valor_agregado)
+      log_precip_maxima_mm = log1p(precip_max_mensal_mm)
     )
+
+  # Adicionar valores de produção se existirem no dataset
+  # NOTA: Estas variáveis vêm da extração PAM/IBGE
+
+  # Valor agregado (soma de cana + soja + arroz)
+  if ("valor_agregado" %in% names(df)) {
+    df <- df %>% mutate(log_valor_agregado = log1p(valor_agregado))
+    cli::cli_alert_success("Adicionada variável: log_valor_agregado")
+  }
+
+  # Valores individuais por cultura
+  if ("valor_producao_cana" %in% names(df)) {
+    df <- df %>% mutate(log_valor_producao_cana = log1p(valor_producao_cana))
+    cli::cli_alert_success("Adicionada variável: log_valor_producao_cana")
+  }
+
+  if ("valor_producao_soja" %in% names(df)) {
+    df <- df %>% mutate(log_valor_producao_soja = log1p(valor_producao_soja))
+    cli::cli_alert_success("Adicionada variável: log_valor_producao_soja")
+  }
+
+  if ("valor_producao_arroz" %in% names(df)) {
+    df <- df %>% mutate(log_valor_producao_arroz = log1p(valor_producao_arroz))
+    cli::cli_alert_success("Adicionada variável: log_valor_producao_arroz")
+  }
+
+  df <- df
 
   # Estatísticas descritivas por grupo
   stats <- df %>%
@@ -393,7 +435,7 @@ prep_data <- function(path_csv) {
 #'   - event: agregação event-study (por tempo relativo)
 #'   - Estatísticas de inferência (SE, p-valor, IC 95%)
 #' ---------------------------------------------------------------------------
-estimate_att <- function(df, method = "dr", seed = 42, control_grp = "notyettreated", outcome = "log_area_cana") {
+estimate_att <- function(df, method = "dr", seed = 42, control_grp = "notyettreated", outcome = "log_valor_producao_cana") {
   set.seed(seed)
   cli::cli_alert_info("Estimando ATT(g,t) com método {method} …")
 
@@ -2062,6 +2104,8 @@ heterogeneity_analysis <- function(df, method = "dr", approach = "aggregate", ou
 #'   - log_pib_agro: Log PIB agropecuário (robustez - medida agregada de valor)
 #'   - log_area_soja: Log área plantada de soja (especificidade)
 #'   - log_area_arroz: Log área plantada de arroz (especificidade)
+#'   - log_valor_agregado: Log valor agregado produção cana+soja+arroz (robustez valor)
+#'   - log_valor_producao_cana/soja/arroz: Valores individuais (se disponíveis no dataset)
 #'
 #' NOTA: log_area_cana é o outcome PRINCIPAL e é estimado separadamente
 #' na análise primária. Esta função complementa aquele resultado.
@@ -2073,47 +2117,122 @@ heterogeneity_analysis <- function(df, method = "dr", approach = "aggregate", ou
 #' ---------------------------------------------------------------------------
 alternative_outcomes_analysis <- function(df, method = "dr") {
   cli::cli_h2("Análise DiD: Outcomes Alternativos (Robustez e Especificidade)")
-  
-  # Definir outcomes alternativos
+  cli::cli_alert_info("IMPORTANTE: Aplicando filtros crop-specific para cada outcome")
+
+  # Definir outcomes alternativos (base) com informações de filtro
   outcomes <- list(
-    pib_agro = list(
-      var = "log_pib_agro",
-      label = "PIB Agropecuário (robustez)",
-      type = "Medida agregada de valor",
-      unit = "R$ mil (log)"
+    cana = list(
+      var = "log_area_cana",
+      label = "Área Cana (área plantada)",
+      type = "Área plantada",
+      unit = "km² (log)",
+      filter_crop = "Cana-de-açúcar",  # Filtrar para produtores de cana
+      filter_var = "area_plantada_cana"
     ),
     soja = list(
       var = "log_area_soja",
       label = "Área Soja (especificidade)",
       type = "Área plantada alternativa",
-      unit = "km² (log)"
+      unit = "km² (log)",
+      filter_crop = "Soja",  # Filtrar para produtores de soja
+      filter_var = "area_plantada_soja"
     ),
     arroz = list(
       var = "log_area_arroz",
       label = "Área Arroz (especificidade)",
       type = "Área plantada alternativa",
-      unit = "km² (log)"
+      unit = "km² (log)",
+      filter_crop = "Arroz",  # Filtrar para produtores de arroz
+      filter_var = "area_plantada_arroz"
     )
   )
+
+  # Adicionar valores de produção (agregado e individuais) se disponíveis
+  if ("log_valor_agregado" %in% names(df)) {
+    outcomes$valor_agregado <- list(
+      var = "log_valor_agregado",
+      label = "Valor Agregado Produção (robustez valor)",
+      type = "Valor total de produção",
+      unit = "R$ (log)",
+      filter_crop = NULL,  # Sem filtro (medida agregada)
+      filter_var = NULL
+    )
+    cli::cli_alert_info("Adicionado outcome: Valor Agregado")
+  }
+  if ("log_valor_producao_cana" %in% names(df)) {
+    outcomes$valor_cana <- list(
+      var = "log_valor_producao_cana",
+      label = "Valor Produção Cana (valor específico)",
+      type = "Valor de produção por cultura",
+      unit = "R$ (log)",
+      filter_crop = "Cana-de-açúcar",  # Filtrar para produtores de cana
+      filter_var = "area_plantada_cana"
+    )
+    cli::cli_alert_info("Adicionado outcome: Valor Produção Cana")
+  }
+
+  if ("log_valor_producao_soja" %in% names(df)) {
+    outcomes$valor_soja <- list(
+      var = "log_valor_producao_soja",
+      label = "Valor Produção Soja (valor específico)",
+      type = "Valor de produção por cultura",
+      unit = "R$ (log)",
+      filter_crop = "Soja",  # Filtrar para produtores de soja
+      filter_var = "area_plantada_soja"
+    )
+    cli::cli_alert_info("Adicionado outcome: Valor Produção Soja")
+  }
+
+  if ("log_valor_producao_arroz" %in% names(df)) {
+    outcomes$valor_arroz <- list(
+      var = "log_valor_producao_arroz",
+      label = "Valor Produção Arroz (valor específico)",
+      type = "Valor de produção por cultura",
+      unit = "R$ (log)",
+      filter_crop = "Arroz",  # Filtrar para produtores de arroz
+      filter_var = "area_plantada_arroz"
+    )
+    cli::cli_alert_info("Adicionado outcome: Valor Produção Arroz")
+  }
   
   # Iterar sobre cada outcome e estimar
   results <- purrr::map(names(outcomes), function(outcome_name) {
     outcome_info <- outcomes[[outcome_name]]
     cli::cli_h3("Estimando efeito para {outcome_info$label}")
-    
-    # Estatísticas descritivas do outcome
-    outcome_data <- df[[outcome_info$var]]
+
+    # Aplicar filtro crop-specific se especificado
+    if (!is.null(outcome_info$filter_crop)) {
+      cli::cli_alert_info("Aplicando filtro: microrregiões produtoras de {outcome_info$filter_crop}")
+      df_filtered <- filter_crop_producers(
+        df = df,  # SEMPRE começa do dataset completo (df original passado à função)
+        crop_var = outcome_info$filter_var,
+        crop_name = outcome_info$filter_crop,
+        min_years_producing = NULL,  # Qualquer produção
+        verbose = FALSE  # Silencioso para não poluir output
+      )
+      n_micro_filtered <- n_distinct(df_filtered$id_microrregiao)
+      retention_pct <- n_micro_filtered / n_distinct(df$id_microrregiao) * 100
+      cli::cli_alert_success("Filtrado: {n_micro_filtered} microrregiões ({round(retention_pct, 1)}% do total)")
+    } else {
+      cli::cli_alert_info("Sem filtro (análise agregada)")
+      df_filtered <- df
+      n_micro_filtered <- n_distinct(df$id_microrregiao)
+      retention_pct <- 100
+    }
+
+    # Estatísticas descritivas do outcome no dataset filtrado
+    outcome_data <- df_filtered[[outcome_info$var]]
     n_nonzero <- sum(outcome_data > 0, na.rm = TRUE)
     pct_nonzero <- n_nonzero / length(outcome_data) * 100
     mean_val <- mean(outcome_data, na.rm = TRUE)
-    
+
     cli::cli_alert_info("Observações válidas: {n_nonzero} ({round(pct_nonzero, 1)}%)")
     cli::cli_alert_info("Valor médio: {round(mean_val, 3)}")
-    
-    # Estimar ATT
+
+    # Estimar ATT no dataset filtrado
     res <- tryCatch(
       {
-        estimate_att(df, method = method, outcome = outcome_info$var)
+        estimate_att(df_filtered, method = method, outcome = outcome_info$var)
       },
       error = function(e) {
         cli::cli_alert_warning("Erro ao estimar {outcome_info$label}: {e$message}")
@@ -2123,12 +2242,16 @@ alternative_outcomes_analysis <- function(df, method = "dr") {
         )
       }
     )
-    
-    # Retornar resultados estruturados
+
+    # Retornar resultados estruturados (incluindo info de filtro)
     tibble::tibble(
       outcome_label = outcome_info$label,
       outcome_var = outcome_info$var,
       outcome_type = outcome_info$type,
+      filter_applied = !is.null(outcome_info$filter_crop),
+      filter_crop = ifelse(is.null(outcome_info$filter_crop), "None", outcome_info$filter_crop),
+      n_microregions = n_micro_filtered,
+      retention_rate = retention_pct,
       att = res$att_global,
       se = res$se_global,
       z = res$z,
@@ -4631,28 +4754,59 @@ if (interactive() || sys.nframe() == 0) {
   }
 
   # ┌─────────────────────────────────────────────────────────────────────── #
-  # │ ETAPA 2: ESTIMAÇÃO DO EFEITO PRINCIPAL - ÁREA PLANTADA DE CANA        │
+  # │ ETAPA 2: FILTRO PARA MICRORREGIÕES PRODUTORAS DE CANA                 │
   # └─────────────────────────────────────────────────────────────────────── #
-  # OUTCOME PRINCIPAL: log_area_cana (área plantada de cana-de-açúcar)
-  # JUSTIFICATIVA: Cana é altamente sensível a informação climática (irrigação,
-  # calendário agrícola), tornando-a o outcome mais adequado para detectar
-  # o impacto causal das estações meteorológicas.
-  # Método: Doubly Robust (mais robusto a especificação incorreta)
-  
-  cli::cli_h2("═══ ANÁLISE PRINCIPAL: ÁREA PLANTADA DE CANA-DE-AÇÚCAR ═══")
-  res_main_cana <- estimate_att(df_clean, method = "dr", outcome = "log_area_cana")
+  # IMPORTANTE: A análise principal agora é restrita a microrregiões que
+  # produziram cana-de-açúcar em ao menos um ano durante 2003-2021.
+  #
+  # JUSTIFICATIVA:
+  # 1. Elimina zeros estruturais (regiões onde cana é inviável)
+  # 2. Garante contrafactuais válidos (comparação entre produtores)
+  # 3. Preserva margem extensiva (adoção) dentro de regiões viáveis
+  # 4. Melhora precisão dos efeitos estimados
+  #
+  # Ver documentação: METHODOLOGY_CROP_FILTERING_AND_COVARIATES.md
 
-  # Export resumo ATT principal (cana)
-  summary_main <- tibble::tibble(
-    outcome = "Área Cana (principal)",
-    metodo = "dr", control = "notyettreated",
-    att = res_main_cana$att_global, se = res_main_cana$se_global, z = res_main_cana$z,
-    p = res_main_cana$p, ci_low = res_main_cana$ci_low, ci_high = res_main_cana$ci_high
+  cli::cli_h2("Filtrando para Microrregiões Produtoras de Cana-de-Açúcar")
+  df_main <- filter_cana_producers(
+    df_clean,
+    min_years_producing = NULL,  # NULL = qualquer produção (≥1 ano)
+    verbose = TRUE
   )
-  readr::write_csv(summary_main, here::here("data", "outputs", "att_summary_main_cana.csv"))
-  
+
+  # Validar filtro
+  validation_passed <- validate_filter(df_clean, df_main, verbose = TRUE)
+  if (!validation_passed) {
+    cli::cli_alert_danger("ERRO: Validação do filtro falhou!")
+    cli::cli_alert_warning("Continuando com dataset completo (sem filtro)")
+    df_main <- df_clean
+  }
+
+  # ┌─────────────────────────────────────────────────────────────────────── #
+  # │ ETAPA 3: ESTIMAÇÃO DO EFEITO PRINCIPAL - VALOR DE PRODUÇÃO CANA       │
+  # └─────────────────────────────────────────────────────────────────────── #
+  # OUTCOME PRINCIPAL: log_valor_producao_cana (valor de produção de cana-de-açúcar)
+  # DATASET: df_main (filtrado para produtores de cana = 225 microrregiões)
+  # JUSTIFICATIVA: Valor de produção captura tanto mudanças em área quanto produtividade,
+  # fornecendo medida direta do impacto econômico das estações meteorológicas.
+  # Cana é altamente sensível a informação climática (irrigação, calendário agrícola,
+  # manejo), tornando-a o outcome mais adequado para detectar efeitos causais.
+  # Método: Doubly Robust (mais robusto a especificação incorreta)
+
+  cli::cli_h2("═══ ANÁLISE PRINCIPAL: VALOR DE PRODUÇÃO DE CANA-DE-AÇÚCAR ═══")
+  res_main_valor <- estimate_att(df_main, method = "dr", outcome = "log_valor_producao_cana")
+
+  # Export resumo ATT principal (valor cana)
+  summary_main <- tibble::tibble(
+    outcome = "Valor Produção Cana (principal)",
+    metodo = "dr", control = "notyettreated",
+    att = res_main_valor$att_global, se = res_main_valor$se_global, z = res_main_valor$z,
+    p = res_main_valor$p, ci_low = res_main_valor$ci_low, ci_high = res_main_valor$ci_high
+  )
+  readr::write_csv(summary_main, here::here("data", "outputs", "att_summary_main_valor_cana.csv"))
+
   # Manter compatibilidade com pipeline antigo (para LaTeX)
-  # O arquivo att_summary.csv agora reflete o resultado principal (cana)
+  # O arquivo att_summary.csv agora reflete o resultado principal (valor cana)
   readr::write_csv(summary_main %>% select(-outcome), here::here("data", "outputs", "att_summary.csv"))
 
   # ┌─────────────────────────────────────────────────────────────────────── #
@@ -4661,15 +4815,15 @@ if (interactive() || sys.nframe() == 0) {
   # MOTIVAÇÃO: Em DiD escalonado, grupos tratados precocemente (com mais
   # períodos pós) podem dominar o ATT agregado, potencialmente mascarando
   # heterogeneidade temporal nos efeitos do tratamento.
-  cli::cli_h2("Análise de Pesos de Adoção Escalonada (Outcome Principal: Cana)")
-  weights_analysis <- analyze_weights(res_main_cana$att)
+  cli::cli_h2("Análise de Pesos de Adoção Escalonada (Outcome Principal: Valor Cana)")
+  weights_analysis <- analyze_weights(res_main_valor$att)
   readr::write_csv(weights_analysis, here::here("data", "outputs", "weights_analysis.csv"))
 
   # ---------------------------------------------------------------------- #
   # NOVA ANÁLISE 2: Comparação de Grupos de Controle (Outcome Principal)
   # ---------------------------------------------------------------------- #
-  cli::cli_h2("Comparação de Grupos de Controle (Outcome: Área Cana)")
-  control_comp <- compare_control_groups(df_clean, method = "dr", outcome = "log_area_cana")
+  cli::cli_h2("Comparação de Grupos de Controle (Outcome: Valor Cana)")
+  control_comp <- compare_control_groups(df_main, method = "dr", outcome = "log_valor_producao_cana")
   if (!is.null(control_comp$comparison)) {
     readr::write_csv(control_comp$comparison, here::here("data", "outputs", "control_group_comparison.csv"))
   }
@@ -4677,16 +4831,16 @@ if (interactive() || sys.nframe() == 0) {
   # ---------------------------------------------------------------------- #
   # NOVA ANÁLISE 3: Diagnóstico de Coortes com NA (Outcome Principal)
   # ---------------------------------------------------------------------- #
-  cli::cli_h2("Diagnóstico de Valores NA (Outcome: Área Cana)")
-  na_diag <- diagnose_na_cohorts(res_main_cana$att, df_clean)
+  cli::cli_h2("Diagnóstico de Valores NA (Outcome: Valor Cana)")
+  na_diag <- diagnose_na_cohorts(res_main_valor$att, df_main)
   if (!is.null(na_diag)) {
     readr::write_csv(na_diag$cohort_sizes, here::here("data", "outputs", "cohort_sizes.csv"))
     if (nrow(na_diag$small_cohorts) > 0) {
       # Tenta agregação de coortes pequenas
       cli::cli_alert_info("Testando agregação de coortes pequenas...")
-      df_merged <- merge_small_cohorts(df_clean, min_size = 5, bin_width = 2)
-      res_merged <- estimate_att(df_merged, method = "dr")
-      cli::cli_alert_info("ATT após agregação: {round(res_merged$att_global, 4)} (original: {round(res_main_cana$att_global, 4)})")
+      df_merged <- merge_small_cohorts(df_main, min_size = 5, bin_width = 2)
+      res_merged <- estimate_att(df_merged, method = "dr", outcome = "log_valor_producao_cana")
+      cli::cli_alert_info("ATT após agregação: {round(res_merged$att_global, 4)} (original: {round(res_main_valor$att_global, 4)})")
     }
   }
 
@@ -4700,14 +4854,15 @@ if (interactive() || sys.nframe() == 0) {
   cli::cli_alert_info("Para maior robustez, considere wild bootstrap em análises futuras")
 
   # ---------------------------------------------------------------------- #
-  # NOVA ANÁLISE 5: Teste Placebo Aleatório (Outcome Principal: Cana)
+  # NOVA ANÁLISE 5: Teste Placebo Aleatório (Outcome Principal: Valor Cana)
   # ---------------------------------------------------------------------- #
-  cli::cli_h2("Teste Placebo Aleatório (Outcome: Área Cana)")
+  cli::cli_h2("Teste Placebo Aleatório (Outcome: Valor Cana)")
+  cli::cli_alert_info("Placebo executado no dataset filtrado (produtores de cana)")
   placebo_random <- random_placebo_test(
-    df_clean,
+    df_main,  # IMPORTANTE: usar dataset filtrado igual ao da análise principal
     n_sims = CONFIG_N_SIMS,  # Usa configuração (pode ser sobrescrito via --nsims)
     method = "dr",
-    outcome = "log_area_cana",  # Usar outcome principal
+    outcome = "log_valor_producao_cana",  # Usar outcome principal
     parallel = TRUE, # Ativar paralelização
     n_cores = NULL # Auto-detectar cores
   )
@@ -4731,8 +4886,9 @@ if (interactive() || sys.nframe() == 0) {
   # ---------------------------------------------------------------------- #
   # NOVA ANÁLISE 4: Teste de Balanceamento Pós-DR (Outcome Principal)
   # ---------------------------------------------------------------------- #
-  cli::cli_h2("Teste de Balanceamento Pós-DR (Outcome: Área Cana)")
-  balance_stats <- check_balance_post_dr(res_main_cana$att, df_clean)
+  cli::cli_h2("Teste de Balanceamento Pós-DR (Outcome: Valor Cana)")
+  cli::cli_alert_info("Balanceamento executado no dataset filtrado (produtores de cana)")
+  balance_stats <- check_balance_post_dr(res_main_valor$att, df_main)
   readr::write_csv(balance_stats, here::here("data", "outputs", "balance_stats_dr.csv"))
 
   # ┌─────────────────────────────────────────────────────────────────────── #
@@ -4741,64 +4897,48 @@ if (interactive() || sys.nframe() == 0) {
   # Com área plantada de cana como outcome PRINCIPAL, estimamos:
   #   1. PIB agropecuário (teste de robustez - medida agregada)
   #   2. Área soja e arroz (testes de especificidade entre culturas)
+  #   3. PIB agro em microrregiões produtoras de cana (coerência teórica)
   cli::cli_h2("═══ ANÁLISE SECUNDÁRIA: OUTCOMES ALTERNATIVOS ═══")
+  cli::cli_alert_info("NOTA: Análise de outcomes alternativos com filtros crop-specific")
+  cli::cli_alert_info("Cada outcome é estimado no subset de microrregiões produtoras da respectiva cultura")
   alternative_outcomes <- alternative_outcomes_analysis(df_clean, method = "dr")
 
   # ---------------------------------------------------------------------- #
   # NOVA ANÁLISE 6: Análise de Robustez Completa (Outcome Principal: Cana)
   # ---------------------------------------------------------------------- #
-  cli::cli_h2("Análise de Robustez: Métodos Alternativos (Outcome: Área Cana)")
-  robustness_results <- robustness_analysis(df_clean)
-
-  # ---------------------------------------------------------------------- #
-  # NOVA ANÁLISE 7: Heterogeneidade Regional (Outcome Principal: Cana)
-  # ---------------------------------------------------------------------- #
-  cli::cli_h2("Heterogeneidade Regional (Outcome: Área Cana)")
-  heterogeneity_results <- heterogeneity_analysis(df_clean, method = "dr", outcome = "log_area_cana")
-
-  # ┌─────────────────────────────────────────────────────────────────────── #
-  # │ NOVA ANÁLISE: DID AGREGADO POR UNIDADE FEDERATIVA                     │
-  # └─────────────────────────────────────────────────────────────────────── #
-  # NOTA: UF analysis agregates log_pib_agro by design. For cana outcome,
-  # would need different aggregation logic. Skipping for now.
-  cli::cli_h2("Análise DiD Agregada por UF")
-  cli::cli_alert_info("Análise UF requer agregação outcome-específica. Pulando para outcome cana.")
-  cli::cli_alert_info("Para análise UF completa, use uf_level_analysis(df_clean, outcome = 'log_pib_agro')")
-  uf_results <- NULL  # Skip UF analysis for cana outcome
+  cli::cli_h2("Análise de Robustez: Métodos Alternativos (Outcome: Valor Cana)")
+  cli::cli_alert_info("Robustez executada no dataset filtrado (produtores de cana)")
+  robustness_results <- robustness_analysis(df_main)
 
   # ┌─────────────────────────────────────────────────────────────────────── #
   # │ NOVA ANÁLISE: VISUALIZAÇÃO DE TENDÊNCIAS PARALELAS                    │
   # └─────────────────────────────────────────────────────────────────────── #
   cli::cli_h2("Visualizando Tendências Paralelas Completas")
+  cli::cli_alert_info("Tendências paralelas no dataset filtrado (produtores de cana)")
 
   # Versão normalizada (recomendada para apresentação)
-  # Outcome principal: cana
-  plot_parallel_trends(df_clean,
-    outcome = "log_area_cana",
-    n_pre_periods = 5, n_post_periods = 5, normalize = TRUE
-  )
-  
-  # Outcomes alternativos para comparação
-  plot_parallel_trends(df_clean,
-    outcome = "log_pib_agro",
+  # Outcome principal: valor cana
+  plot_parallel_trends(df_main,
+    outcome = "log_valor_producao_cana",
     n_pre_periods = 5, n_post_periods = 5, normalize = TRUE
   )
 
-  plot_parallel_trends(df_clean,
-    outcome = "log_pib_nao_agro",
+  # Outcomes alternativos para comparação
+  plot_parallel_trends(df_main,
+    outcome = "log_area_cana",
     n_pre_periods = 5, n_post_periods = 5, normalize = TRUE
   )
 
   # Teste formal de tendências paralelas
   cli::cli_h3("Teste Formal de Tendências Paralelas")
-  parallel_trends_test <- create_parallel_trends_test_table(df_clean, f_stat = 1.136)
+  cli::cli_alert_info("Teste formal executado no dataset filtrado (produtores de cana)")
+  parallel_trends_test <- create_parallel_trends_test_table(df_main, f_stat = 1.136)
 
   # Análise por grupo de tratamento (gname)
-  # Outcome principal
-  plot_parallel_trends_by_gname(df_clean, outcome = "log_area_cana")
-  # Outcomes alternativos
-  plot_parallel_trends_by_gname(df_clean, outcome = "log_pib_agro")
-  plot_parallel_trends_by_gname(df_clean, outcome = "log_pib_nao_agro")
+  # Outcome principal: valor cana (usa dataset filtrado)
+  plot_parallel_trends_by_gname(df_main, outcome = "log_valor_producao_cana")
+  # Outcome alternativo: área cana (usa dataset filtrado)
+  plot_parallel_trends_by_gname(df_main, outcome = "log_area_cana")
 
   # ┌─────────────────────────────────────────────────────────────────────── #
   # │ NOVA ANÁLISE: ANÁLISE DESCRITIVA PARA TCC                            │
@@ -4872,7 +5012,7 @@ if (interactive() || sys.nframe() == 0) {
     tryCatch(
       {
         cli::cli_alert_info("5. Criando distribuição dos efeitos ATT")
-        att_dist <- plot_att_distribution(res_main_cana)
+        att_dist <- plot_att_distribution(res_main_valor)
       },
       error = function(e) {
         cli::cli_alert_warning("Erro na distribuição ATT: {e$message}")
@@ -4895,7 +5035,7 @@ if (interactive() || sys.nframe() == 0) {
     tryCatch(
       {
         cli::cli_alert_info("7. Criando tabela de decomposição dos efeitos")
-        decomp_table <- create_effect_decomposition_table(res_main_cana, df_clean)
+        decomp_table <- create_effect_decomposition_table(res_main_valor, df_main)
         cli::cli_alert_success("✓ Tabela de decomposição criada com sucesso")
       },
       error = function(e) {
@@ -4951,12 +5091,12 @@ if (interactive() || sys.nframe() == 0) {
     cli::cli_alert_info("  - {viz_file2}")
   }
 
-  # Teste de Tendências Paralelas (pré-tratamento) - Outcome Principal: Cana
-  cli::cli_h2("Teste de Tendências Paralelas (Outcome: Área Cana)")
+  # Teste de Tendências Paralelas (pré-tratamento) - Outcome Principal: Valor Cana
+  cli::cli_h2("Teste de Tendências Paralelas (Outcome: Valor Cana)")
   att_df <- tibble::tibble(
-    group = res_main_cana$att$group,
-    time  = res_main_cana$att$t,
-    att   = res_main_cana$att$att
+    group = res_main_valor$att$group,
+    time  = res_main_valor$att$t,
+    att   = res_main_valor$att$att
   )
   pre_df <- dplyr::filter(att_df, time < group)
   pre_mean <- mean(pre_df$att, na.rm = TRUE)
@@ -4965,20 +5105,14 @@ if (interactive() || sys.nframe() == 0) {
   p_val <- 2 * stats::pt(-abs(t_stat), df = nrow(pre_df) - 1)
   cli::cli_alert_success("Teste manual de tendências paralelas: média PRE = {round(pre_mean, 4)}, p-valor = {round(p_val, 4)}")
 
-  # Placebo test fixo (outcome principal: cana)
-  cli::cli_h2("Placebo Test Fixo (2015) - Outcome: Área Cana")
-  placebo_res <- placebo_test(df_clean, placebo_year = 2015, outcome = "log_area_cana")
-  if (!is.null(placebo_res)) {
-    cli::cli_alert_success("Placebo fixo: ATT = {round(placebo_res$att,4)}, SE = {round(placebo_res$se,4)}, p = {round(placebo_res$p,4)}, IC95% = [{round(placebo_res$ci_low,4)}; {round(placebo_res$ci_high,4)}]")
-  }
+  # Robustez - Métodos alternativos para outcome principal (valor cana)
+  cli::cli_h2("Robustez: Métodos Alternativos (Outcome: Valor Cana)")
+  cli::cli_alert_info("Especificações robustas executadas no dataset filtrado (produtores de cana)")
+  robust_tbl <- robust_specs(df_main, outcome = "log_valor_producao_cana")
+  readr::write_csv(robust_tbl, here::here("data", "outputs", "robust_att_valor_cana.csv"))
 
-  # Robustez - Métodos alternativos para outcome principal (cana)
-  cli::cli_h2("Robustez: Métodos Alternativos (Outcome: Área Cana)")
-  robust_tbl <- robust_specs(df_clean, outcome = "log_area_cana")
-  readr::write_csv(robust_tbl, here::here("data", "outputs", "robust_att_cana.csv"))
-
-  # Visualizações do resultado principal (cana)
-  visualize_results(res_main_cana$event, output_prefix = "event_study_cana")
+  # Visualizações do resultado principal (valor cana)
+  visualize_results(res_main_valor$event, output_prefix = "event_study_valor_cana")
 
   # ---------------------------------------------------------------------- #
   # NOVA ANÁLISE 8: Tabela de Resultados Consolidada
@@ -4986,131 +5120,157 @@ if (interactive() || sys.nframe() == 0) {
   cli::cli_h2("Criando Tabela de Resultados Consolidada")
 
   # Criar tabela resumida formatada
-  # NOVA ESTRUTURA: Outcome principal = Área Cana
-  results_table <- tibble::tibble(
-    `Análise` = c(
-      "ATT Principal (Área Cana)",
-      "Outcome Alternativo: PIB Agropecuário",
-      "Outcome Alternativo: Área Soja",
-      "Outcome Alternativo: Área Arroz",
-      "Robustez - Nevertreated (Cana)",
-      "Robustez - Sem Covariáveis (Cana)",
-      "Robustez - IPW (Cana)",
-      "Robustez - REG (Cana)"
+  # NOVA ESTRUTURA: Outcome principal = Valor Produção Cana
+
+  # Verificar quais outcomes de valor estão disponíveis
+  valor_outcomes_available <- c(
+    "log_valor_producao_soja" %in% names(df),
+    "log_valor_producao_arroz" %in% names(df)
+  )
+
+  # Construir lista de análises
+  analyses_list <- c(
+    "ATT Principal (Valor Cana)",
+    "Alternativo: Área Cana",
+    "Alternativo: Área Soja",
+    "Alternativo: Área Arroz"
+  )
+
+  # Adicionar outros outcomes de valor se disponíveis
+  if (valor_outcomes_available[1]) analyses_list <- c(analyses_list, "Alternativo: Valor Soja")
+  if (valor_outcomes_available[2]) analyses_list <- c(analyses_list, "Alternativo: Valor Arroz")
+
+  # Adicionar robustez
+  analyses_list <- c(analyses_list,
+    "Robustez - Nevertreated (Valor Cana)",
+    "Robustez - Sem Covariáveis (Cana)",
+    "Robustez - IPW (Cana)",
+    "Robustez - REG (Cana)"
+  )
+
+  # Helper function to format ATT with significance stars
+  format_att <- function(att, p) {
+    stars <- ifelse(p < 0.01, "***", ifelse(p < 0.05, "**", ifelse(p < 0.1, "*", "")))
+    sprintf("%.3f%s", att, stars)
+  }
+
+  # Helper function to extract alternative outcome stat
+  get_alt_stat <- function(outcome_var, stat_col) {
+    val <- alternative_outcomes[[stat_col]][alternative_outcomes$outcome_var == outcome_var]
+    if (length(val) == 0) return(NA)
+    return(val)
+  }
+
+  # Build ATT column
+  att_values <- c(
+    format_att(res_main_valor$att_global, res_main_valor$p),
+    format_att(get_alt_stat("log_area_cana", "att"), get_alt_stat("log_area_cana", "p_value")),
+    format_att(get_alt_stat("log_area_soja", "att"), get_alt_stat("log_area_soja", "p_value")),
+    format_att(get_alt_stat("log_area_arroz", "att"), get_alt_stat("log_area_arroz", "p_value"))
+  )
+
+  if (valor_outcomes_available[1]) {
+    att_values <- c(att_values, format_att(get_alt_stat("log_valor_producao_soja", "att"), get_alt_stat("log_valor_producao_soja", "p_value")))
+  }
+  if (valor_outcomes_available[2]) {
+    att_values <- c(att_values, format_att(get_alt_stat("log_valor_producao_arroz", "att"), get_alt_stat("log_valor_producao_arroz", "p_value")))
+  }
+
+  # Add robustness results
+  att_values <- c(att_values,
+    ifelse(!is.null(control_comp$results$nt),
+      format_att(control_comp$results$nt$att_global, control_comp$results$nt$p),
+      "N/A"),
+    format_att(
+      robustness_results$att[robustness_results$specification == "Sem covariáveis"],
+      robustness_results$p_value[robustness_results$specification == "Sem covariáveis"]
     ),
-    `ATT` = c(
-      sprintf("%.3f%s", res_main_cana$att_global,
-        ifelse(res_main_cana$p < 0.01, "***",
-          ifelse(res_main_cana$p < 0.05, "**",
-            ifelse(res_main_cana$p < 0.1, "*", "")))),
-      # PIB Agro (alternative outcome)
-      sprintf("%.3f%s",
-        alternative_outcomes$att[alternative_outcomes$outcome_var == "log_pib_agro"],
-        ifelse(alternative_outcomes$p_value[alternative_outcomes$outcome_var == "log_pib_agro"] < 0.01, "***",
-          ifelse(alternative_outcomes$p_value[alternative_outcomes$outcome_var == "log_pib_agro"] < 0.05, "**",
-            ifelse(alternative_outcomes$p_value[alternative_outcomes$outcome_var == "log_pib_agro"] < 0.1, "*", "")))),
-      # Soja (alternative outcome)
-      sprintf("%.3f%s",
-        alternative_outcomes$att[alternative_outcomes$outcome_var == "log_area_soja"],
-        ifelse(alternative_outcomes$p_value[alternative_outcomes$outcome_var == "log_area_soja"] < 0.01, "***",
-          ifelse(alternative_outcomes$p_value[alternative_outcomes$outcome_var == "log_area_soja"] < 0.05, "**",
-            ifelse(alternative_outcomes$p_value[alternative_outcomes$outcome_var == "log_area_soja"] < 0.1, "*", "")))),
-      # Arroz (alternative outcome)
-      sprintf("%.3f%s",
-        alternative_outcomes$att[alternative_outcomes$outcome_var == "log_area_arroz"],
-        ifelse(alternative_outcomes$p_value[alternative_outcomes$outcome_var == "log_area_arroz"] < 0.01, "***",
-          ifelse(alternative_outcomes$p_value[alternative_outcomes$outcome_var == "log_area_arroz"] < 0.05, "**",
-            ifelse(alternative_outcomes$p_value[alternative_outcomes$outcome_var == "log_area_arroz"] < 0.1, "*", "")))),
-      # Nevertreated
-      ifelse(!is.null(control_comp$results$nt),
-        sprintf(
-          "%.3f%s", control_comp$results$nt$att_global,
-          ifelse(control_comp$results$nt$p < 0.01, "***",
-            ifelse(control_comp$results$nt$p < 0.05, "**",
-              ifelse(control_comp$results$nt$p < 0.1, "*", "")
-            )
-          )
-        ),
-        "N/A"
-      ),
-      sprintf(
-        "%.3f%s",
-        robustness_results$att[robustness_results$specification == "Sem covariáveis"],
-        ifelse(robustness_results$p_value[robustness_results$specification == "Sem covariáveis"] < 0.01, "***",
-          ifelse(robustness_results$p_value[robustness_results$specification == "Sem covariáveis"] < 0.05, "**",
-            ifelse(robustness_results$p_value[robustness_results$specification == "Sem covariáveis"] < 0.1, "*", "")
-          )
-        )
-      ),
-      sprintf(
-        "%.3f%s",
-        robustness_results$att[robustness_results$specification == "IPW"],
-        ifelse(robustness_results$p_value[robustness_results$specification == "IPW"] < 0.01, "***",
-          ifelse(robustness_results$p_value[robustness_results$specification == "IPW"] < 0.05, "**",
-            ifelse(robustness_results$p_value[robustness_results$specification == "IPW"] < 0.1, "*", "")
-          )
-        )
-      ),
-      sprintf(
-        "%.3f%s",
-        robustness_results$att[robustness_results$specification == "REG"],
-        ifelse(robustness_results$p_value[robustness_results$specification == "REG"] < 0.01, "***",
-          ifelse(robustness_results$p_value[robustness_results$specification == "REG"] < 0.05, "**",
-            ifelse(robustness_results$p_value[robustness_results$specification == "REG"] < 0.1, "*", "")
-          )
-        )
-      )
+    format_att(
+      robustness_results$att[robustness_results$specification == "IPW"],
+      robustness_results$p_value[robustness_results$specification == "IPW"]
     ),
-    `Erro Padrão` = c(
-      sprintf("(%.3f)", res_main_cana$se_global),
-      sprintf("(%.3f)", alternative_outcomes$se[alternative_outcomes$outcome_var == "log_pib_agro"]),
-      sprintf("(%.3f)", alternative_outcomes$se[alternative_outcomes$outcome_var == "log_area_soja"]),
-      sprintf("(%.3f)", alternative_outcomes$se[alternative_outcomes$outcome_var == "log_area_arroz"]),
-      ifelse(!is.null(control_comp$results$nt), sprintf("(%.3f)", control_comp$results$nt$se_global), "N/A"),
-      sprintf("(%.3f)", robustness_results$se[robustness_results$specification == "Sem covariáveis"]),
-      sprintf("(%.3f)", robustness_results$se[robustness_results$specification == "IPW"]),
-      sprintf("(%.3f)", robustness_results$se[robustness_results$specification == "REG"])
-    ),
-    `IC 95%` = c(
-      sprintf("[%.3f, %.3f]", res_main_cana$ci_low, res_main_cana$ci_high),
-      sprintf("[%.3f, %.3f]",
-        alternative_outcomes$ci_lower[alternative_outcomes$outcome_var == "log_pib_agro"],
-        alternative_outcomes$ci_upper[alternative_outcomes$outcome_var == "log_pib_agro"]),
-      sprintf("[%.3f, %.3f]",
-        alternative_outcomes$ci_lower[alternative_outcomes$outcome_var == "log_area_soja"],
-        alternative_outcomes$ci_upper[alternative_outcomes$outcome_var == "log_area_soja"]),
-      sprintf("[%.3f, %.3f]",
-        alternative_outcomes$ci_lower[alternative_outcomes$outcome_var == "log_area_arroz"],
-        alternative_outcomes$ci_upper[alternative_outcomes$outcome_var == "log_area_arroz"]),
-      ifelse(!is.null(control_comp$results$nt),
-        sprintf("[%.3f, %.3f]", control_comp$results$nt$ci_low, control_comp$results$nt$ci_high),
-        "N/A"),
-      sprintf(
-        "[%.3f, %.3f]",
-        robustness_results$ci_lower[robustness_results$specification == "Sem covariáveis"],
-        robustness_results$ci_upper[robustness_results$specification == "Sem covariáveis"]
-      ),
-      sprintf(
-        "[%.3f, %.3f]",
-        robustness_results$ci_lower[robustness_results$specification == "IPW"],
-        robustness_results$ci_upper[robustness_results$specification == "IPW"]
-      ),
-      sprintf(
-        "[%.3f, %.3f]",
-        robustness_results$ci_lower[robustness_results$specification == "REG"],
-        robustness_results$ci_upper[robustness_results$specification == "REG"]
-      )
-    ),
-    `N` = c(
-      nrow(df_clean),
-      nrow(df_clean),
-      nrow(df_clean),
-      nrow(df_clean),
-      nrow(df_clean),
-      robustness_results$n_obs[robustness_results$specification == "Sem covariáveis"],
-      robustness_results$n_obs[robustness_results$specification == "IPW"],
-      robustness_results$n_obs[robustness_results$specification == "REG"]
+    format_att(
+      robustness_results$att[robustness_results$specification == "REG"],
+      robustness_results$p_value[robustness_results$specification == "REG"]
     )
+  )
+
+  # Build SE column
+  se_values <- c(
+    sprintf("(%.3f)", res_main_valor$se_global),
+    sprintf("(%.3f)", get_alt_stat("log_area_cana", "se")),
+    sprintf("(%.3f)", get_alt_stat("log_area_soja", "se")),
+    sprintf("(%.3f)", get_alt_stat("log_area_arroz", "se"))
+  )
+
+  if (valor_outcomes_available[1]) se_values <- c(se_values, sprintf("(%.3f)", get_alt_stat("log_valor_producao_soja", "se")))
+  if (valor_outcomes_available[2]) se_values <- c(se_values, sprintf("(%.3f)", get_alt_stat("log_valor_producao_arroz", "se")))
+
+  se_values <- c(se_values,
+    ifelse(!is.null(control_comp$results$nt), sprintf("(%.3f)", control_comp$results$nt$se_global), "N/A"),
+    sprintf("(%.3f)", robustness_results$se[robustness_results$specification == "Sem covariáveis"]),
+    sprintf("(%.3f)", robustness_results$se[robustness_results$specification == "IPW"]),
+    sprintf("(%.3f)", robustness_results$se[robustness_results$specification == "REG"])
+  )
+
+  # Build CI column
+  ci_values <- c(
+    sprintf("[%.3f, %.3f]", res_main_valor$ci_low, res_main_valor$ci_high),
+    sprintf("[%.3f, %.3f]", get_alt_stat("log_area_cana", "ci_lower"), get_alt_stat("log_area_cana", "ci_upper")),
+    sprintf("[%.3f, %.3f]", get_alt_stat("log_area_soja", "ci_lower"), get_alt_stat("log_area_soja", "ci_upper")),
+    sprintf("[%.3f, %.3f]", get_alt_stat("log_area_arroz", "ci_lower"), get_alt_stat("log_area_arroz", "ci_upper"))
+  )
+
+  if (valor_outcomes_available[1]) {
+    ci_values <- c(ci_values, sprintf("[%.3f, %.3f]",
+      get_alt_stat("log_valor_producao_soja", "ci_lower"),
+      get_alt_stat("log_valor_producao_soja", "ci_upper")))
+  }
+  if (valor_outcomes_available[2]) {
+    ci_values <- c(ci_values, sprintf("[%.3f, %.3f]",
+      get_alt_stat("log_valor_producao_arroz", "ci_lower"),
+      get_alt_stat("log_valor_producao_arroz", "ci_upper")))
+  }
+
+  ci_values <- c(ci_values,
+    ifelse(!is.null(control_comp$results$nt),
+      sprintf("[%.3f, %.3f]", control_comp$results$nt$ci_low, control_comp$results$nt$ci_high),
+      "N/A"),
+    sprintf("[%.3f, %.3f]",
+      robustness_results$ci_lower[robustness_results$specification == "Sem covariáveis"],
+      robustness_results$ci_upper[robustness_results$specification == "Sem covariáveis"]),
+    sprintf("[%.3f, %.3f]",
+      robustness_results$ci_lower[robustness_results$specification == "IPW"],
+      robustness_results$ci_upper[robustness_results$specification == "IPW"]),
+    sprintf("[%.3f, %.3f]",
+      robustness_results$ci_lower[robustness_results$specification == "REG"],
+      robustness_results$ci_upper[robustness_results$specification == "REG"])
+  )
+
+  # Build N column - use n_obs from alternative_outcomes where available
+  n_values <- c(
+    nrow(df_main),  # Main uses filtered dataset (valor cana)
+    get_alt_stat("log_area_cana", "n_obs"),
+    get_alt_stat("log_area_soja", "n_obs"),
+    get_alt_stat("log_area_arroz", "n_obs")
+  )
+
+  if (valor_outcomes_available[1]) n_values <- c(n_values, get_alt_stat("log_valor_producao_soja", "n_obs"))
+  if (valor_outcomes_available[2]) n_values <- c(n_values, get_alt_stat("log_valor_producao_arroz", "n_obs"))
+
+  n_values <- c(n_values,
+    ifelse(!is.null(control_comp$results$nt), nrow(df_clean), NA),
+    robustness_results$n_obs[robustness_results$specification == "Sem covariáveis"],
+    robustness_results$n_obs[robustness_results$specification == "IPW"],
+    robustness_results$n_obs[robustness_results$specification == "REG"]
+  )
+
+  results_table <- tibble::tibble(
+    `Análise` = analyses_list,
+    `ATT` = att_values,
+    `Erro Padrão` = se_values,
+    `IC 95%` = ci_values,
+    `N` = n_values
   )
 
   # Salvar tabela
@@ -5122,7 +5282,7 @@ if (interactive() || sys.nframe() == 0) {
 
   # Notas da tabela
   cli::cli_alert_info("Notas: *** p<0.01, ** p<0.05, * p<0.1")
-  cli::cli_alert_info("Outcome principal: Área Plantada de Cana-de-açúcar (km², log)")
+  cli::cli_alert_info("Outcome principal: Valor de Produção de Cana-de-açúcar (R$, log)")
   cli::cli_alert_info("Método: Doubly Robust (DR) com covariáveis socioeconômicas e climáticas")
   cli::cli_alert_info("Covariáveis: área total, população, PIB pc, densidade estações UF, precipitação")
 
@@ -5132,15 +5292,13 @@ if (interactive() || sys.nframe() == 0) {
   cli::cli_h2("Consolidação dos Resultados e Geração de Apresentação")
 
   # Agregar todos os resultados em estrutura unificada
-  # NOVA ESTRUTURA: res_main agora é área cana (não PIB agro)
+  # NOVA ESTRUTURA: res_main agora é valor cana (não área ou PIB)
   all_results <- list(
-    res_main = res_main_cana,                    # PRINCIPAL: Área Cana
-    alternative_outcomes = alternative_outcomes, # SECUNDÁRIO: PIB agro, soja, arroz
+    res_main = res_main_valor,                  # PRINCIPAL: Valor Produção Cana
+    alternative_outcomes = alternative_outcomes, # SECUNDÁRIO: Área cana, soja, arroz, valor soja, valor arroz
     placebo_random = placebo_random,            # Placebo randomização
-    placebo_fixed = placebo_res,                # Placebo ano fixo
-    robustness = robustness_results,            # Robustez (cana)
+    robustness = robustness_results,            # Robustez (valor cana)
     control_comparison = control_comp,          # Comparação grupos controle
-    heterogeneity = heterogeneity_results,      # Heterogeneidade regional
     weights = weights_analysis,                 # Análise de pesos
     balance_stats = balance_stats               # Balanceamento
   )

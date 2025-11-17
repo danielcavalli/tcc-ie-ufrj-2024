@@ -40,7 +40,8 @@ format_pvalue <- function(p) {
 placebo_data <- read_csv("data/outputs/placebo_random_summary.csv", show_col_types = FALSE)
 
 # Ler dados principais detalhados (para z, p, CI)
-att_summary_path <- "data/outputs/att_summary_main_cana.csv"
+# CORRIGIDO: Agora lê do arquivo correto de valor de produção (não área)
+att_summary_path <- "data/outputs/att_summary_main_valor_cana.csv"
 if (file.exists(att_summary_path)) {
     att_summary <- read_csv(att_summary_path, show_col_types = FALSE)
 }
@@ -49,6 +50,12 @@ if (file.exists(att_summary_path)) {
 main_results_path <- "data/outputs/main_results_table.csv"
 if (file.exists(main_results_path)) {
     main_results <- read_csv(main_results_path, show_col_types = FALSE)
+}
+
+# Ler dados do Valor de Produção Cana em microrregiões produtoras
+valor_filtered_path <- "data/outputs/att_summary_valor_cana_producers.csv"
+if (file.exists(valor_filtered_path)) {
+    valor_filtered <- read_csv(valor_filtered_path, show_col_types = FALSE)
 }
 
 # Criar conteúdo do arquivo LaTeX
@@ -97,6 +104,25 @@ if (exists("att_summary") && nrow(att_summary) > 0) {
         paste0("\\newcommand{\\mainattpct}{", format_number(att_summary$att[1], percent = TRUE), "}"),
         ""
     )
+}
+
+# Adicionar valores de área cana da análise de alternative outcomes
+alternative_outcomes_path <- "data/outputs/alternative_outcomes_analysis.csv"
+if (file.exists(alternative_outcomes_path)) {
+    alt_outcomes <- read_csv(alternative_outcomes_path, show_col_types = FALSE)
+    # Filtrar linha de área cana
+    area_cana_row <- alt_outcomes[grepl("Área Cana", alt_outcomes$outcome_label), ]
+    if (nrow(area_cana_row) > 0) {
+        latex_content <- c(
+            latex_content,
+            "% Valores de área cana (outcome secundário)",
+            paste0("\\newcommand{\\areacanaatt}{", format_number(area_cana_row$att[1]), "}"),
+            paste0("\\newcommand{\\areacanaattpct}{", format_number(area_cana_row$att[1], percent = TRUE), "}"),
+            paste0("\\newcommand{\\areacanase}{", format_number(area_cana_row$se[1]), "}"),
+            paste0("\\newcommand{\\areacanap}{", format_number(area_cana_row$p_value[1], digits = 4), "}"),
+            ""
+        )
+    }
 }
 
 # Se existirem resultados de robustez, adicionar
@@ -162,6 +188,23 @@ if (exists("main_results") && nrow(main_results) > 0) {
             )
         }
     }
+}
+
+# Se existirem resultados do Valor de Produção Cana filtrado, adicionar
+if (exists("valor_filtered") && nrow(valor_filtered) > 0) {
+    latex_content <- c(
+        latex_content,
+        "% Valores do Valor de Produção Cana em Microrregiões Produtoras",
+        paste0("\\newcommand{\\valorfiltatt}{", format_number(valor_filtered$att[1]), "}"),
+        paste0("\\newcommand{\\valorfiltse}{", format_number(valor_filtered$se[1]), "}"),
+        paste0("\\newcommand{\\valorfiltcilower}{", format_number(valor_filtered$ci_low[1]), "}"),
+        paste0("\\newcommand{\\valorfiltciupper}{", format_number(valor_filtered$ci_high[1]), "}"),
+        paste0("\\newcommand{\\valorfiltatppct}{", format_number(valor_filtered$att[1], percent = TRUE), "}"),
+        paste0("\\newcommand{\\valorfiltpvalue}{", format_pvalue(valor_filtered$p[1]), "}"),
+        paste0("\\newcommand{\\valorfiltnmicro}{", valor_filtered$n_microregions[1], "}"),
+        paste0("\\newcommand{\\valorfiltretention}{", format_number(valor_filtered$retention_rate[1], percent = TRUE), "}"),
+        ""
+    )
 }
 
 # Ler dados de sensibilidade temporal (se existir)
