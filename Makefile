@@ -1,4 +1,4 @@
-.PHONY: help env lock install update-lock clean shell fetch renv-init renv-restore renv-snapshot renv-clean
+.PHONY: help env lock install update-lock clean shell fetch renv-init renv-restore renv-snapshot renv-clean latex-values verify-values analysis thesis presentation docs latex-clean
 
 # -------- Configuration ------------------------------------------------------
 # Virtual-env directory
@@ -96,7 +96,10 @@ renv-clean:  ## Delete renv library directory
 
 latex-values:  ## Generate LaTeX values from R outputs
 	@$(R) rscripts/generate_latex_values.r
-	@echo "LaTeX values updated in documents/drafts/latex_output/auto_values.tex"
+	@echo "✅ LaTeX values updated"
+
+verify-values:  ## Verify auto_values.tex is in sync with CSV outputs
+	@./verify_latex_values.sh
 
 # Run the complete DiD analysis and update LaTeX values
 # Usage: make analysis [NSIMS=50]
@@ -109,8 +112,14 @@ analysis: renv-restore  ## Run complete DiD analysis and update LaTeX values [NS
 		echo "🔬 Running analysis with default simulations (5000)..."; \
 		$(R) rscripts/did_v2.r; \
 	fi
+	@echo ""
+	@echo "📝 Updating LaTeX values..."
 	@$(R) rscripts/generate_latex_values.r
+	@echo ""
 	@echo "✅ Analysis complete and LaTeX values updated"
+	@echo ""
+	@echo "🔍 Verifying synchronization..."
+	@./verify_latex_values.sh
 
 # -----------------------------------------------------------------------------
 # LaTeX document compilation
@@ -135,9 +144,9 @@ thesis: latex-values  ## Compile the thesis PDF (TCC)
 presentation: latex-values  ## Compile the defense presentation PDF
 	@echo "📊 Compiling defense presentation..."
 	@cd documents/drafts/latex_output && \
-	pdflatex -interaction=nonstopmode apresentacao_defesa.tex && \
-	pdflatex -interaction=nonstopmode apresentacao_defesa.tex
-	@echo "✅ Presentation compiled: documents/drafts/latex_output/apresentacao_defesa.pdf"
+	pdflatex -interaction=nonstopmode apresentacao_defesa_v5.tex && \
+	pdflatex -interaction=nonstopmode apresentacao_defesa_v5.tex
+	@echo "✅ Presentation compiled: documents/drafts/latex_output/apresentacao_defesa_v5.pdf"
 
 # Compile all LaTeX documents
 docs: thesis presentation  ## Compile both thesis and presentation

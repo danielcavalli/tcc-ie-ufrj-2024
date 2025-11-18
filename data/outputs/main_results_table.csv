@@ -1,9 +1,9 @@
 Análise,ATT,Erro Padrão,IC 95%,N
-ATT Principal (Valor Cana),0.477**,(0.211),"[0.064, 0.890]",4275
-Alternativo: Área Cana,0.271**,(0.111),"[0.054, 0.489]",NA
-Alternativo: Área Soja,0.034,(0.068),"[-0.098, 0.167]",NA
-Alternativo: Área Arroz,-0.212,(0.143),"[-0.493, 0.068]",NA
-Robustez - Nevertreated (Valor Cana),0.421**,(0.203),"[0.024, 0.818]",8265
+ATT Principal (Valor Cana),0.485**,(0.205),"[0.083, 0.888]",4275
+Alternativo: Área Cana,0.265**,(0.111),"[0.047, 0.483]",NA
+Alternativo: Área Soja,0.030,(0.068),"[-0.102, 0.163]",NA
+Alternativo: Área Arroz,-0.212,(0.143),"[-0.492, 0.068]",NA
+Robustez - Nevertreated (Valor Cana),0.408**,(0.200),"[0.016, 0.801]",10355
 Robustez - Sem Covariáveis (Cana),0.346**,(0.168),"[0.016, 0.675]",4275
-Robustez - IPW (Cana),0.413**,(0.199),"[0.023, 0.804]",4275
-Robustez - REG (Cana),0.457**,(0.196),"[0.074, 0.841]",4275
+Robustez - IPW (Cana),0.429**,(0.199),"[0.040, 0.819]",4275
+Robustez - REG (Cana),0.452**,(0.193),"[0.073, 0.832]",4275

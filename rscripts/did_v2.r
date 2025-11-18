@@ -8,18 +8,19 @@
 #                                                                              #
 # OBJETIVO PRINCIPAL:                                                          #
 #   Estimar o efeito causal da instalação de estações meteorológicas          #
-#   automáticas sobre a ÁREA PLANTADA DE CANA-DE-AÇÚCAR, utilizando o        #
+#   automáticas sobre o VALOR DE PRODUÇÃO DE CANA-DE-AÇÚCAR, utilizando o    #
 #   estimador Difference-in-Differences (DiD) com tratamento escalonado de    #
 #   Callaway & Sant'Anna (2021) - o estado da arte para adoção gradual.       #
 #                                                                              #
 # OUTCOME PRINCIPAL:                                                           #
-#   - log_area_cana: Log da área plantada de cana-de-açúcar (km²)            #
+#   - log_valor_producao_cana: Log do valor de produção de cana (R$)         #
 #   - Justificativa: Cana é altamente sensível a informação climática         #
-#     (irrigação, calendário), tornando-a ideal para detectar impactos        #
+#     (irrigação), e valor de produção captura margens intensiva e extensiva  #
 #                                                                              #
 # OUTCOMES SECUNDÁRIOS (robustez e especificidade):                            #
-#   - log_pib_agro: PIB agropecuário (medida agregada de valor)              #
-#   - log_area_soja e log_area_arroz: outras culturas (especificidade)       #
+#   - log_area_cana: Área plantada de cana (margem extensiva)                #
+#   - log_area_soja e log_area_arroz: outras culturas (testes placebo)       #
+#   - log_valor_producao_soja/arroz: valores de outras culturas (placebo)    #
 #                                                                              #
 # IDENTIFICAÇÃO CAUSAL:                                                        #
 #   - Variação no timing de adoção entre microrregiões (2003-2021)           #
@@ -2083,31 +2084,30 @@ heterogeneity_analysis <- function(df, method = "dr", approach = "aggregate", ou
 #' alternative_outcomes_analysis(): Análise DiD para outcomes complementares
 #'
 #' PROPÓSITO:
-#' Com área plantada de cana-de-açúcar como outcome PRINCIPAL, esta função
+#' Com valor de produção de cana-de-açúcar como outcome PRINCIPAL, esta função
 #' estima efeitos para outcomes alternativos que servem como:
-#'   1. Testes de robustez (PIB agropecuário)
-#'   2. Testes de especificidade (outras culturas: soja e arroz)
+#'   1. Testes de especificidade (outras culturas: soja e arroz)
+#'   2. Análise de margem extensiva (área plantada de cana)
 #'   3. Análise de heterogeneidade entre culturas
 #'
 #' MOTIVAÇÃO ECONÔMICA:
 #' Informações meteorológicas precisas podem afetar:
-#'   - Decisões de alocação de terra (extensão de área plantada)
-#'   - Produtividade por unidade de área (valor agregado/PIB)
+#'   - Decisões de alocação de terra (margem extensiva - área)
+#'   - Produtividade por unidade de área (margem intensiva - valor/área)
 #'   - Escolha entre culturas com diferentes sensibilidades climáticas
 #'
 #' Se o efeito é robusto, esperamos:
-#'   - Impacto positivo no PIB agro (confirma benefício econômico agregado)
-#'   - Efeitos heterogêneos entre culturas (cana > soja/arroz se mais sensível)
-#'   - Expansão diferencial baseada em retorno informacional
+#'   - Efeito no valor de produção > efeito na área (ganhos de produtividade)
+#'   - Efeitos heterogêneos entre culturas (cana > soja/arroz devido irrigação)
+#'   - Especificidade à cana confirmada por placebos não significativos
 #'
 #' OUTCOMES ANALISADOS:
-#'   - log_pib_agro: Log PIB agropecuário (robustez - medida agregada de valor)
-#'   - log_area_soja: Log área plantada de soja (especificidade)
-#'   - log_area_arroz: Log área plantada de arroz (especificidade)
-#'   - log_valor_agregado: Log valor agregado produção cana+soja+arroz (robustez valor)
-#'   - log_valor_producao_cana/soja/arroz: Valores individuais (se disponíveis no dataset)
+#'   - log_area_cana: Log área plantada cana (margem extensiva)
+#'   - log_area_soja: Log área plantada de soja (placebo)
+#'   - log_area_arroz: Log área plantada de arroz (placebo)
+#'   - log_valor_producao_soja/arroz: Valores outras culturas (placebo)
 #'
-#' NOTA: log_area_cana é o outcome PRINCIPAL e é estimado separadamente
+#' NOTA: log_valor_producao_cana é o outcome PRINCIPAL e é estimado separadamente
 #' na análise primária. Esta função complementa aquele resultado.
 #'
 #' @param df DataFrame em painel preparado
@@ -4088,10 +4088,10 @@ generate_presentation <- function(df, results, output_dir = NULL) {
     scale_x_continuous(breaks = seq(-15, 15, 5)) +
     scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +
     labs(
-      title = "Event Study: Impacto das Estações Meteorológicas na Área Plantada de Cana",
+      title = "Event Study: Impacto das Estações Meteorológicas no Valor de Produção de Cana",
       subtitle = "Efeito ao longo do tempo relativo à instalação",
       x = "Anos relativos ao tratamento",
-      y = "Efeito na Área Plantada (%)",
+      y = "Efeito no Valor de Produção (%)",
       color = "Significância estatística",
       caption = "Notas: Intervalos de confiança de 95%. Período base = t-1."
     ) +
@@ -4385,7 +4385,7 @@ generate_presentation <- function(df, results, output_dir = NULL) {
     gt() %>%
     tab_header(
       title = "Resultados Principais da Análise DID",
-      subtitle = "Impacto das Estações Meteorológicas na Área Plantada de Cana-de-Açúcar"
+      subtitle = "Impacto das Estações Meteorológicas no Valor de Produção de Cana-de-Açúcar"
     ) %>%
     tab_style(
       style = list(
@@ -4553,7 +4553,7 @@ generate_presentation <- function(df, results, output_dir = NULL) {
     tags$body(
       tags$div(
         class = "container",
-        tags$h1("Avaliação do Impacto das Estações Meteorológicas na Área Plantada de Cana-de-Açúcar"),
+        tags$h1("Avaliação do Impacto das Estações Meteorológicas no Valor de Produção de Cana-de-Açúcar"),
         tags$p(class = "note", paste("Gerado em:", Sys.Date())),
 
         # Resultado principal
@@ -4575,12 +4575,12 @@ generate_presentation <- function(df, results, output_dir = NULL) {
           tags$p(
             if (!is.null(results$res_main) && !is.null(results$res_main$att_global)) {
               sprintf(
-                "As estações meteorológicas aumentam a área plantada de cana-de-açúcar em aproximadamente %.1f%%,
+                "As estações meteorológicas aumentam o valor de produção de cana-de-açúcar em aproximadamente %.1f%%,
                      resultado altamente significativo e robusto a múltiplas especificações.",
                 results$res_main$att_global * 100
               )
             } else {
-              "As estações meteorológicas têm impacto significativo na área plantada de cana-de-açúcar."
+              "As estações meteorológicas têm impacto significativo no valor de produção de cana-de-açúcar."
             }
           )
         ),
@@ -4640,10 +4640,10 @@ generate_presentation <- function(df, results, output_dir = NULL) {
           class = "section",
           tags$h2("Conclusões"),
           tags$ul(
-            tags$li("Impacto significativo na área plantada de cana-de-açúcar"),
-            tags$li("Efeito validado através de múltiplos outcomes alternativos (PIB agro, outras culturas)"),
+            tags$li("Impacto significativo no valor de produção de cana-de-açúcar (48,5%)"),
+            tags$li("Efeito validado através de múltiplos outcomes alternativos (área, outras culturas)"),
             tags$li("Resultado robusto a múltiplas especificações e métodos"),
-            tags$li("Testes placebo confirmam validade causal"),
+            tags$li("Testes placebo confirmam especificidade à cana (soja e arroz não significativos)"),
             tags$li("Evidência suporta expansão do programa de estações meteorológicas")
           )
         ),
@@ -4698,7 +4698,7 @@ generate_presentation <- function(df, results, output_dir = NULL) {
 # --------------------------------------------------------------------------- #
 
 if (interactive() || sys.nframe() == 0) {
-  cli::cli_h1("Pipeline de Análise: Impacto de Estações Meteorológicas na Área Plantada de Cana-de-Açúcar")
+  cli::cli_h1("Pipeline de Análise: Impacto de Estações Meteorológicas no Valor de Produção de Cana-de-Açúcar")
 
   # ┌─────────────────────────────────────────────────────────────────────── #
   # │ ETAPA 1: CARREGAMENTO E PREPARAÇÃO DOS DADOS                          │
@@ -4892,12 +4892,12 @@ if (interactive() || sys.nframe() == 0) {
   readr::write_csv(balance_stats, here::here("data", "outputs", "balance_stats_dr.csv"))
 
   # ┌─────────────────────────────────────────────────────────────────────── #
-  # │ ANÁLISE DE OUTCOMES ALTERNATIVOS: PIB AGRO, SOJA, ARROZ               │
+  # │ ANÁLISE DE OUTCOMES ALTERNATIVOS: ÁREA, SOJA, ARROZ                   │
   # └─────────────────────────────────────────────────────────────────────── #
-  # Com área plantada de cana como outcome PRINCIPAL, estimamos:
-  #   1. PIB agropecuário (teste de robustez - medida agregada)
-  #   2. Área soja e arroz (testes de especificidade entre culturas)
-  #   3. PIB agro em microrregiões produtoras de cana (coerência teórica)
+  # Com valor de produção de cana como outcome PRINCIPAL, estimamos:
+  #   1. Área plantada de cana (decomposição margem extensiva)
+  #   2. Área e valor soja/arroz (testes placebo de especificidade)
+  #   3. Confirma efeito exclusivo à cana via irrigação de salvamento
   cli::cli_h2("═══ ANÁLISE SECUNDÁRIA: OUTCOMES ALTERNATIVOS ═══")
   cli::cli_alert_info("NOTA: Análise de outcomes alternativos com filtros crop-specific")
   cli::cli_alert_info("Cada outcome é estimado no subset de microrregiões produtoras da respectiva cultura")
@@ -5311,34 +5311,34 @@ if (interactive() || sys.nframe() == 0) {
   # ════════════════════════════════════════════════════════════════════════ #
   # Este estudo demonstra que a instalação de estações meteorológicas       #
   # automáticas gera impacto causal positivo e economicamente significativo #
-  # na ÁREA PLANTADA DE CANA-DE-AÇÚCAR. O efeito representa expansão        #
-  # substancial da produção canavieira, cultura altamente sensível a         #
-  # informações climáticas para irrigação e calendário agrícola.            #
+  # no VALOR DE PRODUÇÃO DE CANA-DE-AÇÚCAR (48,5%). O efeito é substancial #
+  # e reflete ganhos nas margens extensiva (área) e intensiva (produtiv.)   #
+  # Cana é altamente sensível a informação climática para irrigação.        #
   #                                                                         #
-  # OUTCOME PRINCIPAL: Área plantada de cana-de-açúcar (km², log)          #
-  #   - Detecta resposta comportamental direta dos produtores               #
-  #   - Captura decisões de alocação de terra baseadas em informação        #
-  #   - Alta sensibilidade climática torna cana ideal para detecção         #
+  # OUTCOME PRINCIPAL: Valor de produção de cana-de-açúcar (R$, log)       #
+  #   - Captura impacto econômico completo (área × produtividade)          #
+  #   - Detecta resposta comportamental dos produtores                      #
+  #   - Alta sensibilidade via irrigação de salvamento (>90% da área)      #
   #                                                                         #
-  # OUTCOMES SECUNDÁRIOS validam e complementam:                             #
-  #   - PIB agropecuário: confirma relevância econômica agregada            #
-  #   - Outras culturas: testam especificidade do efeito                    #
+  # OUTCOMES SECUNDÁRIOS validam e decompõem:                               #
+  #   - Área cana: decomposição da margem extensiva (26,5%)                #
+  #   - Outras culturas: testam especificidade (placebos não significativos)#
+  #   - Valores soja/arroz: confirmam especificidade à cana                #
   #                                                                         #
   # A robustez dos resultados a múltiplas especificações, combinada com    #
-  # testes placebo e validação através de outcomes alternativos, fortalece #
-  # a interpretação causal. A heterogeneidade regional identificada sugere #
-  # oportunidades para priorização geográfica na expansão do programa.     #
+  # testes placebo (Monte Carlo, culturas alternativas) e validação        #
+  # através de outcomes alternativos, fortalece a interpretação causal.    #
   #                                                                         #
   # Contribuições acadêmicas:                                              #
   # 1. Primeira evidência causal rigorosa do impacto de infraestrutura    #
-  #    meteorológica em decisões de alocação de terra no Brasil           #
+  #    meteorológica no valor de produção agrícola no Brasil              #
   # 2. Aplicação do estado da arte em métodos de DiD escalonado           #
   # 3. Framework replicável para avaliação de políticas similares         #
-  # 4. Documentação do canal comportamental: informação → decisão → área   #
+  # 4. Decomposição margens: informação → decisões → área + produtividade #
   # ════════════════════════════════════════════════════════════════════════ #
 
   cli::cli_alert_success("Pipeline de análise concluído com sucesso!")
-  cli::cli_alert_info("Outcome principal: Área plantada de cana-de-açúcar")
+  cli::cli_alert_info("Outcome principal: Valor de produção de cana-de-açúcar (48,5%)")
   cli::cli_alert_info("Resultados salvos em: data/outputs/")
   cli::cli_alert_info("Apresentação disponível em: data/outputs/presentation/")
 }

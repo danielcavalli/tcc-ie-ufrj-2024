@@ -45,7 +45,8 @@ ANOS = list(range(2003, 2022))
 
 # CONFIGURAÇÃO DOS PRODUTOS AGRÍCOLAS
 # Pode ser uma lista com 1 ou mais produtos!
-PRODUTOS_AGRICOLAS = ['Cana-de-açúcar', 'Soja', 'Arroz']  # Exemplos: ['Soja'], ['Arroz']
+# IMPORTANTE: Usar nomes EXATOS conforme PAM/IBGE
+PRODUTOS_AGRICOLAS = ['Cana-de-açúcar', 'Soja (em grão)', 'Arroz (em casca)']
 
 # Garantir que sempre seja uma lista
 if isinstance(PRODUTOS_AGRICOLAS, str):
@@ -54,15 +55,15 @@ if isinstance(PRODUTOS_AGRICOLAS, str):
 # MAPEAMENTO: PAM produto → MapBiomas id_classe
 MAPEAMENTO_PAM_MAPBIOMAS = {
     'Cana-de-açúcar': '20',
-    'Soja': '39',
-    'Arroz': '40'
+    'Soja (em grão)': '39',
+    'Arroz (em casca)': '40'
 }
 
 # MAPEAMENTO: PAM produto → nome curto para coluna
 MAPEAMENTO_NOME_CURTO = {
     'Cana-de-açúcar': 'cana',
-    'Soja': 'soja',
-    'Arroz': 'arroz'
+    'Soja (em grão)': 'soja',
+    'Arroz (em casca)': 'arroz'
 }
 
 # Validar que todos os produtos têm mapeamento MapBiomas
@@ -100,6 +101,10 @@ FROM
 print("🗺️ Baixando mapeamento município → microrregião...")
 df_municipios = bd.read_sql(query_mapeamento, billing_project_id=PROJECT_ID)
 
+# Ensure consistent ID types (string) throughout the script
+df_municipios['id_municipio'] = df_municipios['id_municipio'].astype(str)
+df_municipios['id_microrregiao'] = df_municipios['id_microrregiao'].astype(str)
+
 # Remover municípios sem mapeamento de microrregião
 n_total = len(df_municipios)
 df_municipios = df_municipios[df_municipios['id_microrregiao'].notna()].copy()
@@ -110,6 +115,16 @@ if n_total > n_validos:
 
 print(f"✅ {len(df_municipios):,} municípios mapeados")
 print(f"✅ {df_municipios['id_microrregiao'].nunique()} microrregiões identificadas")
+
+# Validate that microrregiões don't cross state boundaries
+ufs_por_micro = df_municipios.groupby('id_microrregiao')['sigla_uf'].nunique()
+if (ufs_por_micro > 1).any():
+    print("⚠️  WARNING: Some microrregiões cross state boundaries!")
+    micros_problema = ufs_por_micro[ufs_por_micro > 1].index.tolist()
+    print(f"   Microrregiões problemáticas: {micros_problema}")
+else:
+    print("✅ Validação: Todas as microrregiões estão dentro de um único estado")
+
 print("\nExemplo do mapeamento:")
 print(df_municipios.head())
 
@@ -182,13 +197,20 @@ WHERE
 
 print("👥 Baixando dados de população...")
 df_pop_mun = bd.read_sql(query_pop, billing_project_id=PROJECT_ID)
+df_pop_mun['id_municipio'] = df_pop_mun['id_municipio'].astype(str)
 
 # JOIN com mapeamento
 df_pop_mapped = df_pop_mun.merge(
-    df_municipios[['id_municipio', 'id_microrregiao', 'sigla_uf']], 
-    on='id_municipio', 
+    df_municipios[['id_municipio', 'id_microrregiao', 'sigla_uf']],
+    on='id_municipio',
     how='left'
 )
+
+# Report data loss from mapping
+n_sem_mapping_pop = df_pop_mapped['id_microrregiao'].isna().sum()
+if n_sem_mapping_pop > 0:
+    print(f"⚠️  {n_sem_mapping_pop} registros de população sem mapeamento de microrregião (serão descartados)")
+    df_pop_mapped = df_pop_mapped[df_pop_mapped['id_microrregiao'].notna()].copy()
 
 # Agregar por microrregião
 df_pop = df_pop_mapped.groupby(['ano', 'id_microrregiao', 'sigla_uf'])['populacao'].sum().reset_index()
@@ -211,13 +233,20 @@ WHERE
 
 print("\n💰 Baixando dados de PIB...")
 df_pib_mun = bd.read_sql(query_pib, billing_project_id=PROJECT_ID)
+df_pib_mun['id_municipio'] = df_pib_mun['id_municipio'].astype(str)
 
 # JOIN com mapeamento
 df_pib_mapped = df_pib_mun.merge(
-    df_municipios[['id_municipio', 'id_microrregiao']], 
-    on='id_municipio', 
+    df_municipios[['id_municipio', 'id_microrregiao']],
+    on='id_municipio',
     how='left'
 )
+
+# Report data loss from mapping
+n_sem_mapping_pib = df_pib_mapped['id_microrregiao'].isna().sum()
+if n_sem_mapping_pib > 0:
+    print(f"⚠️  {n_sem_mapping_pib} registros de PIB sem mapeamento de microrregião (serão descartados)")
+    df_pib_mapped = df_pib_mapped[df_pib_mapped['id_microrregiao'].notna()].copy()
 
 # Agregar
 df_pib = df_pib_mapped.groupby(['ano', 'id_microrregiao']).agg({
@@ -303,38 +332,77 @@ query_pam = f"""
 SELECT
     lav.id_municipio,
     lav.ano,
-    SUM(lav.valor_producao) AS valor_producao
+    lav.produto,
+    lav.valor_producao
 FROM
     `basedosdados.br_ibge_pam.lavoura_temporaria` AS lav
 WHERE
     lav.ano BETWEEN {ANOS[0]} AND {ANOS[-1]}
     AND lav.produto IN ({produtos_sql})
-GROUP BY
-    lav.id_municipio,
-    lav.ano
 """
 
 print(f"💰 Baixando dados de valor de produção de: {', '.join(PRODUTOS_AGRICOLAS)}...")
 df_pam_mun = bd.read_sql(query_pam, billing_project_id=PROJECT_ID)
+df_pam_mun['id_municipio'] = df_pam_mun['id_municipio'].astype(str)
 print(f"✅ {len(df_pam_mun):,} registros de valor municipal")
 
 # JOIN com mapeamento para obter microrregião
 df_pam_mapped = df_pam_mun.merge(
-    df_municipios[['id_municipio', 'id_microrregiao']], 
-    on='id_municipio', 
+    df_municipios[['id_municipio', 'id_microrregiao']],
+    on='id_municipio',
     how='left'
 )
 
-# Agregar por microrregião
-df_valor = df_pam_mapped.groupby(['ano', 'id_microrregiao']).agg({
+# Report data loss from mapping
+n_sem_mapping_pam = df_pam_mapped['id_microrregiao'].isna().sum()
+if n_sem_mapping_pam > 0:
+    print(f"⚠️  {n_sem_mapping_pam} registros de PAM sem mapeamento de microrregião (serão descartados)")
+    df_pam_mapped = df_pam_mapped[df_pam_mapped['id_microrregiao'].notna()].copy()
+
+# Agregar por microrregião E produto (manter produtos separados)
+df_valor_por_produto = df_pam_mapped.groupby(['ano', 'id_microrregiao', 'produto']).agg({
     'valor_producao': 'sum'
 }).reset_index()
 
-# Renomear para valor_agregado
-df_valor.columns = ['ano', 'id_microrregiao', 'valor_agregado']
+# Mapear produto para nome curto
+df_valor_por_produto['produto_curto'] = df_valor_por_produto['produto'].map(MAPEAMENTO_NOME_CURTO)
+
+# Check which products have data
+produtos_com_dados = df_valor_por_produto['produto'].unique()
+produtos_sem_dados = [p for p in PRODUTOS_AGRICOLAS if p not in produtos_com_dados]
+if produtos_sem_dados:
+    print(f"⚠️  Produtos sem dados de valor de produção (PAM): {produtos_sem_dados}")
+
+# Pivotar: cada produto vira uma coluna valor_producao_<produto>
+df_valor = df_valor_por_produto.pivot_table(
+    index=['ano', 'id_microrregiao'],
+    columns='produto_curto',
+    values='valor_producao',
+    fill_value=0
+).reset_index()
+
+# Renomear colunas para valor_producao_<produto>
+df_valor.columns.name = None  # Remover nome do índice de colunas
+novos_nomes = {col: f'valor_producao_{col}' for col in df_valor.columns if col not in ['ano', 'id_microrregiao']}
+df_valor = df_valor.rename(columns=novos_nomes)
+
+# Ensure all expected columns exist (add missing ones with zeros)
+for produto in PRODUTOS_AGRICOLAS:
+    nome_curto = MAPEAMENTO_NOME_CURTO[produto]
+    col_name = f'valor_producao_{nome_curto}'
+    if col_name not in df_valor.columns:
+        print(f"⚠️  Criando coluna vazia: {col_name}")
+        df_valor[col_name] = 0
 
 print(f"✅ {len(df_valor):,} registros de valor agregados por microrregião")
-print(f"📊 Valor total médio: R$ {df_valor['valor_agregado'].mean():,.0f}")
+print(f"✅ Colunas criadas: {sorted([col for col in df_valor.columns if col.startswith('valor_producao_')])}")
+for col in sorted([col for col in df_valor.columns if col.startswith('valor_producao_')]):
+    n_nonzero = (df_valor[col] > 0).sum()
+    if n_nonzero > 0:
+        media = df_valor[df_valor[col] > 0][col].mean()
+        print(f"   📊 {col}: {n_nonzero} obs com valor > 0, média = R$ {media:,.0f}")
+    else:
+        print(f"   📊 {col}: 0 obs com valor > 0 (sem dados PAM)")
 
 
 # =============================================================================
@@ -372,14 +440,21 @@ WHERE
 
 print("🌾 Baixando área plantada (MapBiomas)...")
 df_mapbiomas_mun = bd.read_sql(query_mapbiomas_plantada, billing_project_id=PROJECT_ID)
+df_mapbiomas_mun['id_municipio'] = df_mapbiomas_mun['id_municipio'].astype(str)
 print(f"✅ {len(df_mapbiomas_mun):,} registros municipais de área plantada")
 
 # JOIN com mapeamento
 df_mapbiomas_mapped = df_mapbiomas_mun.merge(
-    df_municipios[['id_municipio', 'id_microrregiao']], 
-    on='id_municipio', 
+    df_municipios[['id_municipio', 'id_microrregiao']],
+    on='id_municipio',
     how='left'
 )
+
+# Report data loss from mapping
+n_sem_mapping_mapbiomas = df_mapbiomas_mapped['id_microrregiao'].isna().sum()
+if n_sem_mapping_mapbiomas > 0:
+    print(f"⚠️  {n_sem_mapping_mapbiomas} registros de MapBiomas sem mapeamento de microrregião (serão descartados)")
+    df_mapbiomas_mapped = df_mapbiomas_mapped[df_mapbiomas_mapped['id_microrregiao'].notna()].copy()
 
 # Agregar por microrregião E id_classe (manter produtos separados)
 df_area_por_classe = df_mapbiomas_mapped.groupby(['ano', 'id_microrregiao', 'id_classe']).agg({
@@ -425,14 +500,21 @@ GROUP BY
 
 print("\n🌍 Baixando área total (MapBiomas)...")
 df_area_total_mun = bd.read_sql(query_area_total, billing_project_id=PROJECT_ID)
+df_area_total_mun['id_municipio'] = df_area_total_mun['id_municipio'].astype(str)
 print(f"✅ {len(df_area_total_mun):,} registros municipais de área total")
 
 # JOIN com mapeamento
 df_area_total_mapped = df_area_total_mun.merge(
-    df_municipios[['id_municipio', 'id_microrregiao']], 
-    on='id_municipio', 
+    df_municipios[['id_municipio', 'id_microrregiao']],
+    on='id_municipio',
     how='left'
 )
+
+# Report data loss from mapping
+n_sem_mapping_area_total = df_area_total_mapped['id_microrregiao'].isna().sum()
+if n_sem_mapping_area_total > 0:
+    print(f"⚠️  {n_sem_mapping_area_total} registros de área total sem mapeamento de microrregião (serão descartados)")
+    df_area_total_mapped = df_area_total_mapped[df_area_total_mapped['id_microrregiao'].notna()].copy()
 
 # Agregar por microrregião
 df_area_total = df_area_total_mapped.groupby(['ano', 'id_microrregiao']).agg({
@@ -543,18 +625,84 @@ painel_final = painel_final.merge(
 )
 
 # Preencher zeros onde não há dados
-painel_final['valor_agregado'] = painel_final['valor_agregado'].fillna(0)
+colunas_area_plantada = [col for col in painel_final.columns if col.startswith('area_plantada_')]
+colunas_valor_producao = [col for col in painel_final.columns if col.startswith('valor_producao_')]
+
 painel_final['area_total_km2'] = painel_final['area_total_km2'].fillna(0)
 
 # Preencher zeros para todas as colunas de área plantada por produto
-colunas_area_plantada = [col for col in painel_final.columns if col.startswith('area_plantada_')]
 for col in colunas_area_plantada:
     painel_final[col] = painel_final[col].fillna(0)
 
+# Preencher zeros para todas as colunas de valor de produção por produto
+for col in colunas_valor_producao:
+    painel_final[col] = painel_final[col].fillna(0)
+
+# Fill precipitation with 0 as well for consistency
+painel_final['precip_total_anual_mm'] = painel_final['precip_total_anual_mm'].fillna(0)
+painel_final['precip_media_mensal_mm'] = painel_final['precip_media_mensal_mm'].fillna(0)
+painel_final['precip_max_mensal_mm'] = painel_final['precip_max_mensal_mm'].fillna(0)
+
+# Validate balanced panel
+n_esperado = len(all_micros) * len(ANOS)
+n_observado = len(painel_final)
+if n_esperado != n_observado:
+    print(f"\n⚠️  WARNING: Panel is not balanced!")
+    print(f"   Esperado: {n_esperado:,} observações ({len(all_micros)} micros × {len(ANOS)} anos)")
+    print(f"   Observado: {n_observado:,} observações")
+    print(f"   Diferença: {n_esperado - n_observado:,} observações faltando")
+else:
+    print(f"\n✅ Validação: Painel balanceado ({n_observado:,} observações)")
+
+# Filter out microrregiões with ZERO agricultural activity across ALL years
+# Keep microrregiões that have EITHER MapBiomas area data OR PAM production value data
+print("\n" + "="*80)
+print("FILTRO: Removendo microrregiões sem produção agrícola")
+print("="*80)
+print(f"📊 Tamanho antes do filtro: {len(painel_final):,} observações")
+print(f"📊 Microrregiões antes: {painel_final['id_microrregiao'].nunique()}")
+
+# Calculate total planted area per microrregião across all years and crops (MapBiomas)
+colunas_area_plantada = [col for col in painel_final.columns if col.startswith('area_plantada_')]
+painel_final['area_total_produtos'] = painel_final[colunas_area_plantada].sum(axis=1)
+
+# Calculate total production value per microrregião across all years and crops (PAM)
+colunas_valor_producao = [col for col in painel_final.columns if col.startswith('valor_producao_')]
+painel_final['valor_total_produtos'] = painel_final[colunas_valor_producao].sum(axis=1)
+
+# Identify microrregiões with at least SOME area OR value in at least ONE year
+micros_com_area = painel_final.groupby('id_microrregiao')['area_total_produtos'].sum()
+micros_com_area = set(micros_com_area[micros_com_area > 0].index)
+
+micros_com_valor = painel_final.groupby('id_microrregiao')['valor_total_produtos'].sum()
+micros_com_valor = set(micros_com_valor[micros_com_valor > 0].index)
+
+# Union: keep microrregiões with EITHER area OR value
+micros_com_producao = micros_com_area.union(micros_com_valor)
+
+print(f"   - Microrregiões com MapBiomas área > 0: {len(micros_com_area)}")
+print(f"   - Microrregiões com PAM valor > 0: {len(micros_com_valor)}")
+print(f"   - Total com área OU valor: {len(micros_com_producao)}")
+
+# Filter the panel
+n_micros_antes = painel_final['id_microrregiao'].nunique()
+painel_final = painel_final[painel_final['id_microrregiao'].isin(micros_com_producao)].copy()
+n_micros_depois = painel_final['id_microrregiao'].nunique()
+
+# Drop the auxiliary columns
+painel_final = painel_final.drop(['area_total_produtos', 'valor_total_produtos'], axis=1)
+
+print(f"✅ Tamanho após filtro: {len(painel_final):,} observações")
+print(f"✅ Microrregiões após filtro: {n_micros_depois}")
+print(f"✅ Microrregiões removidas: {n_micros_antes - n_micros_depois} ({(n_micros_antes - n_micros_depois)/n_micros_antes*100:.1f}%)")
+print(f"✅ Microrregiões tratadas após filtro: {painel_final[painel_final['tratado'] == 1]['id_microrregiao'].nunique()}")
+print(f"✅ Microrregiões controle após filtro: {painel_final[painel_final['tratado'] == 0]['id_microrregiao'].nunique()}")
+
 # Estatísticas do painel final
-print("\n✅ Painel consolidado!")
+print("\n" + "="*80)
+print("ESTATÍSTICAS DO PAINEL FINAL")
+print("="*80)
 print(f"📊 Total de observações: {len(painel_final):,}")
-print(f"📊 Observações com valor > 0: {(painel_final['valor_agregado'] > 0).sum()} ({(painel_final['valor_agregado'] > 0).sum()/len(painel_final)*100:.1f}%)")
 print(f"📊 Área total média: {painel_final['area_total_km2'].mean():,.1f} km²")
 print("\n📊 Áreas plantadas por produto:")
 for col in colunas_area_plantada:
@@ -563,6 +711,13 @@ for col in colunas_area_plantada:
     n_micros = painel_final[painel_final[col] > 0]['id_microrregiao'].nunique()
     media = painel_final[painel_final[col] > 0][col].mean() if n_obs > 0 else 0
     print(f"   - {col}: {n_obs} obs ({pct:.1f}%), {n_micros} microrregiões, média = {media:,.1f} km²")
+print("\n📊 Valor de produção por produto:")
+for col in colunas_valor_producao:
+    n_obs = (painel_final[col] > 0).sum()
+    pct = n_obs / len(painel_final) * 100
+    n_micros = painel_final[painel_final[col] > 0]['id_microrregiao'].nunique()
+    media = painel_final[painel_final[col] > 0][col].mean() if n_obs > 0 else 0
+    print(f"   - {col}: {n_obs} obs ({pct:.1f}%), {n_micros} microrregiões, média = R$ {media:,.0f}")
 
 
 # =============================================================================
@@ -584,9 +739,13 @@ cols_order = [
 colunas_area_plantada = sorted([col for col in painel_final.columns if col.startswith('area_plantada_')])
 cols_order.extend(colunas_area_plantada)
 
+# Adicionar todas as colunas valor_producao_<produto> dinamicamente
+colunas_valor_producao = sorted([col for col in painel_final.columns if col.startswith('valor_producao_')])
+cols_order.extend(colunas_valor_producao)
+
 # Adicionar restante das colunas
 cols_order.extend([
-    'area_total_km2', 'valor_agregado',
+    'area_total_km2',
     'populacao_total', 'pib_total', 'pib_per_capita', 'pib_agropecuario',
     'precip_total_anual_mm', 'precip_media_mensal_mm', 'precip_max_mensal_mm'
 ])
@@ -596,7 +755,13 @@ cols_final = [c for c in cols_order if c in painel_final.columns]
 df_final = painel_final[cols_final].sort_values(['id_microrregiao', 'ano'])
 
 # Criar nome do arquivo com produtos separados por hífen
-produtos_filename = '-'.join(PRODUTOS_AGRICOLAS).replace(' ', '_').replace('(', '').replace(')', '')
+# Remover sufixos "(em grão)" e "(em casca)" dos nomes para o arquivo
+produtos_filename_list = []
+for p in PRODUTOS_AGRICOLAS:
+    # Remove "(em grão)" e "(em casca)" para manter compatibilidade com nomes antigos
+    nome_limpo = p.replace(' (em grão)', '').replace(' (em casca)', '')
+    produtos_filename_list.append(nome_limpo)
+produtos_filename = '-'.join(produtos_filename_list)
 output_file = f'data/microrregions_{produtos_filename}_{min(ANOS)}-{max(ANOS)}_mapbiomas.csv'
 
 # Criar diretório se não existir
@@ -727,14 +892,6 @@ VARIABLE_METADATA = {
         'notes': '1 if year >= first treatment year and microrregião is treated, 0 otherwise'
     },
     
-    # Agricultural value
-    'valor_agregado': {
-        'label': 'Aggregated value of agricultural production',
-        'source': 'PAM/IBGE',
-        'units': 'BRL (nominal)',
-        'notes': f'Sum of production value for: {", ".join(PRODUTOS_AGRICOLAS)}'
-    },
-    
     # Area variables (MapBiomas)
     'area_total_km2': {
         'label': 'Total land area',
@@ -795,12 +952,24 @@ for produto in PRODUTOS_AGRICOLAS:
     nome_curto = MAPEAMENTO_NOME_CURTO[produto]
     col_name = f'area_plantada_{nome_curto}'
     id_classe = MAPEAMENTO_PAM_MAPBIOMAS[produto]
-    
+
     VARIABLE_METADATA[col_name] = {
         'label': f'Planted area of {produto}',
         'source': 'MapBiomas cobertura_municipio_classe',
         'units': 'km²',
         'notes': f'MapBiomas class {id_classe}; aggregated from municipal to microrregião level'
+    }
+
+# Add metadata for dynamic valor_producao_<produto> columns
+for produto in PRODUTOS_AGRICOLAS:
+    nome_curto = MAPEAMENTO_NOME_CURTO[produto]
+    col_name = f'valor_producao_{nome_curto}'
+
+    VARIABLE_METADATA[col_name] = {
+        'label': f'Production value of {produto}',
+        'source': 'PAM/IBGE lavoura_temporaria',
+        'units': 'BRL (nominal)',
+        'notes': f'Sum of production value for {produto}; aggregated from municipal to microrregião level'
     }
 
 
@@ -875,7 +1044,6 @@ print(f"  - Anos: {ANOS[0]}-{ANOS[-1]}")
 print(f"  - Microrregiões tratadas: {df_final[df_final['tratado'] == 1]['id_microrregiao'].nunique()}")
 print(f"  - Microrregiões controle: {df_final[df_final['tratado'] == 0]['id_microrregiao'].nunique()}")
 print("\n📊 Cobertura de dados:")
-print(f"  - Observações com valor agregado > 0: {(df_final['valor_agregado'] > 0).sum()} ({(df_final['valor_agregado'] > 0).sum()/len(df_final)*100:.1f}%)")
 print(f"  - Área total média: {df_final['area_total_km2'].mean():,.1f} km²")
 print("\n📊 Áreas plantadas por produto (dataset final):")
 colunas_area_final = [col for col in df_final.columns if col.startswith('area_plantada_')]
@@ -884,6 +1052,13 @@ for col in colunas_area_final:
     pct = n_obs / len(df_final) * 100
     media = df_final[df_final[col] > 0][col].mean() if n_obs > 0 else 0
     print(f"  - {col}: {n_obs} obs ({pct:.1f}%), média = {media:,.1f} km²")
+print("\n📊 Valor de produção por produto (dataset final):")
+colunas_valor_final = [col for col in df_final.columns if col.startswith('valor_producao_')]
+for col in colunas_valor_final:
+    n_obs = (df_final[col] > 0).sum()
+    pct = n_obs / len(df_final) * 100
+    media = df_final[df_final[col] > 0][col].mean() if n_obs > 0 else 0
+    print(f"  - {col}: {n_obs} obs ({pct:.1f}%), média = R$ {media:,.0f}")
 print("\n📊 Missing values:")
 print(f"  - População: {df_final['populacao_total'].isnull().sum()} ({df_final['populacao_total'].isnull().sum()/len(df_final)*100:.1f}%)")
 print(f"  - PIB: {df_final['pib_total'].isnull().sum()} ({df_final['pib_total'].isnull().sum()/len(df_final)*100:.1f}%)")
@@ -907,4 +1082,3 @@ print("✨ PROCESSAMENTO CONCLUÍDO COM SUCESSO!")
 print("📦 Dados: MapBiomas (área) + PAM (valor) + IBGE (PIB/pop) + INMET (tratamento) + CDS/ERA5 (precipitação)")
 print(f"📖 Dicionário de variáveis salvo em: {dict_file}")
 print("="*80)
-

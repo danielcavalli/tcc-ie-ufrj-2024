@@ -106,11 +106,12 @@ if (exists("att_summary") && nrow(att_summary) > 0) {
     )
 }
 
-# Adicionar valores de área cana da análise de alternative outcomes
+# Adicionar valores de outcomes alternativos
 alternative_outcomes_path <- "data/outputs/alternative_outcomes_analysis.csv"
 if (file.exists(alternative_outcomes_path)) {
     alt_outcomes <- read_csv(alternative_outcomes_path, show_col_types = FALSE)
-    # Filtrar linha de área cana
+
+    # Área Cana
     area_cana_row <- alt_outcomes[grepl("Área Cana", alt_outcomes$outcome_label), ]
     if (nrow(area_cana_row) > 0) {
         latex_content <- c(
@@ -120,6 +121,68 @@ if (file.exists(alternative_outcomes_path)) {
             paste0("\\newcommand{\\areacanaattpct}{", format_number(area_cana_row$att[1], percent = TRUE), "}"),
             paste0("\\newcommand{\\areacanase}{", format_number(area_cana_row$se[1]), "}"),
             paste0("\\newcommand{\\areacanap}{", format_number(area_cana_row$p_value[1], digits = 4), "}"),
+            paste0("\\newcommand{\\areacanalower}{", format_number(area_cana_row$ci_lower[1]), "}"),
+            paste0("\\newcommand{\\areacanaupper}{", format_number(area_cana_row$ci_upper[1]), "}"),
+            ""
+        )
+    }
+
+    # Área Soja
+    area_soja_row <- alt_outcomes[grepl("Área Soja", alt_outcomes$outcome_label), ]
+    if (nrow(area_soja_row) > 0) {
+        latex_content <- c(
+            latex_content,
+            "% Valores de área soja",
+            paste0("\\newcommand{\\areasojaat}{", format_number(area_soja_row$att[1]), "}"),
+            paste0("\\newcommand{\\areasojase}{", format_number(area_soja_row$se[1]), "}"),
+            paste0("\\newcommand{\\areasojap}{", format_number(area_soja_row$p_value[1], digits = 4), "}"),
+            paste0("\\newcommand{\\areasojlower}{", format_number(area_soja_row$ci_lower[1]), "}"),
+            paste0("\\newcommand{\\areasojaupper}{", format_number(area_soja_row$ci_upper[1]), "}"),
+            ""
+        )
+    }
+
+    # Área Arroz
+    area_arroz_row <- alt_outcomes[grepl("Área Arroz", alt_outcomes$outcome_label), ]
+    if (nrow(area_arroz_row) > 0) {
+        latex_content <- c(
+            latex_content,
+            "% Valores de área arroz",
+            paste0("\\newcommand{\\areaarrozatt}{", format_number(area_arroz_row$att[1]), "}"),
+            paste0("\\newcommand{\\areaarrozse}{", format_number(area_arroz_row$se[1]), "}"),
+            paste0("\\newcommand{\\areaarrozp}{", format_number(area_arroz_row$p_value[1], digits = 4), "}"),
+            paste0("\\newcommand{\\areaarrozlower}{", format_number(area_arroz_row$ci_lower[1]), "}"),
+            paste0("\\newcommand{\\areaarrozupper}{", format_number(area_arroz_row$ci_upper[1]), "}"),
+            ""
+        )
+    }
+
+    # Valor Soja
+    valor_soja_row <- alt_outcomes[grepl("Valor Produção Soja", alt_outcomes$outcome_label), ]
+    if (nrow(valor_soja_row) > 0) {
+        latex_content <- c(
+            latex_content,
+            "% Valores de valor de produção soja",
+            paste0("\\newcommand{\\valorsojaat}{", format_number(valor_soja_row$att[1]), "}"),
+            paste0("\\newcommand{\\valorsojase}{", format_number(valor_soja_row$se[1]), "}"),
+            paste0("\\newcommand{\\valorsojap}{", format_number(valor_soja_row$p_value[1], digits = 4), "}"),
+            paste0("\\newcommand{\\valorsojlower}{", format_number(valor_soja_row$ci_lower[1]), "}"),
+            paste0("\\newcommand{\\valorsojaupper}{", format_number(valor_soja_row$ci_upper[1]), "}"),
+            ""
+        )
+    }
+
+    # Valor Arroz
+    valor_arroz_row <- alt_outcomes[grepl("Valor Produção Arroz", alt_outcomes$outcome_label), ]
+    if (nrow(valor_arroz_row) > 0) {
+        latex_content <- c(
+            latex_content,
+            "% Valores de valor de produção arroz",
+            paste0("\\newcommand{\\valorarrozatt}{", format_number(valor_arroz_row$att[1]), "}"),
+            paste0("\\newcommand{\\valorarrozse}{", format_number(valor_arroz_row$se[1]), "}"),
+            paste0("\\newcommand{\\valorarrozp}{", format_number(valor_arroz_row$p_value[1], digits = 4), "}"),
+            paste0("\\newcommand{\\valorarrozlower}{", format_number(valor_arroz_row$ci_lower[1]), "}"),
+            paste0("\\newcommand{\\valorarrozupper}{", format_number(valor_arroz_row$ci_upper[1]), "}"),
             ""
         )
     }
@@ -282,8 +345,12 @@ if (file.exists(sensitivity_path)) {
     }
 }
 
-# Escrever arquivo
+# Escrever arquivo para ambos os locais (para compatibilidade)
+# Local principal usado pelo LaTeX
+writeLines(latex_content, "data/outputs/latex_values.tex", useBytes = TRUE)
+# Local secundário (histórico)
 writeLines(latex_content, "documents/drafts/latex_output/auto_values.tex", useBytes = TRUE)
 
-cat("Arquivo auto_values.tex gerado com sucesso!\n")
-cat("Adicione \\input{auto_values} no preâmbulo do seu documento LaTeX.\n")
+cat("Arquivo latex_values.tex gerado com sucesso!\n")
+cat("  - data/outputs/latex_values.tex (usado pelo LaTeX)\n")
+cat("  - documents/drafts/latex_output/auto_values.tex (backup)\n")
