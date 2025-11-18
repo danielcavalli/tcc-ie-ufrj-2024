@@ -340,11 +340,12 @@ plot_trends_by_size_quartile <- function(df) {
     }
 
     # Calcular área inicial (primeiro ano disponível)
+    # Usa area_plantada_cana (outcome principal) para definir quartis
     initial_area <- df %>%
         group_by(id_microrregiao) %>%
-        filter(!is.na(area_plantada)) %>%
+        filter(!is.na(area_plantada_cana)) %>%
         summarise(
-            initial_area = first(area_plantada),
+            initial_area = first(area_plantada_cana),
             gname = first(gname),
             .groups = "drop"
         )
@@ -454,7 +455,7 @@ create_data_quality_dashboard <- function(df) {
 
     # 1. Heatmap de valores faltantes
     vars_check <- c(
-        "log_pib_agro", "log_pib_nao_agro", "log_area_plantada",
+        "log_pib_agro", "log_pib_nao_agro", "log_area_cana",
         "log_populacao", "log_pib_per_capita", "log_densidade_estacoes_uf"
     )
 
@@ -476,7 +477,7 @@ create_data_quality_dashboard <- function(df) {
             variable_label = case_when(
                 variable == "log_pib_agro" ~ "PIB Agro",
                 variable == "log_pib_nao_agro" ~ "PIB Não-Agro",
-                variable == "log_area_plantada" ~ "Área Plantada",
+                variable == "log_area_cana" ~ "Área Cana",
                 variable == "log_populacao" ~ "População",
                 variable == "log_pib_per_capita" ~ "PIB per Capita",
                 variable == "log_densidade_estacoes_uf" ~ "Densidade Estações",

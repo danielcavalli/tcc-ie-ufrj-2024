@@ -1,4 +1,4 @@
-.PHONY: help env lock install update-lock clean shell fetch renv-init renv-restore renv-snapshot renv-clean
+.PHONY: help env lock install update-lock clean shell fetch renv-init renv-restore renv-snapshot renv-clean latex-values verify-values analysis thesis presentation docs latex-clean
 
 # -------- Configuration ------------------------------------------------------
 # Virtual-env directory
@@ -96,10 +96,64 @@ renv-clean:  ## Delete renv library directory
 
 latex-values:  ## Generate LaTeX values from R outputs
 	@$(R) rscripts/generate_latex_values.r
-	@echo "LaTeX values updated in documents/drafts/latex_output/auto_values.tex"
+	@echo "✅ LaTeX values updated"
+
+verify-values:  ## Verify auto_values.tex is in sync with CSV outputs
+	@./verify_latex_values.sh
 
 # Run the complete DiD analysis and update LaTeX values
-analysis: renv-restore  ## Run complete DiD analysis and update LaTeX values
-	@$(R) rscripts/did_v2.r
+# Usage: make analysis [NSIMS=50]
+# NSIMS: Number of Monte Carlo simulations (default: 5000, use 50-100 for quick tests)
+analysis: renv-restore  ## Run complete DiD analysis and update LaTeX values [NSIMS=50]
+	@if [ -n "$(NSIMS)" ]; then \
+		echo "🔬 Running analysis with $(NSIMS) Monte Carlo simulations..."; \
+		$(R) rscripts/did_v2.r --nsims $(NSIMS); \
+	else \
+		echo "🔬 Running analysis with default simulations (5000)..."; \
+		$(R) rscripts/did_v2.r; \
+	fi
+	@echo ""
+	@echo "📝 Updating LaTeX values..."
 	@$(R) rscripts/generate_latex_values.r
-	@echo "Analysis complete and LaTeX values updated" 
+	@echo ""
+	@echo "✅ Analysis complete and LaTeX values updated"
+	@echo ""
+	@echo "🔍 Verifying synchronization..."
+	@./verify_latex_values.sh
+
+# -----------------------------------------------------------------------------
+# LaTeX document compilation
+# -----------------------------------------------------------------------------
+
+# Compile the thesis document
+thesis: latex-values  ## Compile the thesis PDF (TCC)
+	@echo "📄 Compiling thesis document..."
+	@cd documents/drafts/latex_output && \
+	pdflatex -interaction=nonstopmode TCC_DanielCavalli_ABNT2.tex; \
+	bibtex TCC_DanielCavalli_ABNT2; \
+	pdflatex -interaction=nonstopmode TCC_DanielCavalli_ABNT2.tex; \
+	pdflatex -interaction=nonstopmode TCC_DanielCavalli_ABNT2.tex; \
+	if [ -f TCC_DanielCavalli_ABNT2.pdf ]; then \
+		echo "✅ Thesis compiled: documents/drafts/latex_output/TCC_DanielCavalli_ABNT2.pdf"; \
+	else \
+		echo "⚠️  Compilation completed with errors - PDF may not be generated"; \
+		exit 1; \
+	fi
+
+# Compile the defense presentation
+presentation: latex-values  ## Compile the defense presentation PDF
+	@echo "📊 Compiling defense presentation..."
+	@cd documents/drafts/latex_output && \
+	pdflatex -interaction=nonstopmode apresentacao_defesa_v5.tex && \
+	pdflatex -interaction=nonstopmode apresentacao_defesa_v5.tex
+	@echo "✅ Presentation compiled: documents/drafts/latex_output/apresentacao_defesa_v5.pdf"
+
+# Compile all LaTeX documents
+docs: thesis presentation  ## Compile both thesis and presentation
+
+# Clean LaTeX auxiliary files
+latex-clean:  ## Remove LaTeX auxiliary files
+	@echo "🧹 Cleaning LaTeX auxiliary files..."
+	@cd documents/drafts/latex_output && \
+	rm -f *.aux *.log *.out *.toc *.lof *.lot *.bbl *.blg *.idx *.ilg *.ind *.synctex.gz *.fdb_latexmk *.fls *.nav *.snm *.vrb
+	@echo "✅ LaTeX cleanup complete" 

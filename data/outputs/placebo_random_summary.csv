@@ -1,2 +1,2 @@
-true_att,p_value_empirical,ci_95_lower,ci_95_upper,n_valid_sims
-0.082057718244160055,0,-0.03726678646030335,0.03301348057509681,50
+true_att,p_value_empirical,p_value_se,p_value_ci_lower,p_value_ci_upper,n_extremes,placebo_mean,placebo_sd,placebo_ci_95_lower,placebo_ci_95_upper,n_valid_sims
+0.4851657805700519,1.999600079984003e-4,1.999600079984003e-4,0,5.918816236752649e-4,0,0.0018924897047519651,0.140301079672331,-0.26892583967536965,0.2855636974810699,5000

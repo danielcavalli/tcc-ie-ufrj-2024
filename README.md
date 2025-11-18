@@ -1,35 +1,73 @@
-# Impacto de Estações Meteorológicas no PIB Agropecuário: Uma Análise via Difference-in-Differences
+# Impacto de Estações Meteorológicas na Cultura de Cana-de-Açúcar: Uma Aplicação de Diferenças em Diferenças com Tratamento Escalonado
 
-> Trabalho de Conclusão de Curso – Instituto de Economia, UFRJ (2024)
+> Trabalho de Conclusão de Curso – Instituto de Economia, UFRJ (2025)
 
-Este repositório contém os códigos, dados e documentação utilizados no meu Trabalho de Conclusão de Curso (TCC) no Instituto de Economia da Universidade Federal do Rio de Janeiro. O estudo investiga o impacto causal da instalação de estações meteorológicas automáticas sobre o PIB agropecuário municipal no Brasil, utilizando o estimador de diferenças-em-diferenças (DiD) com adoção escalonada de Callaway & Sant'Anna (2021).
+Este repositório contém os códigos, dados e documentação do TCC desenvolvido no Instituto de Economia da UFRJ. O estudo investiga o impacto causal da instalação de estações meteorológicas automáticas sobre a produção de cana-de-açúcar no Brasil, utilizando o estimador de Diferenças em Diferenças (DiD) com adoção escalonada de Callaway e Sant'Anna (2021).
 
-## Índice
-1. [Objetivos do projeto](#objetivos-do-projeto)
-2. [Estrutura do repositório](#estrutura-do-repositório)
-3. [Pré-requisitos](#pré-requisitos)
-4. [Instalação do ambiente](#instalação-do-ambiente)
-5. [Reprodução dos resultados](#reprodução-dos-resultados)
-6. [Fontes de dados](#fontes-de-dados)
-7. [Licença](#licença)
-8. [Autor e citação](#autor-e-citação)
+## Destaques do Projeto
 
-## Objetivos do projeto
-1. Reunir e integrar bases de dados agropecuários (PAM/IBGE), meteorológicos (INMET) e socioeconômicos municipais.
-2. Identificar o impacto causal da instalação de estações meteorológicas automáticas sobre o PIB agropecuário.
-3. Implementar o estimador DiD com adoção escalonada de Callaway & Sant'Anna (2021), adequado para contextos onde todas as unidades são eventualmente tratadas.
-4. Realizar testes de robustez, análises de heterogeneidade regional e validação das hipóteses de identificação.
-5. Documentar todo o pipeline de análise para garantir transparência e reprodutibilidade científica.
+- **Metodologia Estado da Arte**: Implementação completa do estimador Callaway & Sant'Anna (2021) para DiD com adoção escalonada
+- **Pipeline Totalmente Automatizado**: Da análise estatística ao documento final, sem intervenção manual
+- **Integração R + LaTeX**: Valores numéricos extraídos automaticamente dos outputs e inseridos no documento via macros
+- **Reprodutibilidade Completa**: Gerenciamento de dependências com `renv`, documentação extensiva, comandos via Makefile
+- **Testes Rigorosos**: Placebo Monte Carlo (5.000 simulações), tendências paralelas, múltiplas especificações
+- **Dados Públicos**: Todas as fontes são abertas e documentadas, queries SQL disponíveis
 
-## Visão geral da pesquisa
+## 📋 Sumário
 
-Esta pesquisa investiga o impacto causal da instalação de estações meteorológicas automáticas sobre o PIB agropecuário em microrregiões brasileiras. A hipótese central é que o acesso a informações meteorológicas precisas e localizadas melhora significativamente a tomada de decisão no setor agrícola, resultando em ganhos de produtividade e valor agregado. Utilizamos a expansão gradual da rede de estações do INMET entre 2003-2023 como variação exógena para identificação causal.
+1. [Resumo da Pesquisa](#resumo-da-pesquisa)
+2. [Resultados Principais](#resultados-principais)
+3. [Estrutura de Análise e Pipeline](#estrutura-de-análise-e-pipeline)
+4. [Metodologia](#metodologia)
+5. [Dados e Variáveis](#dados-e-variáveis)
+6. [Estrutura do Repositório](#estrutura-do-repositório)
+7. [Instalação do Ambiente](#instalação-do-ambiente)
+8. [Reprodução Completa dos Resultados](#reprodução-completa-dos-resultados)
+9. [Citação](#citação)
+
+## 📊 Resumo da Pesquisa
+
+**Pergunta:** A instalação de estações meteorológicas automáticas aumenta a produção de cana-de-açúcar local?
+
+**Hipótese:** O acesso a informações meteorológicas precisas e localizadas melhora a tomada de decisão no setor agrícola (irrigação, calendário de plantio), resultando em expansão da área plantada e aumento do valor de produção de cana-de-açúcar.
+
+**Metodologia:** Diferenças em Diferenças com adoção escalonada (Callaway & Sant'Anna, 2021), adequado para contextos onde todas as unidades são eventualmente tratadas.
+
+**Período:** 2003-2021 (19 anos)
+
+**Unidades:** 490 microrregiões produtoras de cana-de-açúcar
+
+**Outcomes Analisados:**
+- Área plantada de cana-de-açúcar (outcome principal)
+- Valor de produção de cana-de-açúcar
+- PIB agropecuário (medida agregada)
+- Culturas alternativas: soja e arroz (testes de especificidade)
+
+## 🎯 Resultados Principais
+
+Os resultados reportados abaixo são obtidos através do pipeline automatizado implementado em [rscripts/did_v2.r](rscripts/did_v2.r). Todos os valores numéricos são extraídos automaticamente e incorporados no documento LaTeX através do script [rscripts/generate_latex_values.r](rscripts/generate_latex_values.r).
+
+### Efeito Principal (Cana-de-Açúcar)
+- **Área Plantada:** ATT agregado significativo na expansão da área de cana-de-açúcar
+- **Valor de Produção:** Aumento substancial no valor de produção da cultura
+- **Interpretação:** As estações meteorológicas facilitam decisões sobre expansão de área e práticas de manejo
+
+### Validação e Robustez
+- **Tendências Paralelas:** Confirmadas através de múltiplos testes formais e inspeção visual por coorte
+- **Placebo com Outras Culturas:** Soja e arroz apresentam efeitos nulos ou distintos, confirmando especificidade do impacto em cana
+- **Placebo Monte Carlo:** Simulações confirmam que resultados não são artefatos estatísticos
+- **Especificações Alternativas:** Consistência entre estimadores Doubly Robust (DR), IPW e Regressão
+
+### Dinâmica Temporal
+- **Event Study:** Trajetória dinâmica dos efeitos desde 10 anos antes até 10 anos após tratamento
+- **Lag Inicial:** Efeitos tornam-se mais pronunciados após 2-3 anos (tempo para ajustes de plantio)
+- **Persistência:** Benefícios se mantêm ou se ampliam no longo prazo
 
 ## Metodologia
 
-Empregamos o modelo de Diferenças-em-Diferenças (DiD) com adoção escalonada de Callaway & Sant'Anna (2021). Este framework é especialmente adequado para nosso contexto onde:
-- Múltiplas microrregiões recebem estações em diferentes anos (2003-2023)
-- Todas as unidades são eventualmente tratadas (não há controles "puros")
+Empregamos o modelo de Diferenças em Diferenças (DiD) com adoção escalonada de Callaway & Sant'Anna (2021). Este framework é especialmente adequado para nosso contexto onde:
+- Múltiplas microrregiões recebem estações em diferentes anos (2003-2021)
+- Todas as unidades são eventualmente tratadas (não há controles permanentes)
 - Os efeitos do tratamento podem ser heterogêneos entre grupos e ao longo do tempo
 
 ### Principais características:
@@ -51,137 +89,178 @@ Empregamos o modelo de Diferenças-em-Diferenças (DiD) com adoção escalonada 
 * **Sem antecipação**: Assumimos que unidades não antecipam o tratamento futuro
 * **SUTVA**: Controlamos spillovers parcialmente via densidade estadual de estações
 
-## Dados e variáveis
+## Dados e Variáveis
 
-### Variáveis principais:
+### Variáveis Principais:
 
 | Tipo | Variável | Descrição |
 |------|----------|-----------|
-| **Outcome principal** | `log_pib_agro` | Log do PIB agropecuário municipal (R$ constantes) |
-| **Outcome placebo** | `log_pib_nao_agro` | Log do PIB não-agropecuário (teste de especificidade) |
+| **Outcome principal** | `log_area_cana` | Log da área plantada de cana-de-açúcar (hectares) |
+| **Outcomes secundários** | `log_valor_producao_cana` | Log do valor de produção de cana (R$ mil, valores constantes) |
+|  | `log_pib_agro` | Log do PIB agropecuário (R$ constantes) |
+| **Outcomes placebo** | `log_area_soja`, `log_area_arroz` | Log da área plantada de soja e arroz (testes de especificidade) |
 | **Tratamento** | `gname` | Ano da primeira estação meteorológica na microrregião |
-| **Identificação** | `id_microrregiao` | Código único da microrregião |
-| **Tempo** | `ano` | Ano da observação (2003-2023) |
+| **Identificação** | `id_microrregiao` | Código IBGE da microrregião |
+| **Tempo** | `ano` | Ano da observação (2003-2021) |
 
 ### Covariáveis:
 
 | Variável | Descrição |
 |----------|-----------|
-| `log_area_plantada` | Log da área plantada total (hectares) |
+| `log_area_plantada_total` | Log da área plantada agregada (hectares) |
 | `log_populacao` | Log da população municipal |
 | `log_pib_per_capita` | Log do PIB per capita |
-| `log_densidade_estacoes_uf` | Log da densidade de estações na UF (spillovers) |
+| `log_densidade_estacoes_uf` | Log da densidade de estações na UF (controle de spillovers) |
 
-### Estrutura dos dados:
-- **Unidade de análise**: Microrregião
-- **Período**: 2003-2023 (21 anos)
-- **Painel**: Balanceado com 490 microrregiões × 21 anos = 10.290 observações
-- **Grupo de controle**: "Not yet treated" (dinâmico ao longo do tempo)
+### Estrutura dos Dados:
+- **Unidade de análise**: Microrregião (agregação de municípios segundo IBGE)
+- **Período**: 2003-2021 (19 anos)
+- **Painel**: Balanceado com 490 microrregiões produtoras de cana × 19 anos = 9.310 observações
+- **Grupo de controle**: "Not yet treated" (dinâmico, muda ao longo do tempo)
+- **Filtro de amostra**: Microrregiões com produção de cana-de-açúcar em pelo menos um ano
 
-## Principais resultados
+## Estrutura de Análise e Pipeline
 
-### Efeito principal:
-* **ATT agregado**: Aumento de **8,3%** no PIB agropecuário (p < 0,001)
-* **Intervalo de confiança 95%**: [4,8%; 11,8%]
-* **Interpretação**: Cada estação meteorológica gera, em média, R$ 8,30 adicionais para cada R$ 100 de PIB agropecuário
+### Pipeline Completo:
 
-### Validação e robustez:
-* **Tendências paralelas**: Confirmadas por múltiplos testes (p > 0,50)
-* **Placebo PIB não-agrícola**: Efeito nulo (p > 0,10), confirmando especificidade
-* **Placebo temporal**: ATT não significativo para anos fictícios
-* **Robustez**: Resultados consistentes entre diferentes especificações (DR, IPW, Reg)
+O projeto implementa um pipeline totalmente automatizado que garante reprodutibilidade e sincronização entre análise estatística e documento final:
 
-### Dinâmica temporal:
-* **Efeitos crescentes**: Impacto se intensifica ao longo do tempo
-* **Lag inicial**: Efeitos tornam-se significativos após 2-3 anos
-* **Persistência**: Benefícios mantidos no longo prazo (10+ anos)
+1. **Análise Econométrica** ([rscripts/did_v2.r](rscripts/did_v2.r)):
+   - Estimação dos efeitos via Callaway & Sant'Anna (2021)
+   - Testes de robustez e validação
+   - Geração de todas as figuras e tabelas
+   - Exportação de resultados em formatos `.rds` e `.csv`
 
-### Heterogeneidade:
-* **Por coorte**: Early adopters (2003-2007) apresentam maiores ganhos
-* **Regional**: Variação substancial entre regiões (análise em desenvolvimento)
-* **Mecanismos**: Evidências sugerem melhor alocação de insumos e timing de plantio
+2. **Extração de Valores** ([rscripts/generate_latex_values.r](rscripts/generate_latex_values.r)):
+   - Leitura automática dos outputs gerados por `did_v2.r`
+   - Extração de valores numéricos (ATTs, p-valores, ICs)
+   - Geração de macros LaTeX em `data/outputs/latex_values.tex`
+   - Criação de pequenas tabelas formatadas para inclusão no documento
 
-## Detalhes de implementação do código
+3. **Compilação do Documento** (via Makefile):
+   - Inclusão automática de `latex_values.tex` no documento principal
+   - Compilação com pdflatex + bibtex
+   - Geração do PDF final da tese
 
-### Stack tecnológico:
+### Comandos Principais via Makefile:
+
+```bash
+make analysis          # Executa análise DiD completa e atualiza valores LaTeX
+make analysis NSIMS=50 # Análise rápida com 50 simulações Monte Carlo (vs 5000)
+make latex-values      # Apenas atualiza valores LaTeX a partir dos outputs existentes
+make thesis            # Compila o documento LaTeX (TCC)
+make docs              # Compila tese e apresentação
+```
+
+## Detalhes de Implementação
+
+### Stack Tecnológico:
 - **R 4.5+**: Análise estatística principal
-- **Pacote `did`**: Implementação do estimador Callaway & Sant'Anna
-- **tidyverse**: Manipulação de dados e visualizações
-- **gt/kableExtra**: Tabelas profissionais para apresentação
+- **Pacote `did`**: Implementação do estimador Callaway & Sant'Anna (2021)
+- **tidyverse**: Manipulação de dados e visualizações (dplyr, ggplot2, readr, tidyr)
+- **gt/kableExtra**: Tabelas formatadas para LaTeX e HTML
 - **Python 3.9+**: ETL e preparação de dados via BigQuery
+- **LaTeX (abntex2)**: Documento final em conformidade com normas ABNT
+- **GNU Make**: Automação do pipeline completo
 
-### Pipeline de análise (`rscripts/did_v2.r`):
+### Arquitetura do Código:
 
-1. **Preparação de dados** (`prep_data()`):
-   - Transformações logarítmicas
-   - Construção da variável de tratamento (gname)
+#### Script Principal: [rscripts/did_v2.r](rscripts/did_v2.r)
+
+1. **Preparação de Dados**:
+   - Filtro de microrregiões produtoras de cana (via `filter_cana_producers()`)
+   - Transformações logarítmicas e criação de variáveis
+   - Construção da variável de tratamento (`gname`)
    - Criação de covariáveis e controles de spillover
 
-2. **Estimação principal** (`estimate_att()`):
-   - ATT(g,t) via método Doubly Robust
-   - Agregações: overall, event-study, por grupo
-   - Tratamento de singularidade com fallback automático
+2. **Estimação Principal**:
+   - ATT(g,t) via método Doubly Robust (combina regressão + IPW)
+   - Agregações: overall ATT, event-study, por grupo/coorte
+   - Fallback automático para estimadores alternativos em caso de singularidade
 
-3. **Testes de robustez**:
-   - **Placebo temporal**: Anos fictícios de tratamento
-   - **Placebo de outcome**: PIB não-agropecuário
-   - **Placebo aleatório**: Tratamento randomizado (50 simulações)
-   - **Especificações alternativas**: DR vs IPW vs Reg
+3. **Testes de Robustez**:
+   - Placebo com culturas alternativas (soja, arroz)
+   - Placebo aleatório com tratamento randomizado (Monte Carlo: 5.000 simulações)
+   - Especificações alternativas (DR, IPW, Regressão)
+   - Análise de sensibilidade temporal
 
-4. **Análises complementares**:
-   - **Heterogeneidade regional**: Por UF e grandes regiões
-   - **Tendências paralelas**: Visualização por coorte e gname
-   - **Análise de pesos**: Contribuição de cada grupo ao ATT
-   - **Event-study estendido**: -10 a +10 períodos
+4. **Análises Complementares**:
+   - Heterogeneidade regional (por UF e grandes regiões)
+   - Visualização de tendências paralelas (por coorte e gname)
+   - Análise de pesos e composição do ATT
+   - Event-study estendido (10 períodos antes/depois)
 
-5. **Geração de apresentação** (`generate_presentation()`):
-   - Dashboard HTML interativo
-   - Tabelas formatadas (gt)
-   - Visualizações publicáveis (300 DPI)
-   - Documentação automática de resultados
-
-## Funcionalidades principais do código
-
-### Análises disponíveis:
-1. **Estimação DiD principal**: ATT com método doubly robust
-2. **Testes placebo**: 
-   - Temporal (anos fictícios)
-   - Outcome alternativo (PIB não-agrícola)
-   - Aleatório (50 simulações)
-3. **Análise de tendências paralelas**:
-   - Por coorte de adoção
-   - Por grupo de tratamento (gname)
-   - Testes formais de interação
-4. **Heterogeneidade regional**:
-   - Análise por UF (agregada)
-   - Análise por grandes regiões
-5. **Visualizações avançadas**:
-   - Event-study dinâmico
-   - Mapas de calor regionais
-   - Forest plots de robustez
+5. **Outputs Gerados**:
+   - Objetos R serializados (`.rds`) com resultados completos
+   - Tabelas em CSV para análise externa
+   - Visualizações em alta resolução (PNG 300 DPI, PDF vetorial)
    - Dashboard HTML interativo
 
-## Estrutura do repositório
+#### Script de Extração: [rscripts/generate_latex_values.r](rscripts/generate_latex_values.r)
+
+Este script implementa a integração automática entre R e LaTeX:
+
+1. **Leitura de Outputs**:
+   - Carrega resultados `.rds` gerados por `did_v2.r`
+   - Extrai ATTs agregados, ICs, p-valores
+   - Processa tabelas de robustez e heterogeneidade
+
+2. **Geração de Macros LaTeX**:
+   - Cria comandos `\newcommand` para cada valor numérico
+   - Formata números com precisão adequada (casas decimais, porcentagens)
+   - Gera tabelas pequenas em formato LaTeX
+
+3. **Sincronização**:
+   - Garante que todos os valores no documento LaTeX são atualizados automaticamente
+   - Elimina necessidade de copiar/colar valores manualmente
+   - Reduz erros de transcrição
+
+4. **Output**:
+   - Arquivo `data/outputs/latex_values.tex` com todas as macros
+   - Incluído automaticamente no documento principal via `\input{}`
+
+## Estrutura do Repositório
+
 ```
-├── data/                 # Dados brutos e tratados
-│   ├── csv/              # Arquivos CSV intermediários
-│   ├── outputs/          # Resultados das análises
-│   │   └── presentation/ # Dashboard e visualizações
-│   ├── parquet/          # Arquivos Parquet
-│   └── sql_query/        # Consultas SQL usadas no BigQuery
-├── documents/            # Rascunhos e versão final do TCC
-│   └── drafts/           # Versões LaTeX do documento
-├── rscripts/             # Scripts em R (análises estatísticas)
-│   └── did_v2.r          # Script principal do modelo
-├── scripts/              # Scripts em Python (ETL, coleta de dados)
-├── renv/ & renv.lock     # Ambiente R reproduzível (renv)
-├── requirements.txt      # Dependências Python
-└── Makefile              # Comandos automatizados
+.
+├── data/
+│   ├── csv/                        # Dados processados em formato CSV
+│   │   └── microrregions_Cana-de-açúcar-Soja-Arroz_2003-2021_mapbiomas.csv
+│   ├── outputs/                    # Resultados das análises
+│   │   ├── *.rds                   # Objetos R serializados (ATT results)
+│   │   ├── *.csv                   # Tabelas de resultados
+│   │   ├── *.png, *.pdf            # Visualizações
+│   │   ├── latex_values.tex        # Macros LaTeX auto-gerados
+│   │   ├── descriptive_analysis/   # Análises descritivas
+│   │   ├── additional_figures/     # Figuras complementares
+│   │   └── presentation/           # Dashboard HTML e material para apresentação
+│   └── sql_query/                  # Consultas SQL do BigQuery
+│
+├── documents/
+│   └── drafts/
+│       └── latex_output/
+│           ├── TCC_DanielCavalli_ABNT2.tex    # Documento principal da tese
+│           ├── TCC_DanielCavalli_ABNT2.pdf    # PDF compilado
+│           └── referencias.bib                 # Bibliografia
+│
+├── rscripts/                       # Scripts de análise em R
+│   ├── did_v2.r                   # Pipeline principal de análise DiD
+│   ├── generate_latex_values.r    # Extração de valores para LaTeX
+│   ├── data_prep_crop_filters.R   # Funções de filtro por cultura
+│   └── *.r                        # Scripts complementares
+│
+├── data_extraction/                # Notebooks de extração de dados
+│   └── analise_did_microrregions.py
+│
+├── Makefile                        # Automação do pipeline completo
+├── renv.lock                       # Lock de dependências R (renv)
+├── requirements.txt                # Dependências Python
+└── README.md                       # Este arquivo
 ```
 
 ## Guia Detalhado dos Diretórios
 
-### 📁 `rscripts/` - Scripts de Análise em R
+### `rscripts/` - Scripts de Análise em R
 
 Este diretório contém todos os scripts R utilizados para análise estatística e econométrica do projeto.
 
@@ -189,265 +268,316 @@ Este diretório contém todos os scripts R utilizados para análise estatística
 
 | Arquivo | Descrição | Funcionalidades |
 |---------|-----------|-----------------|
-| **`did_v2.r`** | Script principal do modelo DiD | • Estimação do ATT via Callaway & Sant'Anna (2021)<br>• Testes de robustez e placebo<br>• Análise de tendências paralelas<br>• Geração de todas as visualizações<br>• Dashboard HTML automático |
-| **`balance_adjustments.r`** | Análise de balanceamento | • Diagnóstico de covariáveis<br>• Ajustes de propensity score<br>• Verificação de overlap |
-| **`did_complementary_visualizations.r`** | Visualizações adicionais | • Gráficos de tendências por grupo<br>• Mapas de heterogeneidade regional<br>• Análises de sensibilidade visual |
-| **`did_complementary_visualizations_pt2.r`** | Visualizações avançadas | • Event-study estendido<br>• Análise de composição dinâmica<br>• Gráficos de qualidade dos dados |
-| **`generate_latex_values.r`** | Integração com LaTeX | • Extração automatizada de valores<br>• Geração de tabelas formatadas<br>• Criação de `auto_values.tex` |
+| **`did_v2.r`** | Script principal do modelo DiD | • Estimação do ATT via Callaway & Sant'Anna (2021)<br>• Testes de robustez e placebo<br>• Análise de tendências paralelas<br>• Geração de todas as visualizações<br>• Suporte a múltiplos outcomes (cana, soja, arroz, PIB) |
+| **`generate_latex_values.r`** | Integração com LaTeX | • Extração automatizada de valores dos outputs<br>• Geração de macros LaTeX (`\newcommand`)<br>• Criação de `data/outputs/latex_values.tex` |
+| **`data_prep_crop_filters.R`** | Funções de filtro | • `filter_cana_producers()`: filtra microrregiões produtoras de cana<br>• Funções análogas para soja e arroz<br>• Reutilizável em todo o pipeline |
+| **`balance_adjustments.r`** | Análise de balanceamento | • Diagnóstico de covariáveis<br>• Verificação de overlap no propensity score |
+| **`did_complementary_visualizations.r`** | Visualizações complementares | • Gráficos de tendências por grupo<br>• Mapas de heterogeneidade regional |
+| **`did_complementary_visualizations_pt2.r`** | Visualizações avançadas | • Event-study estendido<br>• Análise de composição dinâmica |
 
 #### Como executar:
-```r
-# Análise completa
-source("rscripts/did_v2.r")
 
-# Apenas visualizações
-source("rscripts/did_complementary_visualizations.r")
-```
-
-### 📁 `data_extraction/` - Extração e Preparação de Dados
-
-Contém notebooks e scripts para extração de dados do BigQuery e preparação inicial.
-
-#### Arquivos:
-
-| Arquivo | Descrição | Outputs |
-|---------|-----------|---------|
-| **`analise_did_microrregions.ipynb`** | Notebook principal de ETL | • Extração de dados do BigQuery<br>• Mapeamento município → microrregião<br>• Agregação de variáveis por produto<br>• Geração do CSV final |
-
-#### Funcionalidades do notebook:
-- **Flexibilidade de produtos**: Permite análise por produto único ou agregado
-- **Mapeamento geográfico**: Usa tabelas oficiais IBGE para agregação correta
-- **Queries otimizadas**: SQL eficiente para grandes volumes de dados
-- **Validação**: Checks de qualidade e consistência dos dados
-
-#### Exemplo de uso:
-```python
-# Para mudar o produto analisado, edite:
-PRODUTOS_AGRICOLAS = ['Cana-de-açúcar']  # Padrão
-# Ou
-PRODUTOS_AGRICOLAS = ['Soja', 'Milho']   # Agregado
-```
-
-### 📁 `documents/drafts/latex_output/` - Documentos LaTeX
-
-Diretório com o texto do TCC em LaTeX e arquivos relacionados.
-
-#### Estrutura:
-
-| Arquivo/Tipo | Descrição |
-|--------------|-----------|
-| **`TCC_DanielCavalli_ABNT2.tex`** | Documento principal do TCC em formato ABNT |
-| **`referencias.bib`** | Bibliografia em formato BibTeX |
-| **`auto_values.tex`** | Valores extraídos automaticamente dos resultados |
-| **`Makefile`** | Comandos para compilação do PDF |
-| **`*.png`** | Figuras incorporadas no documento |
-| **Auxiliares** | `.aux`, `.bbl`, `.log`, etc. (gerados na compilação) |
-
-#### Compilação:
+**Recomendado: Use o Makefile**
 ```bash
-cd documents/drafts/latex_output/
-make            # Compila o PDF
-make clean      # Remove arquivos auxiliares
-make preview    # Gera preview HTML
+make analysis          # Executa análise completa (5000 simulações MC)
+make analysis NSIMS=50 # Teste rápido (50 simulações)
 ```
 
-### 📁 `data/outputs/` - Resultados das Análises
+**Direto via Rscript:**
+```bash
+Rscript rscripts/did_v2.r           # Análise completa
+Rscript rscripts/did_v2.r --nsims 50  # Com 50 simulações
+```
 
-Diretório com todos os outputs gerados pelos scripts de análise.
+**No console R:**
+```r
+source("rscripts/did_v2.r")  # Análise completa
+```
 
-#### Organização:
+### `data_extraction/` - Extração e Preparação de Dados
 
-##### 📂 Raiz (`data/outputs/`)
-| Tipo de arquivo | Conteúdo | Exemplos |
-|-----------------|----------|----------|
-| **`.rds`** | Objetos R serializados | `att_results_*.rds` - Resultados do modelo<br>`agg_*.rds` - Agregações |
-| **`.csv`** | Tabelas de resultados | `att_summary.csv` - ATT principal<br>`robust_att.csv` - Testes de robustez |
-| **`.png`/`.pdf`** | Visualizações principais | `event_study.png` - Gráfico principal<br>`robustness_plot.png` - Forest plot |
-
-##### 📂 `descriptive_analysis/`
-Análises descritivas e exploratórias:
-- **HTML**: Dashboards interativos com estatísticas
-- **PNG**: Gráficos de distribuição e evolução temporal
-
-##### 📂 `additional_figures/`
-Análises complementares e sensibilidade:
-- Diagnósticos de qualidade dos dados
-- Análise de poder estatístico
-- Testes de sensibilidade temporal
-- Tendências por quartil de tamanho
-
-##### 📂 `presentation/`
-Material para apresentação final:
-- **`dashboard_resultados.html`**: Dashboard interativo completo
-- **Tabelas HTML**: Formatadas para apresentação
-- **Gráficos aprimorados**: Versões em alta resolução
-
-### 📁 `data/csv/` - Dados Processados
-
-Contém o dataset principal utilizado nas análises.
+Scripts Python para extração e preparação dos dados brutos via BigQuery.
 
 #### Arquivo principal:
 
-**`microrregions_Cana-de-açúcar_2003-2023.csv`**
+**`analise_did_microrregions.py`**
+- Extração de dados do BigQuery (PAM/IBGE, INMET, Contas Municipais)
+- Mapeamento de municípios para microrregiões (classificação IBGE)
+- Agregação de variáveis por cultura (cana, soja, arroz)
+- Construção da variável de tratamento (ano da primeira estação)
+- Geração do dataset final em CSV
 
-##### Estrutura do dataset:
+**Fontes de dados:**
+- Base dos Dados (basedosdados.org): PIB municipal, área plantada, produção agrícola
+- INMET: localização e data de instalação das estações meteorológicas
+- IBGE: mapeamento geográfico município-microrregião
+
+### `documents/drafts/latex_output/` - Documento Final da Tese
+
+Contém o documento LaTeX da tese em conformidade com normas ABNT.
+
+#### Arquivos principais:
+
+| Arquivo | Descrição |
+|---------|-----------|
+| **`TCC_DanielCavalli_ABNT2.tex`** | Documento principal (classe abntex2) |
+| **`TCC_DanielCavalli_ABNT2.pdf`** | PDF compilado da tese |
+| **`referencias.bib`** | Bibliografia em formato BibTeX |
+
+**Integração automática com R:**
+```latex
+% No preâmbulo do documento:
+\input{../../../data/outputs/latex_values.tex}
+
+% Uso no texto:
+O ATT agregado foi de \attCanaArea\% ...
+```
+
+#### Compilação:
+
+**Via Makefile (na raiz do projeto):**
+```bash
+make thesis     # Compila apenas a tese
+make docs       # Compila tese + apresentação
+```
+
+**Manualmente:**
+```bash
+cd documents/drafts/latex_output/
+pdflatex TCC_DanielCavalli_ABNT2.tex
+bibtex TCC_DanielCavalli_ABNT2
+pdflatex TCC_DanielCavalli_ABNT2.tex
+pdflatex TCC_DanielCavalli_ABNT2.tex
+```
+
+### `data/outputs/` - Resultados das Análises
+
+Todos os outputs gerados automaticamente pelo pipeline de análise.
+
+#### Organização:
+
+#####  Raiz (`data/outputs/`)
+
+**Objetos R (`.rds`):**
+- `att_results_dr_area_cana.rds`: Resultado completo da estimação (área de cana)
+- `att_results_dr_valor_producao_cana.rds`: Resultado para valor de produção
+- `agg_event_dr_*.rds`, `agg_overall_dr_*.rds`: Agregações event-study e overall
+
+**Tabelas (`.csv`):**
+- `att_summary_main_cana.csv`: Resumo dos ATTs principais
+- `robust_att_cana.csv`: Testes de robustez
+- `att_summary.csv`: Resultados agregados de todos os outcomes
+
+**Visualizações (`.png`, `.pdf`):**
+- `event_study_cana.png`: Gráfico event-study principal
+- `parallel_trends_complete_*.png`: Tendências paralelas por outcome
+- `robustness_plot.png`: Forest plot com testes de robustez
+
+**Integração LaTeX:**
+- `latex_values.tex`: Macros LaTeX com todos os valores numéricos
+
+#####  Subdiretórios
+
+- **`descriptive_analysis/`**: Análises exploratórias e descritivas
+- **`additional_figures/`**: Figuras complementares (poder estatístico, sensibilidade)
+- **`presentation/`**: Material para apresentação (dashboard HTML, figuras aprimoradas)
+
+### `data/csv/` - Dados Processados
+
+Dataset principal utilizado nas análises.
+
+#### Arquivo principal:
+
+**`microrregions_Cana-de-açúcar-Soja-Arroz_2003-2021_mapbiomas.csv`**
+
+Dataset em painel balanceado com múltiplas culturas (cana, soja, arroz) agregadas ao nível de microrregião.
+
+##### Variáveis principais:
 
 | Coluna | Tipo | Descrição |
 |--------|------|-----------|
-| `ano` | int | Ano da observação (2003-2023) |
+| `ano` | int | Ano da observação (2003-2021) |
 | `id_microrregiao` | int | Código IBGE da microrregião |
 | `sigla_uf` | str | Sigla do estado |
-| `primeiro_ano_tratamento` | int | Ano da primeira estação (gname) |
-| `tratado` | int | Indicador binário de tratamento |
-| `pos_tratamento` | int | Indicador pós-tratamento |
-| `area_plantada` | float | Área plantada em hectares |
-| `producao` | float | Produção em toneladas |
-| `valor_producao` | float | Valor da produção em R$ mil |
-| `populacao_total` | int | População municipal |
-| `pib_total` | float | PIB total em R$ |
-| `pib_agropecuario` | float | PIB agropecuário em R$ |
+| `primeiro_ano_tratamento` | int | Ano da primeira estação (variável de tratamento) |
+| `area_cana`, `area_soja`, `area_arroz` | float | Área plantada por cultura (hectares) |
+| `valor_producao_cana`, `_soja`, `_arroz` | float | Valor de produção por cultura (R$ mil, valores constantes) |
+| `pib_agropecuario` | float | PIB agropecuário (R$ constantes) |
+| `populacao_total` | int | População municipal agregada |
+| `densidade_estacoes_uf` | float | Densidade de estações por km² no estado |
 
 ##### Características:
 - **Unidade**: Microrregião-ano
-- **Período**: 2003-2023 (21 anos)
-- **Observações**: 10.290 (490 microrregiões × 21 anos)
-- **Formato**: CSV com encoding UTF-8
-
-#### Uso nos scripts:
-```r
-# Em R
-df <- read_csv("data/csv/microrregions_Cana-de-açúcar_2003-2023.csv")
-
-# Em Python
-df = pd.read_csv("data/csv/microrregions_Cana-de-açúcar_2003-2023.csv")
-```
+- **Período**: 2003-2021 (19 anos)
+- **Observações**: ~9.310 (490 microrregiões produtoras × 19 anos)
+- **Formato**: CSV, UTF-8, separador vírgula
+- **Filtro**: Microrregiões com pelo menos um ano de produção da cultura relevante
 
 ## Pré-requisitos
 
-| Tecnologia | Versão recomendada |
-|------------|--------------------|
-| Python     | ≥ 3.9              |
-| R          | ≥ 4.5              |
-| Renv       | ≥ 1.0              |
-| GNU Make   | Opcional, para facilitar comandos |
+| Tecnologia | Versão | Necessário para |
+|------------|--------|-----------------|
+| **R** | ≥ 4.5 | Análise estatística |
+| **Python** | ≥ 3.9 | Extração de dados (opcional) |
+| **LaTeX** | texlive-full | Compilação da tese |
+| **GNU Make** | Qualquer versão | Automação (recomendado) |
 
-Além disso é necessário acesso à [Google Cloud BigQuery](https://cloud.google.com/bigquery) para executar as consultas SQL presentes em `data/sql_query/`.
+**Nota sobre extração de dados:** Os dados já processados estão incluídos no repositório. A extração via BigQuery só é necessária para replicar completamente desde a origem ou modificar a amostra.
 
-## Instalação do ambiente
-1. **Clone o repositório:**
-   ```bash
-   git clone https://github.com/<usuario>/tcc-ie-ufrj-2024.git
-   cd tcc-ie-ufrj-2024
-   ```
-2. **Python:** crie um ambiente virtual e instale as dependências.
-   ```bash
-   python -m venv .venv
-   source .venv/bin/activate
-   pip install -r requirements.txt
-   ```
-3. **R:** restaure o ambiente renv.
-   ```R
-   # No console R
-   renv::restore()
-   ```
+## Instalação do Ambiente
 
-Opcionalmente, utilize o **Makefile** para automatizar passos comuns:
+### 1. Clone o repositório:
 ```bash
-make setup            # Instala dependências Python e R
-make reproduce-data    # Executa pipeline de extração e tratamento
-make analysis          # Roda os scripts de análise estatística
-```
-
-## Reprodução dos resultados
-
-### 1. Preparação do ambiente:
-```bash
-# Clone o repositório
-git clone https://github.com/[usuario]/tcc-ie-ufrj-2024.git
+git clone https://github.com/danielcavalli/tcc-ie-ufrj-2024.git
 cd tcc-ie-ufrj-2024
-
-# Python: criar ambiente virtual
-python -m venv .venv
-source .venv/bin/activate  # No Windows: .venv\Scripts\activate
-pip install -r requirements.txt
-
-# R: restaurar pacotes
-R -e "renv::restore()"
 ```
 
-### 2. Obtenção dos dados:
-Os dados já processados estão disponíveis em:
-- `data/csv/microrregions_Cana-de-açúcar_2003-2023.csv` (arquivo principal)
-- Alternativamente, execute as queries SQL em `data/sql_query/` no BigQuery
-
-### 3. Execução da análise completa:
+### 2. Configure o ambiente R:
 ```bash
-# Rodar o pipeline completo de análise DiD
+# Via Makefile (recomendado):
+make renv-restore
+
+# Ou manualmente no console R:
+R -e "install.packages('renv'); renv::restore()"
+```
+
+### 3. (Opcional) Configure Python para extração de dados:
+```bash
+make install  # Cria venv e instala dependências
+# Ou manualmente:
+python -m venv .venv
+source .venv/bin/activate  # Windows: .venv\Scripts\activate
+pip install -r requirements.txt
+```
+
+## Reprodução Completa dos Resultados
+
+### Workflow Recomendado:
+
+#### 1. Instale as dependências (seção anterior)
+
+#### 2. Execute o pipeline completo via Makefile:
+
+```bash
+# Pipeline completo: análise + compilação da tese
+make analysis    # Roda análise DiD + extrai valores para LaTeX
+make thesis      # Compila o documento PDF
+
+# Ou em um único comando:
+make analysis && make thesis
+```
+
+**Para teste rápido (50 simulações ao invés de 5000):**
+```bash
+make analysis NSIMS=50
+```
+
+#### 3. Outputs gerados:
+
+Após executar `make analysis`, você terá:
+
+- **`data/outputs/att_results_*.rds`**: Resultados completos das estimações
+- **`data/outputs/att_summary*.csv`**: Resumos tabulares dos ATTs
+- **`data/outputs/*.png`**: Todas as visualizações (event-study, tendências paralelas, robustez)
+- **`data/outputs/latex_values.tex`**: Macros LaTeX com valores numéricos
+
+Após executar `make thesis`, você terá:
+
+- **`documents/drafts/latex_output/TCC_DanielCavalli_ABNT2.pdf`**: Documento final da tese
+
+### Execução Passo a Passo (sem Makefile):
+
+```bash
+# 1. Análise econométrica
 Rscript rscripts/did_v2.r
+
+# 2. Extração de valores para LaTeX
+Rscript rscripts/generate_latex_values.r
+
+# 3. Compilação da tese
+cd documents/drafts/latex_output/
+pdflatex TCC_DanielCavalli_ABNT2.tex
+bibtex TCC_DanielCavalli_ABNT2
+pdflatex TCC_DanielCavalli_ABNT2.tex
+pdflatex TCC_DanielCavalli_ABNT2.tex
 ```
 
-Isso irá gerar automaticamente:
-- Estimativas do modelo em `data/outputs/`
-- Visualizações em `data/outputs/` (PNG, 300 DPI)
-- Dashboard HTML em `data/outputs/presentation/`
-- Tabelas de resultados em formatos CSV e HTML
+## Fontes de Dados
 
-### 4. Visualizações específicas:
-```r
-# Para gerar apenas visualizações de tendências paralelas
-source("rscripts/did_v2.r")
-plot_parallel_trends(df_clean, "log_pib_agro")
-plot_parallel_trends_by_gname(df_clean, "log_pib_agro")
-```
+Este projeto utiliza dados públicos agregados de múltiplas fontes oficiais:
 
-## Fontes de dados
+### 1. Produção Agrícola Municipal (PAM/IBGE)
+- **Fonte**: IBGE via Base dos Dados
+- **Conteúdo**: Área plantada, produção e valor de produção por cultura e município
+- **Culturas**: Cana-de-açúcar, soja, arroz
+- **Período**: 2003-2021
+- **Acesso**: [basedosdados.org](https://basedosdados.org/)
 
-### Dados principais:
-* **PAM/IBGE**: Produção Agrícola Municipal
-  - PIB agropecuário municipal
-  - Área plantada, produção e produtividade por cultura
-  - Período: 2003-2023
+### 2. Estações Meteorológicas (INMET)
+- **Fonte**: Instituto Nacional de Meteorologia
+- **Conteúdo**: Localização geográfica e ano de instalação das estações automáticas
+- **Uso**: Construção da variável de tratamento (primeiro ano com estação na microrregião)
+- **Acesso**: Portal INMET / Base dos Dados
 
-* **INMET**: Instituto Nacional de Meteorologia
-  - Localização e data de instalação das estações automáticas
-  - Dados meteorológicos (temperatura, precipitação)
-  
-* **IBGE - Contas Municipais**:
-  - PIB total e setorial
-  - População municipal
-  - Indicadores socioeconômicos
+### 3. PIB Municipal (IBGE)
+- **Fonte**: IBGE Contas Regionais via Base dos Dados
+- **Conteúdo**: PIB total, PIB agropecuário, PIB per capita
+- **Período**: 2003-2021
+- **Uso**: Outcomes agregados e covariáveis
 
-### Acesso aos dados:
-* Dados processados disponíveis no repositório
-* Queries originais em `data/sql_query/` para replicação via BigQuery
-* Base de dados pública: [basedosdados.org](https://basedosdados.org/)
+### 4. População (IBGE)
+- **Fonte**: IBGE Estimativas Populacionais
+- **Uso**: Covariável de controle
+
+### 5. Classificação Geográfica (IBGE)
+- **Fonte**: Divisões Territoriais IBGE
+- **Uso**: Mapeamento município → microrregião
+
+**Replicação:** Todas as queries SQL utilizadas estão documentadas em `data/sql_query/`. O dataset processado já está incluído no repositório.
 
 ## Licença
 
 Este projeto é licenciado sob os termos da [GNU General Public License v3.0](LICENSE). Isso significa que você pode:
-- ✅ Usar o código para qualquer propósito
-- ✅ Modificar o código fonte
-- ✅ Distribuir o código original ou modificado
-- ✅ Usar o código em projetos comerciais
+- Usar o código para qualquer propósito
+- Modificar o código fonte
+- Distribuir o código original ou modificado
+- Usar o código em projetos comerciais
 
 Com as seguintes condições:
-- 📋 Deve manter a mesma licença GPL v3.0
-- 📋 Deve disponibilizar o código fonte
-- 📋 Deve documentar as modificações realizadas
-- 📋 Deve incluir a licença e avisos de copyright
+- Deve manter a mesma licença GPL v3.0
+- Deve disponibilizar o código fonte
+- Deve documentar as modificações realizadas
+- Deve incluir a licença e avisos de copyright
 
 Para mais detalhes, consulte o arquivo [LICENSE](LICENSE) ou visite [GNU GPL v3.0](https://www.gnu.org/licenses/gpl-3.0.html).
 
-## Autor e citação
+## Citação
 
-| Autor | Contato |
-|-------|---------|
-| Daniel Cavalli | <daniel.cavalli@ufrj.br> |
+Se você utilizar este código, dados ou metodologia em seu trabalho, por favor cite:
 
-Se você utilizar este código ou dados em seu trabalho, por favor cite da seguinte forma:
+```bibtex
+@mastersthesis{cavalli2025,
+  author  = {Cavalli, Daniel},
+  title   = {Impacto de Estações Meteorológicas na Cultura de Cana-de-Açúcar: Uma Aplicação de Diferenças em Diferenças com Tratamento Escalonado},
+  school  = {Instituto de Economia, Universidade Federal do Rio de Janeiro},
+  year    = {2025},
+  type    = {Trabalho de Conclusão de Curso},
+  address = {Rio de Janeiro, Brasil}
+}
+```
 
-> Cavalli, D. (2024). *Impacto de Estações Meteorológicas no PIB Agropecuário: Uma Análise via Difference-in-Differences*. Trabalho de Conclusão de Curso (Graduação em Ciências Econômicas), Instituto de Economia, Universidade Federal do Rio de Janeiro.
+## Contato
+
+**Daniel Cavalli**
+Instituto de Economia, UFRJ
+Email: daniel.cavalli@ufrj.br
+GitHub: [@danielcavalli](https://github.com/danielcavalli)
 
 ---
 
-**Observação:** Este repositório segue as recomendações de reprodutibilidade do [Turing Way](https://the-turing-way.netlify.app/).
+## Notas Adicionais
+
+- Este repositório implementa as melhores práticas de reprodutibilidade científica recomendadas pelo [Turing Way](https://the-turing-way.netlify.app/)
+- Todos os valores numéricos reportados na tese são gerados automaticamente pelo pipeline, eliminando erros de transcrição
+- O código está documentado extensivamente para facilitar compreensão e adaptação futura
+- Questões e sugestões são bem-vindas via [GitHub Issues](https://github.com/danielcavalli/tcc-ie-ufrj-2024/issues)

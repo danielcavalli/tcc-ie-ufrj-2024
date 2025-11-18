@@ -1,0 +1,430 @@
+{
+  "ano": {
+    "label": "Calendar year",
+    "type": "integer",
+    "source": "constructed",
+    "stats": {
+      "n": 10355,
+      "n_missing": 0,
+      "mean": 2012.0,
+      "std": 5.477490066713454,
+      "min": 2003.0,
+      "max": 2021.0,
+      "median": 2012.0,
+      "q25": 2007.0,
+      "q75": 2017.0
+    },
+    "units": "year",
+    "notes": "Panel time dimension"
+  },
+  "id_microrregiao": {
+    "label": "IBGE microrregião code",
+    "type": "string",
+    "source": "IBGE Diretórios Brasil",
+    "stats": {
+      "n": 10355,
+      "n_missing": 0,
+      "n_unique": 545,
+      "top_values": [
+        {
+          "value": "11001",
+          "count": 19
+        },
+        {
+          "value": "35031",
+          "count": 19
+        },
+        {
+          "value": "35025",
+          "count": 19
+        },
+        {
+          "value": "35026",
+          "count": 19
+        },
+        {
+          "value": "35027",
+          "count": 19
+        },
+        {
+          "value": "35028",
+          "count": 19
+        },
+        {
+          "value": "35029",
+          "count": 19
+        },
+        {
+          "value": "35030",
+          "count": 19
+        },
+        {
+          "value": "35032",
+          "count": 19
+        },
+        {
+          "value": "31035",
+          "count": 19
+        }
+      ]
+    },
+    "notes": "Panel cross-sectional unit identifier"
+  },
+  "sigla_uf": {
+    "label": "State abbreviation (UF)",
+    "type": "string",
+    "source": "IBGE Diretórios Brasil",
+    "stats": {
+      "n": 10355,
+      "n_missing": 0,
+      "n_unique": 27,
+      "top_values": [
+        {
+          "value": "MG",
+          "count": 1254
+        },
+        {
+          "value": "SP",
+          "count": 1197
+        },
+        {
+          "value": "PR",
+          "count": 741
+        },
+        {
+          "value": "RS",
+          "count": 665
+        },
+        {
+          "value": "CE",
+          "count": 627
+        },
+        {
+          "value": "BA",
+          "count": 570
+        },
+        {
+          "value": "PB",
+          "count": 437
+        },
+        {
+          "value": "PA",
+          "count": 418
+        },
+        {
+          "value": "MT",
+          "count": 418
+        },
+        {
+          "value": "MA",
+          "count": 399
+        }
+      ]
+    },
+    "notes": "Two-letter state code"
+  },
+  "primeiro_ano_tratamento": {
+    "label": "Year of first INMET station installation",
+    "type": "integer",
+    "source": "INMET",
+    "stats": {
+      "n": 10355,
+      "n_missing": 0,
+      "mean": 1421.919266055046,
+      "std": 912.6486735663472,
+      "min": 0.0,
+      "max": 2019.0,
+      "median": 2006.0,
+      "q25": 0.0,
+      "q75": 2008.0
+    },
+    "units": "year",
+    "notes": "Zero if no station installed; minimum foundation year across all stations in the microrregião"
+  },
+  "tratado": {
+    "label": "Treatment group indicator",
+    "type": "integer",
+    "source": "constructed",
+    "stats": {
+      "n": 10355,
+      "n_missing": 0,
+      "mean": 0.708256880733945,
+      "std": 0.4545866562888093,
+      "min": 0.0,
+      "max": 1.0,
+      "median": 1.0,
+      "q25": 0.0,
+      "q75": 1.0
+    },
+    "notes": "1 if microrregião ever receives a meteorological station, 0 otherwise"
+  },
+  "pos_tratamento": {
+    "label": "Post-treatment indicator",
+    "type": "integer",
+    "source": "constructed",
+    "stats": {
+      "n": 10355,
+      "n_missing": 0,
+      "mean": 0.5303718010622888,
+      "std": 0.4991008013090031,
+      "min": 0.0,
+      "max": 1.0,
+      "median": 1.0,
+      "q25": 0.0,
+      "q75": 1.0
+    },
+    "notes": "1 if year >= first treatment year and microrregião is treated, 0 otherwise"
+  },
+  "area_plantada_arroz": {
+    "label": "Planted area of Arroz (em casca)",
+    "type": "float",
+    "source": "MapBiomas cobertura_municipio_classe",
+    "stats": {
+      "n": 10355,
+      "n_missing": 0,
+      "mean": 16.05650305046313,
+      "std": 119.42227292592634,
+      "min": 0.0,
+      "max": 4453.979808095791,
+      "median": 0.0,
+      "q25": 0.0,
+      "q75": 0.0
+    },
+    "units": "km²",
+    "notes": "MapBiomas class 40; aggregated from municipal to microrregião level"
+  },
+  "area_plantada_cana": {
+    "label": "Planted area of Cana-de-açúcar",
+    "type": "float",
+    "source": "MapBiomas cobertura_municipio_classe",
+    "stats": {
+      "n": 10355,
+      "n_missing": 0,
+      "mean": 133.87289576307523,
+      "std": 444.1510360090264,
+      "min": 0.0,
+      "max": 4323.542113944719,
+      "median": 0.0,
+      "q25": 0.0,
+      "q75": 2.865885781921393
+    },
+    "units": "km²",
+    "notes": "MapBiomas class 20; aggregated from municipal to microrregião level"
+  },
+  "area_plantada_soja": {
+    "label": "Planted area of Soja (em grão)",
+    "type": "float",
+    "source": "MapBiomas cobertura_municipio_classe",
+    "stats": {
+      "n": 10355,
+      "n_missing": 0,
+      "mean": 589.0457682686081,
+      "std": 1694.759557124281,
+      "min": 0.0,
+      "max": 23001.636116577993,
+      "median": 4.155361249877927,
+      "q25": 0.0,
+      "q75": 344.7241587431661
+    },
+    "units": "km²",
+    "notes": "MapBiomas class 39; aggregated from municipal to microrregião level"
+  },
+  "valor_producao_arroz": {
+    "label": "Production value of Arroz (em casca)",
+    "type": "float",
+    "source": "PAM/IBGE lavoura_temporaria",
+    "stats": {
+      "n": 10355,
+      "n_missing": 0,
+      "mean": 14612.559246740704,
+      "std": 93990.01583974119,
+      "min": 0.0,
+      "max": 4361316.0,
+      "median": 166.0,
+      "q25": 0.0,
+      "q75": 2170.0
+    },
+    "units": "BRL (nominal)",
+    "notes": "Sum of production value for Arroz (em casca); aggregated from municipal to microrregião level"
+  },
+  "valor_producao_cana": {
+    "label": "Production value of Cana-de-açúcar",
+    "type": "float",
+    "source": "PAM/IBGE lavoura_temporaria",
+    "stats": {
+      "n": 10355,
+      "n_missing": 0,
+      "mean": 68017.2862385321,
+      "std": 221447.22001077817,
+      "min": 0.0,
+      "max": 3143740.0,
+      "median": 1628.0,
+      "q25": 151.0,
+      "q75": 17806.0
+    },
+    "units": "BRL (nominal)",
+    "notes": "Sum of production value for Cana-de-açúcar; aggregated from municipal to microrregião level"
+  },
+  "valor_producao_soja": {
+    "label": "Production value of Soja (em grão)",
+    "type": "float",
+    "source": "PAM/IBGE lavoura_temporaria",
+    "stats": {
+      "n": 10355,
+      "n_missing": 0,
+      "mean": 151289.06779333655,
+      "std": 596909.1225769712,
+      "min": 0.0,
+      "max": 19102194.0,
+      "median": 0.0,
+      "q25": 0.0,
+      "q75": 54162.0
+    },
+    "units": "BRL (nominal)",
+    "notes": "Sum of production value for Soja (em grão); aggregated from municipal to microrregião level"
+  },
+  "area_total_km2": {
+    "label": "Total land area",
+    "type": "float",
+    "source": "MapBiomas cobertura_municipio_classe",
+    "stats": {
+      "n": 10355,
+      "n_missing": 0,
+      "mean": 15494.64674190724,
+      "std": 29757.500406045525,
+      "min": 271.8170805363685,
+      "max": 331420.15758569585,
+      "median": 5591.494317198252,
+      "q25": 2890.1465236633026,
+      "q75": 16188.724449284122
+    },
+    "units": "km²",
+    "notes": "Total area across all land cover classes"
+  },
+  "populacao_total": {
+    "label": "Total population",
+    "type": "integer",
+    "source": "IBGE População",
+    "stats": {
+      "n": 10355,
+      "n_missing": 0,
+      "mean": 357503.41632061807,
+      "std": 913796.8598140725,
+      "min": 17687.0,
+      "max": 15221420.0,
+      "median": 178422.0,
+      "q25": 105033.0,
+      "q75": 313744.5
+    },
+    "units": "persons",
+    "notes": "Aggregated municipal population"
+  },
+  "pib_total": {
+    "label": "Total GDP",
+    "type": "integer",
+    "source": "IBGE PIB",
+    "stats": {
+      "n": 10355,
+      "n_missing": 0,
+      "mean": 8797402167.16562,
+      "std": 36874463089.48917,
+      "min": 39834000.0,
+      "max": 979556984000.0,
+      "median": 2297583000.0,
+      "q25": 975715000.0,
+      "q75": 5683184500.0
+    },
+    "units": "BRL (nominal, 1000s)",
+    "notes": "Gross domestic product at current prices"
+  },
+  "pib_per_capita": {
+    "label": "GDP per capita",
+    "type": "float",
+    "source": "constructed",
+    "stats": {
+      "n": 10355,
+      "n_missing": 0,
+      "mean": 17991.54248961854,
+      "std": 16206.744931037136,
+      "min": 1287.34,
+      "max": 265522.53,
+      "median": 13267.87,
+      "q25": 7695.795,
+      "q75": 23758.21
+    },
+    "units": "BRL per person (nominal)",
+    "notes": "Computed as pib_total / populacao_total"
+  },
+  "pib_agropecuario": {
+    "label": "Agricultural GDP",
+    "type": "integer",
+    "source": "IBGE PIB",
+    "stats": {
+      "n": 10355,
+      "n_missing": 0,
+      "mean": 421256869.0487687,
+      "std": 642047763.9263777,
+      "min": 3475000.0,
+      "max": 15743857000.0,
+      "median": 234340000.0,
+      "q25": 100210000.0,
+      "q75": 504466500.0
+    },
+    "units": "BRL (nominal, 1000s)",
+    "notes": "Value added from agricultural and livestock activities"
+  },
+  "precip_total_anual_mm": {
+    "label": "Total annual precipitation",
+    "type": "float",
+    "source": "CDS/ERA5 local CSV",
+    "stats": {
+      "n": 10355,
+      "n_missing": 0,
+      "mean": 436.61727014876874,
+      "std": 333.26783678279315,
+      "min": 16.95863405863443,
+      "max": 3204.779465993245,
+      "median": 346.1898167928059,
+      "q25": 198.52368036905932,
+      "q75": 572.0254387174334
+    },
+    "units": "mm",
+    "notes": "Sum of municipal precipitation totals within microrregião"
+  },
+  "precip_media_mensal_mm": {
+    "label": "Mean monthly precipitation",
+    "type": "float",
+    "source": "CDS/ERA5 local CSV",
+    "stats": {
+      "n": 10355,
+      "n_missing": 0,
+      "mean": 3.6927947688249185,
+      "std": 1.5641619721764894,
+      "min": 0.21512788019062568,
+      "max": 10.134417601306017,
+      "median": 3.5951278827808526,
+      "q25": 2.5848364620877997,
+      "q75": 4.645894315163638
+    },
+    "units": "mm",
+    "notes": "Average of municipal mean monthly precipitation"
+  },
+  "precip_max_mensal_mm": {
+    "label": "Maximum monthly precipitation",
+    "type": "float",
+    "source": "CDS/ERA5 local CSV",
+    "stats": {
+      "n": 10355,
+      "n_missing": 0,
+      "mean": 9.514117898674542,
+      "std": 3.582938957327794,
+      "min": 0.6687641143798827,
+      "max": 29.152274131774874,
+      "median": 9.261119933355426,
+      "q25": 7.171803050571018,
+      "q75": 11.6693205905683
+    },
+    "units": "mm",
+    "notes": "Average of municipal maximum monthly precipitation"
+  }
+}
