@@ -4,16 +4,16 @@
 
 Este repositório contém os códigos, dados e documentação do TCC desenvolvido no Instituto de Economia da UFRJ. O estudo investiga o impacto causal da instalação de estações meteorológicas automáticas sobre a produção de cana-de-açúcar no Brasil, utilizando o estimador de Diferenças em Diferenças (DiD) com adoção escalonada de Callaway e Sant'Anna (2021).
 
-## Destaques do Projeto
+## Características da Implementação
 
-- **Metodologia Estado da Arte**: Implementação completa do estimador Callaway & Sant'Anna (2021) para DiD com adoção escalonada
-- **Pipeline Totalmente Automatizado**: Da análise estatística ao documento final, sem intervenção manual
-- **Integração R + LaTeX**: Valores numéricos extraídos automaticamente dos outputs e inseridos no documento via macros
-- **Reprodutibilidade Completa**: Gerenciamento de dependências com `renv`, documentação extensiva, comandos via Makefile
-- **Testes Rigorosos**: Placebo Monte Carlo (5.000 simulações), tendências paralelas, múltiplas especificações
-- **Dados Públicos**: Todas as fontes são abertas e documentadas, queries SQL disponíveis
+- **Metodologia**: Aplicação do estimador Callaway & Sant'Anna (2021) para DiD com adoção escalonada.
+- **Pipeline de Análise**: Automação do fluxo de dados, estimação e geração de resultados via Makefile.
+- **Integração R/LaTeX**: Exportação automática de estimativas e estatísticas para o documento final.
+- **Reprodutibilidade**: Controle de ambiente com `renv` e documentação de dependências.
+- **Validação**: Inclui testes de placebo (Monte Carlo), tendências paralelas e análises de sensibilidade.
+- **Dados**: Scripts de extração e processamento para fontes públicas (IBGE, INMET).
 
-## 📋 Sumário
+## Sumário
 
 1. [Resumo da Pesquisa](#resumo-da-pesquisa)
 2. [Resultados Principais](#resultados-principais)
@@ -25,7 +25,7 @@ Este repositório contém os códigos, dados e documentação do TCC desenvolvid
 8. [Reprodução Completa dos Resultados](#reprodução-completa-dos-resultados)
 9. [Citação](#citação)
 
-## 📊 Resumo da Pesquisa
+## Resumo da Pesquisa
 
 **Pergunta:** A instalação de estações meteorológicas automáticas aumenta a produção de cana-de-açúcar local?
 
@@ -35,7 +35,7 @@ Este repositório contém os códigos, dados e documentação do TCC desenvolvid
 
 **Período:** 2003-2021 (19 anos)
 
-**Unidades:** 490 microrregiões produtoras de cana-de-açúcar
+**Unidades:** 225 microrregiões produtoras de cana-de-açúcar
 
 **Outcomes Analisados:**
 - Área plantada de cana-de-açúcar (outcome principal)
@@ -43,7 +43,7 @@ Este repositório contém os códigos, dados e documentação do TCC desenvolvid
 - PIB agropecuário (medida agregada)
 - Culturas alternativas: soja e arroz (testes de especificidade)
 
-## 🎯 Resultados Principais
+## Resultados Principais
 
 Os resultados reportados abaixo são obtidos através do pipeline automatizado implementado em [rscripts/did_v2.r](rscripts/did_v2.r). Todos os valores numéricos são extraídos automaticamente e incorporados no documento LaTeX através do script [rscripts/generate_latex_values.r](rscripts/generate_latex_values.r).
 
@@ -115,7 +115,7 @@ Empregamos o modelo de Diferenças em Diferenças (DiD) com adoção escalonada 
 ### Estrutura dos Dados:
 - **Unidade de análise**: Microrregião (agregação de municípios segundo IBGE)
 - **Período**: 2003-2021 (19 anos)
-- **Painel**: Balanceado com 490 microrregiões produtoras de cana × 19 anos = 9.310 observações
+- **Painel**: Balanceado com 225 microrregiões produtoras de cana × 19 anos = 9.310 observações
 - **Grupo de controle**: "Not yet treated" (dinâmico, muda ao longo do tempo)
 - **Filtro de amostra**: Microrregiões com produção de cana-de-açúcar em pelo menos um ano
 
@@ -123,7 +123,7 @@ Empregamos o modelo de Diferenças em Diferenças (DiD) com adoção escalonada 
 
 ### Pipeline Completo:
 
-O projeto implementa um pipeline totalmente automatizado que garante reprodutibilidade e sincronização entre análise estatística e documento final:
+O projeto utiliza um pipeline automatizado para sincronizar a análise estatística com o documento final:
 
 1. **Análise Econométrica** ([rscripts/did_v2.r](rscripts/did_v2.r)):
    - Estimação dos efeitos via Callaway & Sant'Anna (2021)
@@ -409,7 +409,7 @@ Dataset em painel balanceado com múltiplas culturas (cana, soja, arroz) agregad
 ##### Características:
 - **Unidade**: Microrregião-ano
 - **Período**: 2003-2021 (19 anos)
-- **Observações**: ~9.310 (490 microrregiões produtoras × 19 anos)
+- **Observações**: ~9.310 (225 microrregiões produtoras × 19 anos)
 - **Formato**: CSV, UTF-8, separador vírgula
 - **Filtro**: Microrregiões com pelo menos um ano de produção da cultura relevante
 
@@ -424,83 +424,28 @@ Dataset em painel balanceado com múltiplas culturas (cana, soja, arroz) agregad
 
 **Nota sobre extração de dados:** Os dados já processados estão incluídos no repositório. A extração via BigQuery só é necessária para replicar completamente desde a origem ou modificar a amostra.
 
-## Instalação do Ambiente
+## Como Reproduzir
 
-### 1. Clone o repositório:
+### 1. Instalação
+
+Clone o repositório e instale as dependências do R:
+
 ```bash
 git clone https://github.com/danielcavalli/tcc-ie-ufrj-2024.git
 cd tcc-ie-ufrj-2024
-```
-
-### 2. Configure o ambiente R:
-```bash
-# Via Makefile (recomendado):
 make renv-restore
-
-# Ou manualmente no console R:
-R -e "install.packages('renv'); renv::restore()"
 ```
 
-### 3. (Opcional) Configure Python para extração de dados:
-```bash
-make install  # Cria venv e instala dependências
-# Ou manualmente:
-python -m venv .venv
-source .venv/bin/activate  # Windows: .venv\Scripts\activate
-pip install -r requirements.txt
-```
+### 2. Execução da Análise
 
-## Reprodução Completa dos Resultados
-
-### Workflow Recomendado:
-
-#### 1. Instale as dependências (seção anterior)
-
-#### 2. Execute o pipeline completo via Makefile:
+Para rodar a análise completa e gerar o PDF da tese:
 
 ```bash
-# Pipeline completo: análise + compilação da tese
-make analysis    # Roda análise DiD + extrai valores para LaTeX
-make thesis      # Compila o documento PDF
-
-# Ou em um único comando:
-make analysis && make thesis
+make analysis    # Executa scripts R
+make thesis      # Compila documento LaTeX
 ```
 
-**Para teste rápido (50 simulações ao invés de 5000):**
-```bash
-make analysis NSIMS=50
-```
-
-#### 3. Outputs gerados:
-
-Após executar `make analysis`, você terá:
-
-- **`data/outputs/att_results_*.rds`**: Resultados completos das estimações
-- **`data/outputs/att_summary*.csv`**: Resumos tabulares dos ATTs
-- **`data/outputs/*.png`**: Todas as visualizações (event-study, tendências paralelas, robustez)
-- **`data/outputs/latex_values.tex`**: Macros LaTeX com valores numéricos
-
-Após executar `make thesis`, você terá:
-
-- **`documents/drafts/latex_output/TCC_DanielCavalli_ABNT2.pdf`**: Documento final da tese
-
-### Execução Passo a Passo (sem Makefile):
-
-```bash
-# 1. Análise econométrica
-Rscript rscripts/did_v2.r
-
-# 2. Extração de valores para LaTeX
-Rscript rscripts/generate_latex_values.r
-
-# 3. Compilação da tese
-cd documents/drafts/latex_output/
-pdflatex TCC_DanielCavalli_ABNT2.tex
-bibtex TCC_DanielCavalli_ABNT2
-pdflatex TCC_DanielCavalli_ABNT2.tex
-pdflatex TCC_DanielCavalli_ABNT2.tex
-```
+Os resultados (gráficos e tabelas) estarão em `data/outputs/`. O PDF final estará em `documents/drafts/latex_output/`.
 
 ## Fontes de Dados
 
@@ -577,7 +522,6 @@ GitHub: [@danielcavalli](https://github.com/danielcavalli)
 
 ## Notas Adicionais
 
-- Este repositório implementa as melhores práticas de reprodutibilidade científica recomendadas pelo [Turing Way](https://the-turing-way.netlify.app/)
-- Todos os valores numéricos reportados na tese são gerados automaticamente pelo pipeline, eliminando erros de transcrição
-- O código está documentado extensivamente para facilitar compreensão e adaptação futura
+- Os valores numéricos reportados na tese são gerados pelo pipeline de análise, assegurando consistência entre o código e o texto.
+- O código segue práticas de organização para facilitar a reprodutibilidade dos resultados.
 - Questões e sugestões são bem-vindas via [GitHub Issues](https://github.com/danielcavalli/tcc-ie-ufrj-2024/issues)

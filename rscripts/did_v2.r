@@ -23,7 +23,6 @@
 #   - log_valor_producao_soja/arroz: valores de outras culturas (placebo)    #
 #                                                                              #
 # IDENTIFICAÇÃO CAUSAL:                                                        #
-#   - Variação no timing de adoção entre microrregiões (2003-2021)           #
 #   - Grupo de controle: unidades "not yet treated" (ainda não tratadas)      #
 #   - Assumimos tendências paralelas condicionais às covariáveis              #
 #                                                                              #
@@ -35,7 +34,14 @@
 #   5. Geração automatizada de visualizações e relatórios                    #
 #                                                                              #
 # NOTA: Este código prioriza transparência e reprodutibilidade, com          #
-# documentação extensiva de cada decisão metodológica.                       #
+# documentação extensiva de cada decisão metodológica.                        #
+# Como o código foi desenvolvido ao longo da escrita da tese, a documentação  #
+# aqui presente busca esclarecer e registrar decisões tomadas com o fim de    #
+# permitir que alguém visualizando o código consiga claramente enteder como este funciona. #
+# NOTA 2: Muitos dos problemas que tive durante o desenvolvimento             #
+# foram tratados de forma automatizada. É extremamente necessário ler os logs #
+# da execução para checar se tudo correu conforme o esperado ou se as automações #
+# ativaram os failsafes que implementei.                                      #
 ###############################################################################
 
 # ═══════════════════════════════════════════════════════════════════════════ #
@@ -192,6 +198,8 @@ CONFIG_N_SIMS <- if (!is.null(parsed_args$nsims)) {
 # │ CONFIGURAÇÃO: CAMINHOS DE ENTRADA E SAÍDA                               │ #
 # └─────────────────────────────────────────────────────────────────────────┘ #
 # Centraliza todos os caminhos de arquivos para facilitar manutenção.
+# Caso queira mudar o dataset base por um mais atualizado ou simplesmente mudar o path onde ele é escrito
+# isso pode ser feito aqui:
 # --------------------------------------------------------------------------- #
 CONFIG_PATH_INPUT_DATA <- here::here("data", "csv", "microrregions_Cana-de-açúcar_2003-2023.csv")
 CONFIG_PATH_OUTPUT_DIR <- here::here("data", "outputs")
@@ -221,9 +229,9 @@ cli::cli_rule()
 # └─────────────────────────────────────────────────────────────────────────┘ #
 #' prep_data(): Função central de preparação dos dados para análise DiD
 #'
-#' DESCRIÇÃO DETALHADA:
-#' Esta função implementa todas as transformações necessárias para adequar os
+#' Essa função implementa todas as transformações necessárias para adequar os
 #' dados brutos ao formato exigido pelo estimador de Callaway & Sant'Anna.
+#' Novas colunas precisam ser adicionadas aqui para estarem disponíveis no estimador. 
 #'
 #' TRANSFORMAÇÕES PRINCIPAIS:
 #'   1. LIMPEZA: Remove espaços em branco e converte tipos de dados
@@ -231,7 +239,7 @@ cli::cli_rule()
 #'   2. TRANSFORMAÇÃO LOGARÍTMICA: Aplica log(1+x) às variáveis de interesse
 #'      - Justificativa econométrica: lineariza relações multiplicativas
 #'      - Interpretação: coeficientes ≈ variações percentuais (elasticidades)
-#'      - log(1+x) evita problemas com zeros (log(0) = -∞)
+#'      - log(1+x) em específico evita problemas com zeros (log(0) = -∞)
 #'
 #'   3. CONSTRUÇÃO DO GRUPO DE TRATAMENTO (gname):
 #'      - gname = ano da PRIMEIRA estação instalada na microrregião
@@ -246,9 +254,6 @@ cli::cli_rule()
 #' @param path_csv String - Caminho para arquivo CSV com dados brutos
 #' @return Tibble formatado para análise DiD com estrutura de painel balanceado
 #'
-#' NOTA METODOLÓGICA: A qualidade da preparação dos dados é fundamental para
-#' a validade das estimativas causais. Cada transformação tem justificativa
-#' econométrica específica documentada no código.
 #' ---------------------------------------------------------------------------
 prep_data <- function(path_csv) {
   cli::cli_alert_info("Lendo dados de {path_csv} …")
@@ -257,7 +262,7 @@ prep_data <- function(path_csv) {
     # Conversão explícita para evitar fatores escondidos
     mutate(across(where(is.character), ~ trimws(.x)))
 
-  # Converter variáveis numéricas (conditionally based on what exists)
+  # Converter variáveis numéricas
   numeric_vars <- c(
     "area_plantada_cana", "area_plantada_soja", "area_plantada_arroz",
     "area_total_km2", "populacao_total", "pib_total",
@@ -272,7 +277,7 @@ prep_data <- function(path_csv) {
   df <- df %>%
     mutate(across(all_of(numeric_vars), as.numeric))
 
-  # Diagnóstico inicial
+  # EDA inicial
   cli::cli_alert_info("Estrutura dos dados:")
   cli::cli_alert_info("  - Período: {min(df$ano)} a {max(df$ano)}")
   cli::cli_alert_info("  - Microrregiões: {n_distinct(df$id_microrregiao)}")
@@ -292,7 +297,8 @@ prep_data <- function(path_csv) {
 
   # Calcular densidade de estações por UF e ano
   # NOTA: Esta variável captura spillovers espaciais - microrregiões podem
-  # se beneficiar de estações em áreas vizinhas dentro do mesmo estado
+  # se beneficiar de estações em áreas vizinhas dentro do mesmo estado. 
+  # Para mais informações checar tese salva em documents\drafts\latex_output\TCC_DanielCavalli_ABNT2.pdf
   densidade_uf <- df %>%
     group_by(sigla_uf, ano) %>%
     summarise(
@@ -308,7 +314,7 @@ prep_data <- function(path_csv) {
     left_join(densidade_uf, by = c("sigla_uf", "ano")) %>%
     mutate(
       # gname: ano do primeiro tratamento (0 para nunca tratadas)
-      # No novo dataset, primeiro_ano_tratamento = 0 já indica nunca tratado
+      # No dataset original da análise, primeiro_ano_tratamento = 0 indica nunca tratado
       gname = primeiro_ano_tratamento,
       # Indicador de nunca tratado
       never_treated = (primeiro_ano_tratamento == 0),
@@ -342,7 +348,7 @@ prep_data <- function(path_csv) {
     )
 
   # Adicionar valores de produção se existirem no dataset
-  # NOTA: Estas variáveis vêm da extração PAM/IBGE
+  # NOTA: Variáveis da PAM/IBGE "Valor_producao", geradas por cultura no dataset original
 
   # Valor agregado (soma de cana + soja + arroz)
   if ("valor_agregado" %in% names(df)) {
@@ -440,8 +446,8 @@ estimate_att <- function(df, method = "dr", seed = 42, control_grp = "notyettrea
   set.seed(seed)
   cli::cli_alert_info("Estimando ATT(g,t) com método {method} …")
 
-  # Seleção de covariáveis elegíveis - usando configuração centralizada
-  # Para modificar covariáveis, altere CONFIG_COVARIATES no topo do script
+  # Seleção de covariáveis elegíveis. 
+  # Usando CONFIG_COVARIATES definida no topo do script
   covars_ok <- check_covariates(df, CONFIG_COVARIATES)
 
   # Construção de fórmula
@@ -495,15 +501,14 @@ estimate_att <- function(df, method = "dr", seed = 42, control_grp = "notyettrea
   }
 
   # Persistência dos objetos para reuso
-  # Incluir outcome no nome do arquivo para diferenciar resultados por variável dependente
   dir_out <- here::here("data", "outputs")
   if (!dir.exists(dir_out)) dir.create(dir_out, recursive = TRUE)
-  outcome_suffix <- gsub("log_", "", outcome)  # Remove "log_" prefix for cleaner names
+  outcome_suffix <- gsub("log_", "", outcome)
   saveRDS(att_res, file = file.path(dir_out, paste0("att_results_", method, "_", outcome_suffix, ".rds")))
   saveRDS(agg_overall, file = file.path(dir_out, paste0("agg_overall_", method, "_", outcome_suffix, ".rds")))
   saveRDS(agg_event, file = file.path(dir_out, paste0("agg_event_", method, "_", outcome_suffix, ".rds")))
 
-  # Efeito médio global da versão atual do pacote did
+  # Efeito médio global
   att_global <- agg_overall$overall.att
   se_global <- agg_overall$overall.se
 
@@ -529,112 +534,12 @@ estimate_att <- function(df, method = "dr", seed = 42, control_grp = "notyettrea
   ))
 }
 
-# ┌─────────────────────────────────────────────────────────────────────────┐ #
-# │ 1.3 TESTE PLACEBO COM ANO FICTÍCIO                                      │ #
-# └─────────────────────────────────────────────────────────────────────────┘ #
-#' placebo_test(): Validação via randomização completa (placebo fixo)
-#'
-#' LÓGICA DO TESTE:
-#' Se o modelo identifica corretamente o efeito causal das estações meteorológicas,
-#' então atribuir tratamento de forma COMPLETAMENTE ALEATÓRIA deve resultar
-#' em ATT ≈ 0. Este é um teste de falsificação por randomização.
-#'
-#' IMPLEMENTAÇÃO:
-#'   1. Ignora-se completamente o status real de tratamento
-#'   2. Seleciona-se aleatoriamente ~50% das unidades
-#'   3. Atribui-se tratamento placebo (gname = placebo_year) aos selecionados
-#'   4. Os demais permanecem como controle (gname = 0)
-#'   5. Estima-se o modelo com esta atribuição aleatória
-#'
-#' INTERPRETAÇÃO:
-#'   - ATT ≈ 0 (p > 0.10): Resultado esperado - sem efeito com randomização
-#'   - ATT ≠ 0 (p < 0.05): Indica possível problema na especificação
-#'   - Magnitude pequena mesmo se significante é aceitável
-#'
-#' @param df DataFrame preparado com dados em painel
-#' @param placebo_year Integer - Ano fictício de tratamento (padrão: 2015)
-#' @param seed Integer - Semente para randomização (padrão: 2024)
-#' @param outcome String - Nome da variável de outcome (padrão: "log_area_cana")
-#'
-#' @return Lista com ATT placebo, erro-padrão, p-valor e IC 95%
-#'         ou NULL se estimação falhar
-#' ---------------------------------------------------------------------------
-placebo_test <- function(df, placebo_year = 2015, seed = 2024, outcome = "log_area_cana") {
-  cli::cli_alert_info("Executando placebo test fixo (ano fictício = {placebo_year})…")
-
-  # Verificar se o ano placebo está dentro do período dos dados
-  year_range <- range(df$ano)
-  if (placebo_year < year_range[1] || placebo_year > year_range[2]) {
-    cli::cli_alert_warning("Ano placebo {placebo_year} fora do período dos dados [{year_range[1]}, {year_range[2]}]")
-    return(NULL)
-  }
-
-  # Placebo test fixo: Randomização completa
-  # Objetivo: Atribuir aleatoriamente ~50% das unidades para tratamento placebo
-  # Hipótese nula: Não deve haver efeito significativo com atribuição aleatória
-
-  set.seed(seed) # Para reprodutibilidade
-
-  # Obter lista única de unidades
-  all_units <- unique(df$id_microrregiao)
-  n_units <- length(all_units)
-
-  # Selecionar aleatoriamente metade das unidades para tratamento placebo
-  n_treated_placebo <- round(n_units / 2)
-  treated_units_placebo <- sample(all_units, n_treated_placebo, replace = FALSE)
-
-  cli::cli_alert_info("Total de unidades: {n_units}")
-  cli::cli_alert_info("Unidades aleatoriamente atribuídas ao tratamento placebo: {n_treated_placebo} ({round(100*n_treated_placebo/n_units, 1)}%)")
-
-  # Criar dataset placebo com atribuição completamente aleatória
-  df_placebo <- df %>%
-    mutate(
-      # Ignorar tratamento real - atribuir placebo aleatoriamente
-      gname = ifelse(
-        id_microrregiao %in% treated_units_placebo,
-        placebo_year, # Tratadas no ano placebo
-        0 # Controles (nunca tratadas)
-      )
-    )
-
-  # Verificação rápida
-  n_treated_check <- df_placebo %>%
-    filter(gname == placebo_year) %>%
-    distinct(id_microrregiao) %>%
-    nrow()
-
-  n_control_check <- df_placebo %>%
-    filter(gname == 0) %>%
-    distinct(id_microrregiao) %>%
-    nrow()
-
-  cli::cli_alert_info("Verificação: {n_treated_check} tratadas, {n_control_check} controles")
-
-  out <- tryCatch(
-    {
-      res <- estimate_att(df_placebo, method = "dr", control_grp = "notyettreated", outcome = outcome)
-      att_p <- res$att_global
-      se_p <- res$se_global
-      p_val <- 2 * stats::pnorm(-abs(att_p / se_p))
-      ci_low <- att_p - 1.96 * se_p
-      ci_high <- att_p + 1.96 * se_p
-      list(att = att_p, se = se_p, p = p_val, ci_low = ci_low, ci_high = ci_high)
-    },
-    error = function(e) {
-      cli::cli_alert_warning("Placebo test falhou: {e$message}")
-      NULL
-    }
-  )
-
-  return(out)
-}
-
-# 1.4 Robustez (métodos alternativos) --------------------------------------- #
+# 1.3 Robustez (métodos alternativos) --------------------------------------- #
 #' robust_specs()
 #' ---------------------------------------------------------------------------
 #' Executa rapidamente DR, IPW e REG para comparar magnitude dos efeitos.
 #' Captura erros (ex.: IPW singular) sem abortar o script.
-#' Escreve CSV para documentação reprodutível.
+#' Escreve CSV para documentação dos resultados.
 #' @param outcome String - Nome da variável de outcome
 #' ---------------------------------------------------------------------------
 robust_specs <- function(df, outcome = "log_area_cana") {
@@ -659,7 +564,7 @@ robust_specs <- function(df, outcome = "log_area_cana") {
   return(out)
 }
 
-# 1.5 Visualização ----------------------------------------------------------- #
+# 1.4 Visualização ----------------------------------------------------------- #
 #' visualize_results()
 #' ---------------------------------------------------------------------------
 #' Cria gráfico Event Study com banda de 95% IC.
@@ -694,9 +599,9 @@ visualize_results <- function(att_event, output_prefix = "event_study") {
   ggsave(file.path(dir_out, paste0(output_prefix, ".pdf")), p_event, width = 12, height = 6)
 }
 
-# 1.6 Diagnóstico de Covariáveis ------------------------------------------- #
-#   • Verifica variância no pré-tratamento e colinearidade.                   #
-#   • Retorna subconjunto de covariáveis elegíveis para DR.                   #
+# 1.5 Diagnóstico de Covariáveis ------------------------------------------- #
+#   Verifica variância no pré-tratamento e colinearidade.                   #
+#   Retorna subconjunto de covariáveis elegíveis para DR.                   #
 check_covariates <- function(df, covars) {
   cli::cli_alert_info("Verificando colinearidade/variância das covariáveis…")
 
@@ -767,59 +672,7 @@ check_covariates <- function(df, covars) {
   return(keep)
 }
 
-# 1.7 Placebo Test com PIB Não-Agropecuário --------------------------------- #
-#' placebo_test_non_agro()
-#' ---------------------------------------------------------------------------
-#' Testa se o efeito persiste em setores não relacionados à agricultura.
-#' Se houver efeito significativo, pode indicar desenvolvimento geral ou
-#' problema de especificação.
-#' @param df Dados preparados
-#' @param method Método de estimação
-#' @return Lista com resultados do placebo
-#' ---------------------------------------------------------------------------
-placebo_test_non_agro <- function(df, method = "dr") {
-  cli::cli_alert_info("Executando placebo test com PIB não-agropecuário...")
-
-  # Criar dataset temporário com PIB não-agro como outcome
-  df_placebo <- df %>%
-    mutate(
-      # Temporariamente substituir a variável de resultado
-      log_pib_agro_original = log_pib_agro,
-      log_pib_agro = log_pib_nao_agro
-    ) %>%
-    # Remover observações sem PIB não-agro
-    filter(!is.na(log_pib_agro))
-
-  # Estimar ATT com PIB não-agro
-  placebo_res <- tryCatch(
-    {
-      estimate_att(df_placebo, method = method)
-    },
-    error = function(e) {
-      cli::cli_alert_warning("Erro no placebo test: {e$message}")
-      NULL
-    }
-  )
-
-  if (!is.null(placebo_res)) {
-    cli::cli_alert_info("Placebo ATT (PIB não-agro): {round(placebo_res$att_global, 4)}")
-    cli::cli_alert_info("Placebo p-valor: {round(placebo_res$p, 4)}")
-
-    if (placebo_res$p < 0.05) {
-      cli::cli_alert_warning("⚠️ Efeito significativo no PIB não-agropecuário pode indicar:")
-      cli::cli_alert_warning("  - Desenvolvimento econômico geral (não específico à agricultura)")
-      cli::cli_alert_warning("  - Spillovers para outros setores")
-      cli::cli_alert_warning("  - Problemas de especificação do modelo")
-    } else {
-      cli::cli_alert_success("✓ Efeito não significativo no PIB não-agropecuário")
-      cli::cli_alert_success("  Sugere que o impacto é específico ao setor agrícola")
-    }
-  }
-
-  return(placebo_res)
-}
-
-# 1.8 Teste de Balanceamento Pós-DR ----------------------------------------- #
+# 1.6 Teste de Balanceamento Pós-DR ----------------------------------------- #
 #' check_balance_post_dr()
 #' ---------------------------------------------------------------------------
 #' Verifica se o método DR balanceou adequadamente as covariáveis entre
@@ -906,7 +759,7 @@ check_balance_post_dr <- function(att_obj, df) {
   return(balance_stats)
 }
 
-# 1.9 Análise de Pesos de Adoção Escalonada --------------------------------- #
+# 1.7 Análise de Pesos de Adoção Escalonada --------------------------------- #
 #' analyze_weights()
 #' ---------------------------------------------------------------------------
 #' Examina a distribuição de pesos implícitos no estimador CS para detectar
@@ -1285,10 +1138,10 @@ diagnose_na_cohorts <- function(att_res, df) {
   ))
 }
 
-# 1.10 Agregação Manual de Coortes ------------------------------------------ #
+# 1.10.1 Agregação Manual de Coortes ------------------------------------------ #
 #' merge_small_cohorts()
 #' ---------------------------------------------------------------------------
-#' Agrupa coortes pequenas em bins maiores para reduzir NAs.
+#' Agrupa coortes pequenas em bins maiores para reduzir NAs. Não é usado na análise final mas é interessante de ver.
 #' @param df Dados preparados
 #' @param min_size Tamanho mínimo de coorte
 #' @param bin_width Largura dos bins (em anos)
@@ -1339,47 +1192,6 @@ merge_small_cohorts <- function(df, min_size = 5, bin_width = 2) {
   return(df_merged)
 }
 
-# 1.11 Clustering Alternativo ----------------------------------------------- #
-#' estimate_att_robust_se()
-#' ---------------------------------------------------------------------------
-#' Extensão de estimate_att() com opções de clustering robustas.
-#' @param df Dados
-#' @param method Método base (dr, ipw, reg)
-#' @param se_type Tipo de SE: "clustered" (padrão), "twoway", "wildboot"
-#' @return Lista similar a estimate_att() mas com SEs alternativos
-#' ---------------------------------------------------------------------------
-estimate_att_robust_se <- function(df, method = "dr", se_type = "twoway") {
-  cli::cli_alert_info("Estimando com SEs robustos: {se_type}")
-
-  if (se_type == "wildboot") {
-    # Wild bootstrap requer modificação na chamada att_gt
-    cli::cli_alert_warning("Wild bootstrap não implementado diretamente no pacote did")
-    cli::cli_alert_info("Usando bootstrap padrão com mais replicações")
-
-    # Aumenta número de bootstraps
-    base_res <- estimate_att(df, method = method)
-    return(base_res)
-  }
-
-  if (se_type == "twoway") {
-    # Two-way clustering não é suportado nativamente
-    # Precisaríamos pós-processar os resultados
-    cli::cli_alert_info("Two-way clustering via pós-processamento...")
-
-    # Estima modelo base
-    base_res <- estimate_att(df, method = method)
-
-    # Aqui entraria cálculo manual de SEs two-way
-    # Por ora, retorna resultado base com aviso
-    cli::cli_alert_warning("Two-way SEs requerem implementação customizada")
-
-    return(base_res)
-  }
-
-  # Clustering padrão
-  return(estimate_att(df, method = method))
-}
-
 # 1.11.1 Funções Auxiliares de Paralelização -------------------------------- #
 #' setup_parallel_placebo()
 #' ---------------------------------------------------------------------------
@@ -1417,7 +1229,7 @@ cleanup_parallel_placebo <- function(setup_info) {
   foreach::registerDoSEQ()
 }
 
-# 1.12 Teste Placebo Aleatório ---------------------------------------------- #
+# 1.11.2 Teste Placebo Aleatório ---------------------------------------------- #
 #' random_placebo_test_serial()
 #' ---------------------------------------------------------------------------
 #' Versão serial original - fallback quando paralelização não disponível
@@ -1451,7 +1263,8 @@ random_placebo_test_serial <- function(df, n_sims = 100, method = "dr", seed = 4
   for (i in 1:n_sims) {
     cli::cli_progress_update()
 
-    # IMPORTANTE: Definir seed diferente para cada simulação
+    # IMPORTANTE: Definir seed diferente para cada simulação mas fixa para reprodutibilidade. 
+    # Não alterar essa parte caso você esteja replicando este código!
     set.seed(seed + i)
 
     # Randomizar completamente quem é tratado e quando
@@ -1564,7 +1377,8 @@ random_placebo_test_serial <- function(df, n_sims = 100, method = "dr", seed = 4
 #' ---------------------------------------------------------------------------
 random_placebo_test <- function(df, n_sims = 100, method = "dr", seed = 42,
                                 outcome = "log_area_cana", parallel = TRUE, n_cores = NULL) {
-  # Decisão: paralelo ou serial?
+  # Decisão: paralelo ou serial? 
+  # Não vale a pena paralelizar com poucas simulações
   if (!parallel || n_sims < 100) {
     cli::cli_alert_info("Executando em modo serial (parallel = {parallel}, n_sims = {n_sims})")
     return(random_placebo_test_serial(df, n_sims, method, seed, outcome))
@@ -1654,7 +1468,7 @@ random_placebo_test <- function(df, n_sims = 100, method = "dr", seed = 42,
         mutate(gname = gname_placebo) %>%
         select(-gname_placebo)
 
-      # Estimar ATT placebo (usar outcome do ambiente pai)
+      # Estimar ATT placebo
       tryCatch(
         {
           res <- estimate_att(df_placebo, method = method, outcome = outcome)
@@ -1757,329 +1571,7 @@ random_placebo_test <- function(df, n_sims = 100, method = "dr", seed = 42,
 }
 
 # ┌─────────────────────────────────────────────────────────────────────────┐ #
-# │ 1.13 ANÁLISE DID POR UNIDADE FEDERATIVA (UF)                            │ #
-# └─────────────────────────────────────────────────────────────────────────┘ #
-#' uf_level_analysis(): Análise DiD usando UFs como unidades de análise
-#'
-#' MOTIVAÇÃO ECONÔMICA:
-#' O impacto das estações meteorológicas pode variar substancialmente entre
-#' regiões devido a diferenças em:
-#'   - Estrutura produtiva agrícola (culturas predominantes)
-#'   - Condições climáticas e variabilidade meteorológica
-#'   - Capacidade institucional e capital humano
-#'   - Infraestrutura tecnológica pré-existente
-#'
-#' DESAFIO METODOLÓGICO:
-#' Como todas as microrregiões são eventualmente tratadas, não há controles
-#' "puros" dentro de cada UF. Isso requer abordagens alternativas criativas.
-#'
-#' ESTRATÉGIAS IMPLEMENTADAS:
-#'
-#'   1. AGREGAÇÃO POR UF (approach = "aggregate"):
-#'      - Colapsa dados de microrregiões para nível estadual
-#'      - Usa médias ponderadas (peso = área plantada ou população)
-#'      - Define tratamento quando >50% das microrregiões têm estação
-#'      - VANTAGEM: Cria variação entre estados
-#'      - LIMITAÇÃO: Perde variação within-state
-#'
-#'   2. ANÁLISE POR GRANDES REGIÕES:
-#'      - Agrupa UFs em 5 macrorregiões (Norte, NE, CO, SE, Sul)
-#'      - Mantém dados no nível de microrregião
-#'      - Usa variação no timing entre microrregiões de diferentes UFs
-#'      - VANTAGEM: Preserva granularidade dos dados
-#'      - LIMITAÇÃO: Assume homogeneidade dentro da macrorregião
-#'
-#'   3. FALLBACK AUTOMÁTICO:
-#'      - Se agregação por UF falha (poucos controles), usa regiões
-#'      - Garante sempre algum resultado, mesmo que menos preciso
-#'
-#' INTERPRETAÇÃO DOS RESULTADOS:
-#'   - Heterogeneidade significativa sugere necessidade de políticas regionais
-#'   - Regiões com maior efeito podem ser priorizadas para expansão
-#'   - Ausência de efeito em algumas regiões merece investigação adicional
-#'
-#' @param df DataFrame em painel preparado
-#' @param method String - Método de estimação ("dr", "ipw", "reg")
-#' @param approach String - "aggregate" ou "interaction" (não implementado)
-#' @param outcome String - Nome da variável de outcome (padrão: "log_area_cana")
-#'
-#' @return Tibble com ATT estimado por região/UF, incluindo significância
-#' ---------------------------------------------------------------------------
-heterogeneity_analysis <- function(df, method = "dr", approach = "aggregate", outcome = "log_area_cana") {
-  cli::cli_h2("Análise de Heterogeneidade Regional")
-
-  if (approach == "aggregate") {
-    # ABORDAGEM 1: Agregar dados por UF
-    cli::cli_alert_info("Usando abordagem de agregação por UF...")
-
-    # Agregar dados por UF e ano
-    df_uf <- df %>%
-      group_by(sigla_uf, ano) %>%
-      summarise(
-        # Média ponderada do PIB agro (peso = área total)
-        log_pib_agro = weighted.mean(log_pib_agro, w = area_total_km2, na.rm = TRUE),
-        log_area_total = log(sum(area_total_km2, na.rm = TRUE) + 1),
-        log_populacao = log(sum(populacao_total, na.rm = TRUE) + 1),
-        log_pib_per_capita = weighted.mean(log_pib_per_capita, w = populacao_total, na.rm = TRUE),
-        log_densidade_estacoes_uf = first(log_densidade_estacoes_uf),
-        log_precip_anual = weighted.mean(log_precip_anual, w = area_total_km2, na.rm = TRUE),
-        # Proporção de microrregiões tratadas
-        prop_tratadas = mean(gname > 0),
-        # Ano médio de tratamento (ponderado)
-        primeiro_ano_medio = weighted.mean(
-          ifelse(gname == 0, NA, gname),
-          w = ifelse(gname == 0, 0, 1),
-          na.rm = TRUE
-        ),
-        n_microregioes = n(),
-        .groups = "drop"
-      ) %>%
-      mutate(
-        # Criar novo gname baseado em quando a maioria foi tratada
-        gname = case_when(
-          prop_tratadas < 0.5 ~ 0, # Controle se menos da metade tratada
-          is.na(primeiro_ano_medio) ~ 0,
-          TRUE ~ round(primeiro_ano_medio)
-        ),
-        # ID único por UF
-        id_uf = as.numeric(as.factor(sigla_uf))
-      ) %>%
-      filter(!is.na(log_pib_agro))
-
-    # Verificar variação
-    cli::cli_alert_info("UFs no controle: {sum(df_uf$gname == 0)} observações")
-    cli::cli_alert_info("UFs tratadas: {sum(df_uf$gname > 0)} observações")
-
-    # Estimar modelo agregado
-    # NOTA CRÍTICA: A agregação por UF só funciona para log_pib_agro pois é o único
-    # outcome agregado na construção de df_uf. Para outros outcomes (cana, soja, arroz),
-    # usamos a abordagem regional que mantém dados no nível de microrregião.
-    if (sum(df_uf$gname == 0) < 10 || outcome != "log_pib_agro") {
-      if (outcome != "log_pib_agro") {
-        cli::cli_alert_info("Outcome {outcome} requer análise no nível de microrregião. Usando abordagem regional...")
-      } else {
-        cli::cli_alert_warning("Poucos controles no nível de UF. Usando abordagem alternativa...")
-      }
-
-      # ABORDAGEM 2: Análise por região com dados originais
-      regioes <- list(
-        "Norte" = c("AC", "AP", "AM", "PA", "RO", "RR", "TO"),
-        "Nordeste" = c("AL", "BA", "CE", "MA", "PB", "PE", "PI", "RN", "SE"),
-        "Centro-Oeste" = c("DF", "GO", "MT", "MS"),
-        "Sudeste" = c("ES", "MG", "RJ", "SP"),
-        "Sul" = c("PR", "RS", "SC")
-      )
-
-      het_results <- purrr::map_dfr(names(regioes), function(regiao) {
-        cli::cli_alert_info("Estimando ATT para região {regiao}...")
-
-        # Filtrar dados da região
-        ufs_regiao <- regioes[[regiao]]
-        df_regiao <- df %>% filter(sigla_uf %in% ufs_regiao)
-
-        # Verificar variação
-        n_treated <- sum(df_regiao$gname > 0)
-        n_control <- sum(df_regiao$gname == 0)
-
-        cli::cli_alert_info("  Região {regiao}: {n_treated} tratados, {n_control} controles")
-
-        if (n_treated < 10 || n_control < 10) {
-          return(tibble::tibble(
-            uf = regiao,
-            tipo = "Região",
-            att = NA,
-            se = NA,
-            p_value = NA,
-            n_obs = nrow(df_regiao),
-            n_treated = n_treated,
-            n_control = n_control,
-            significant = NA
-          ))
-        }
-
-        # Estimar ATT
-        res <- tryCatch(
-          {
-            estimate_att(df_regiao, method = method, outcome = outcome)
-          },
-          error = function(e) {
-            cli::cli_alert_warning("Erro ao estimar {regiao}: {e$message}")
-            list(att_global = NA, se_global = NA, p = NA)
-          }
-        )
-
-        tibble::tibble(
-          uf = regiao,
-          tipo = "Região",
-          att = res$att_global,
-          se = res$se_global,
-          p_value = res$p,
-          n_obs = nrow(df_regiao),
-          n_treated = n_treated,
-          n_control = n_control,
-          significant = ifelse(is.na(res$p), NA, res$p < 0.05)
-        )
-      })
-    } else {
-      # Estimar com dados agregados por UF
-      cli::cli_alert_info("Estimando modelo com dados agregados por UF...")
-
-      # Preparar dados para att_gt
-      df_uf_did <- df_uf %>%
-        rename(
-          id_microrregiao = id_uf # Usar id_uf como se fosse id_microrregiao
-        ) %>%
-        select(id_microrregiao, ano, log_pib_agro, gname, starts_with("log_"))
-
-      # Estimar modelo
-      # Nota: df_uf_did já tem log_pib_agro agregado, mas usamos outcome param
-      res_uf <- tryCatch(
-        {
-          estimate_att(df_uf_did, method = method, outcome = outcome)
-        },
-        error = function(e) {
-          cli::cli_alert_warning("Erro na estimação agregada: {e$message}")
-          NULL
-        }
-      )
-
-      if (!is.null(res_uf)) {
-        # Extrair efeitos por UF dos resultados do modelo
-        het_results <- df_uf %>%
-          distinct(sigla_uf, gname) %>%
-          filter(gname > 0) %>%
-          mutate(
-            tipo = "UF",
-            att = res_uf$att_global, # Simplificação - usar ATT global
-            se = res_uf$se_global,
-            p_value = res_uf$p,
-            n_obs = nrow(df_uf),
-            n_treated = sum(df_uf$gname > 0),
-            n_control = sum(df_uf$gname == 0),
-            significant = res_uf$p < 0.05
-          ) %>%
-          rename(uf = sigla_uf)
-      } else {
-        het_results <- tibble()
-      }
-    }
-  } else {
-    # ABORDAGEM 3: Estimação com variável indicadora de UF
-    cli::cli_alert_info("Análise simplificada por grandes regiões...")
-
-    # Definir regiões
-    df <- df %>%
-      mutate(
-        regiao = case_when(
-          sigla_uf %in% c("AC", "AP", "AM", "PA", "RO", "RR", "TO") ~ "Norte",
-          sigla_uf %in% c("AL", "BA", "CE", "MA", "PB", "PE", "PI", "RN", "SE") ~ "Nordeste",
-          sigla_uf %in% c("DF", "GO", "MT", "MS") ~ "Centro-Oeste",
-          sigla_uf %in% c("ES", "MG", "RJ", "SP") ~ "Sudeste",
-          sigla_uf %in% c("PR", "RS", "SC") ~ "Sul"
-        )
-      )
-
-    # Estimar por região
-    het_results <- df %>%
-      distinct(regiao) %>%
-      pull(regiao) %>%
-      purrr::map_dfr(function(reg) {
-        df_reg <- df %>% filter(regiao == reg)
-
-        res <- tryCatch(
-          estimate_att(df_reg, method = method, outcome = outcome),
-          error = function(e) list(att_global = NA, se_global = NA, p = NA)
-        )
-
-        tibble::tibble(
-          uf = reg,
-          tipo = "Região",
-          att = res$att_global,
-          se = res$se_global,
-          p_value = res$p,
-          n_obs = nrow(df_reg),
-          n_treated = sum(df_reg$gname > 0),
-          n_control = sum(df_reg$gname == 0),
-          significant = ifelse(is.na(res$p), NA, res$p < 0.05)
-        )
-      })
-  }
-
-  # Garantir que todas as colunas necessárias existem
-  required_cols <- c("uf", "tipo", "att", "se", "p_value", "n_obs", "n_treated", "n_control")
-  missing_cols <- setdiff(required_cols, names(het_results))
-  
-  if (length(missing_cols) > 0) {
-    cli::cli_alert_warning("Colunas faltando em het_results: {paste(missing_cols, collapse = ', ')}")
-    for (col in missing_cols) {
-      het_results[[col]] <- NA
-    }
-  }
-  
-  # Adicionar coluna significant se não existir
-  if (!"significant" %in% names(het_results)) {
-    het_results <- het_results %>%
-      mutate(significant = ifelse(is.na(p_value), NA, p_value < 0.05))
-  }
-
-  # Salvar resultados
-  readr::write_csv(het_results, here::here("data", "outputs", "heterogeneity_regional.csv"))
-
-  # Criar visualização apenas se houver resultados válidos
-  if (sum(!is.na(het_results$att)) > 0) {
-    p_het <- ggplot(
-      het_results %>% filter(!is.na(att)),
-      aes(x = reorder(uf, att), y = att)
-    ) +
-      geom_col(aes(fill = significant)) +
-      geom_errorbar(aes(ymin = att - 1.96 * se, ymax = att + 1.96 * se), width = 0.3) +
-      coord_flip() +
-      scale_fill_manual(
-        values = c("FALSE" = "gray70", "TRUE" = "steelblue", "NA" = "gray90"),
-        na.value = "gray90"
-      ) +
-      theme_minimal() +
-      labs(
-        title = "Heterogeneidade Regional do Efeito das Estações Meteorológicas",
-        subtitle = ifelse("tipo" %in% names(het_results) && unique(het_results$tipo) == "Região",
-          "Análise por Grandes Regiões", "Análise por UF"
-        ),
-        x = NULL,
-        y = "ATT Estimado",
-        fill = "Significativo (5%)",
-        caption = "Barras de erro representam IC 95%"
-      )
-
-    ggsave(here::here("data", "outputs", "heterogeneity_regional_plot.png"),
-      p_het,
-      width = 10, height = 8
-    )
-  } else {
-    cli::cli_alert_warning("Nenhum resultado válido para visualização de heterogeneidade")
-  }
-
-  # Resumo
-  n_positive <- sum(het_results$att > 0, na.rm = TRUE)
-  n_significant <- sum(het_results$significant, na.rm = TRUE)
-  n_total <- sum(!is.na(het_results$att))
-
-  if (n_total > 0) {
-    cli::cli_alert_info("Resumo da heterogeneidade:")
-    cli::cli_alert_info("  - {n_positive}/{n_total} unidades com efeito positivo")
-    cli::cli_alert_info("  - {n_significant}/{n_total} unidades com efeito significativo (5%)")
-
-    if (n_positive > n_total * 0.8) {
-      cli::cli_alert_success("✓ Efeito predominantemente positivo")
-    } else {
-      cli::cli_alert_warning("⚠️ Heterogeneidade substancial entre regiões")
-    }
-  }
-
-  return(het_results)
-}
-
-# ┌─────────────────────────────────────────────────────────────────────────┐ #
-# │ 1.13.1 ANÁLISE DID PARA OUTCOMES ALTERNATIVOS (ROBUSTEZ E COMPLEMENTOS) │ #
+# │ 1.12.1 ANÁLISE DID PARA OUTCOMES ALTERNATIVOS (ROBUSTEZ E COMPLEMENTOS) │ #
 # └─────────────────────────────────────────────────────────────────────────┘ #
 #' alternative_outcomes_analysis(): Análise DiD para outcomes complementares
 #'
@@ -2349,289 +1841,7 @@ alternative_outcomes_analysis <- function(df, method = "dr") {
 }
 
 # ┌─────────────────────────────────────────────────────────────────────────┐ #
-# │ 1.14 ANÁLISE DID AGREGADA POR UNIDADE FEDERATIVA                        │ #
-# └─────────────────────────────────────────────────────────────────────────┘ #
-#' uf_level_analysis(): Análise DiD usando UFs como unidades de análise
-#'
-#' MOTIVAÇÃO:
-#' Agregar dados ao nível de UF permite capturar efeitos regionais mais amplos
-#' e criar maior variação no timing de adoção entre unidades. Isso é especialmente
-#' útil quando todas as microrregiões são eventualmente tratadas.
-#'
-#' ESTRATÉGIA DE AGREGAÇÃO:
-#'   1. Colapsa dados de microrregiões para médias estaduais ponderadas
-#'   2. Define tratamento quando maioria (>50%) das microrregiões tem estação
-#'   3. Usa o modelo DiD padrão de Callaway & Sant'Anna no nível estadual
-#'
-#' VANTAGENS:
-#'   - Maior variação no timing entre unidades
-#'   - Captura efeitos de spillover dentro do estado
-#'   - Resultados mais interpretáveis para política pública
-#'
-#' @param df DataFrame com dados no nível de microrregião
-#' @param method Método de estimação ("dr", "ipw", "reg")
-#' @param outcome String - Nome da variável de outcome (padrão: "log_area_cana")
-#' @return Lista com resultados do modelo e visualizações
-#' ---------------------------------------------------------------------------
-uf_level_analysis <- function(df, method = "dr", outcome = "log_area_cana") {
-  cli::cli_h2("Análise DiD por Unidade Federativa")
-  cli::cli_alert_info("Agregando dados de microrregiões para UFs...")
-
-  # Agregar dados por UF e ano
-  df_uf <- df %>%
-    group_by(sigla_uf, ano) %>%
-    summarise(
-      # Médias ponderadas por área total
-      log_pib_agro = weighted.mean(log_pib_agro, w = area_total_km2, na.rm = TRUE),
-      log_area_total = log(sum(area_total_km2, na.rm = TRUE) + 1),
-      log_populacao = log(sum(populacao_total, na.rm = TRUE) + 1),
-      log_pib_nao_agro = weighted.mean(log_pib_nao_agro, w = area_total_km2, na.rm = TRUE),
-
-      # Proporção de microrregiões tratadas
-      prop_tratadas = mean(tratado, na.rm = TRUE),
-      n_microregioes = n_distinct(id_microrregiao),
-      n_estacoes = sum(tratado, na.rm = TRUE),
-
-      # Covariáveis
-      log_pib_per_capita = weighted.mean(log_pib_per_capita, w = populacao_total, na.rm = TRUE),
-      log_densidade_estacoes_uf = first(log_densidade_estacoes_uf),
-      log_precip_anual = weighted.mean(log_precip_anual, w = area_total_km2, na.rm = TRUE),
-      .groups = "drop"
-    ) %>%
-    # Definir ano de tratamento da UF
-    group_by(sigla_uf) %>%
-    mutate(
-      # Encontrar primeiro ano baseado em diferentes critérios para criar variação
-      gname = case_when(
-        # Usar 20% como threshold principal para capturar adoção precoce
-        any(prop_tratadas >= 0.2) ~ min(ano[prop_tratadas >= 0.2]),
-        # Se nunca atingir 20%, usar 10%
-        any(prop_tratadas >= 0.1) ~ min(ano[prop_tratadas >= 0.1]),
-        # Caso contrário, nunca tratado
-        TRUE ~ 0
-      )
-    ) %>%
-    ungroup() %>%
-    # Criar variáveis finais
-    mutate(
-      id_uf = as.numeric(factor(sigla_uf)),
-      tratado = as.numeric(ano >= gname & gname > 0)
-    )
-
-  # Diagnóstico do painel agregado
-  n_ufs <- n_distinct(df_uf$sigla_uf)
-  n_periodos <- n_distinct(df_uf$ano)
-  grupos_tratamento <- df_uf %>%
-    filter(gname > 0) %>%
-    distinct(sigla_uf, gname) %>%
-    count(gname) %>%
-    arrange(gname)
-
-  cli::cli_alert_success("Painel agregado: {n_ufs} UFs × {n_periodos} anos")
-  cli::cli_alert_info("Grupos de tratamento (UFs por ano de adoção):")
-  print(grupos_tratamento)
-
-  # Verificar variação
-  n_never_treated <- sum(df_uf$gname == 0)
-  n_treated_groups <- n_distinct(df_uf$gname[df_uf$gname > 0])
-
-  cli::cli_alert_info("UFs nunca tratadas (controle): {n_distinct(df_uf$sigla_uf[df_uf$gname == 0])}")
-  cli::cli_alert_info("Grupos de tratamento distintos: {n_treated_groups}")
-
-  if (n_treated_groups < 2) {
-    cli::cli_alert_danger("Variação insuficiente no timing de tratamento entre UFs")
-    return(NULL)
-  }
-
-  # Estimar modelo DiD no nível de UF
-  cli::cli_alert_info("Estimando modelo DiD agregado por UF...")
-
-  tryCatch(
-    {
-      # Modelo principal
-      # NOTA: Esta análise usa dados agregados ao nível de UF. O outcome precisa
-      # existir na agregação criada acima (df_uf). Por padrão, agregamos log_pib_agro,
-      # mas para outros outcomes seria necessário ajustar a lógica de agregação.
-      att_uf <- did::att_gt(
-        yname = outcome,
-        tname = "ano",
-        idname = "id_uf",
-        gname = "gname",
-        xformla = as.formula(paste("~", paste(CONFIG_COVARIATES, collapse = "+"))),
-        data = df_uf,
-        est_method = method,
-        control_group = "notyettreated",
-        anticipation = 0,
-        base_period = "varying",
-        clustervars = "id_uf",
-        print_details = FALSE
-      )
-
-      # Agregações
-      agg_overall <- aggte(att_uf, type = "overall", na.rm = TRUE)
-      agg_event <- aggte(att_uf, type = "dynamic", na.rm = TRUE)
-      agg_group <- aggte(att_uf, type = "group", na.rm = TRUE)
-
-      # Extrair resultados principais
-      att_global <- agg_overall$overall.att
-      se_global <- agg_overall$overall.se
-      p_value <- 2 * pnorm(-abs(att_global / se_global))
-
-      cli::cli_alert_success("ATT (nível UF) = {round(att_global*100,2)}% (p = {round(p_value,4)})")
-
-      # Criar visualizações
-
-      # 1. Event Study por UF
-      event_data <- data.frame(
-        time = agg_event$egt,
-        att = agg_event$att.egt,
-        se = agg_event$se.egt
-      ) %>%
-        filter(!is.na(att))
-
-      p_event_uf <- ggplot(event_data, aes(x = time, y = att)) +
-        geom_ribbon(aes(ymin = att - 1.96 * se, ymax = att + 1.96 * se),
-          alpha = 0.2, fill = "blue"
-        ) +
-        geom_line(color = "blue", linewidth = 1.5) +
-        geom_point(color = "blue", size = 3) +
-        geom_hline(yintercept = 0, linetype = "dashed", color = "gray50") +
-        geom_vline(xintercept = -0.5, linetype = "solid", color = "red", alpha = 0.5) +
-        theme_minimal() +
-        labs(
-          title = "Event Study: Análise Agregada por UF",
-          subtitle = "Efeito das estações meteorológicas no PIB agropecuário estadual",
-          x = "Anos relativos ao tratamento",
-          y = "ATT (log PIB agropecuário)",
-          caption = "Nota: Tratamento definido quando >50% das microrregiões da UF têm estação"
-        ) +
-        theme(plot.title = element_text(size = 14, face = "bold"))
-
-      ggsave("data/outputs/event_study_uf.png", p_event_uf,
-        width = 10, height = 6, dpi = 300
-      )
-      cli::cli_alert_success("Gráfico salvo: event_study_uf.png")
-
-      # 2. Heterogeneidade por grupo de adoção
-      group_data <- data.frame(
-        group = agg_group$egt,
-        att = agg_group$att.egt,
-        se = agg_group$se.egt
-      ) %>%
-        filter(!is.na(att)) %>%
-        left_join(
-          df_uf %>%
-            filter(gname > 0) %>%
-            distinct(sigla_uf, gname) %>%
-            group_by(gname) %>%
-            summarise(
-              ufs = paste(sigla_uf, collapse = ", "),
-              n_ufs = n(),
-              .groups = "drop"
-            ),
-          by = c("group" = "gname")
-        )
-
-      p_groups_uf <- ggplot(group_data, aes(x = factor(group), y = att * 100)) +
-        geom_col(fill = "steelblue") +
-        geom_errorbar(
-          aes(
-            ymin = (att - 1.96 * se) * 100,
-            ymax = (att + 1.96 * se) * 100
-          ),
-          width = 0.3
-        ) +
-        geom_text(aes(label = paste0(round(att * 100, 1), "%")),
-          vjust = -0.5, size = 3.5
-        ) +
-        theme_minimal() +
-        labs(
-          title = "Efeito por Ano de Adoção (Nível UF)",
-          x = "Ano de adoção",
-          y = "ATT (%)",
-          caption = "IC 95%. Cada barra representa UFs que adotaram no mesmo ano."
-        ) +
-        theme(axis.text.x = element_text(angle = 45, hjust = 1))
-
-      ggsave("data/outputs/att_by_adoption_year_uf.png", p_groups_uf,
-        width = 8, height = 6, dpi = 300
-      )
-      cli::cli_alert_success("Gráfico salvo: att_by_adoption_year_uf.png")
-
-      # 3. Mapa de timing de adoção por UF
-      adoption_data <- df_uf %>%
-        distinct(sigla_uf, gname) %>%
-        mutate(
-          adoption_category = case_when(
-            gname == 0 ~ "Não adotou",
-            gname <= 2010 ~ "Adoção precoce\n(até 2010)",
-            gname <= 2015 ~ "Adoção intermediária\n(2011-2015)",
-            TRUE ~ "Adoção tardia\n(após 2015)"
-          )
-        )
-
-      p_adoption_map <- ggplot(adoption_data, aes(
-        x = reorder(sigla_uf, gname),
-        y = 1,
-        fill = adoption_category
-      )) +
-        geom_tile(color = "white", linewidth = 0.5) +
-        scale_fill_manual(values = c(
-          "Não adotou" = "gray70",
-          "Adoção precoce\n(até 2010)" = "#2ecc71",
-          "Adoção intermediária\n(2011-2015)" = "#f39c12",
-          "Adoção tardia\n(após 2015)" = "#e74c3c"
-        )) +
-        theme_minimal() +
-        labs(
-          title = "Timing de Adoção por UF",
-          subtitle = "Ano em que >50% das microrregiões tiveram estação",
-          x = "UF",
-          y = NULL,
-          fill = "Categoria"
-        ) +
-        theme(
-          axis.text.y = element_blank(),
-          axis.ticks.y = element_blank(),
-          legend.position = "bottom"
-        )
-
-      ggsave("data/outputs/adoption_timing_uf.png", p_adoption_map,
-        width = 12, height = 4, dpi = 300
-      )
-      cli::cli_alert_success("Gráfico salvo: adoption_timing_uf.png")
-
-      # Salvar resultados
-      readr::write_rds(list(
-        att_uf = att_uf,
-        overall = agg_overall,
-        event = agg_event,
-        group = agg_group,
-        df_uf = df_uf
-      ), here::here("data", "outputs", "uf_analysis_results.rds"))
-
-      # Retornar resultados
-      return(list(
-        att_uf = att_uf,
-        overall = agg_overall,
-        event = agg_event,
-        group = agg_group,
-        att_global = att_global,
-        se_global = se_global,
-        p_value = p_value,
-        df_uf = df_uf,
-        adoption_data = adoption_data
-      ))
-    },
-    error = function(e) {
-      cli::cli_alert_danger("Erro na estimação por UF: {e$message}")
-      return(NULL)
-    }
-  )
-}
-
-# ┌─────────────────────────────────────────────────────────────────────────┐ #
-# │ 1.15 VISUALIZAÇÃO DE TENDÊNCIAS PARALELAS (COMPLETA)                    │ #
+# │ 1.13 VISUALIZAÇÃO DE TENDÊNCIAS PARALELAS (COMPLETA)                    │ #
 # └─────────────────────────────────────────────────────────────────────────┘ #
 #' plot_parallel_trends(): Visualiza tendências completas por coorte (pré e pós)
 #'
@@ -2863,7 +2073,7 @@ plot_parallel_trends <- function(df, outcome = "log_pib_agro",
 }
 
 # ┌─────────────────────────────────────────────────────────────────────────┐ #
-# │ 1.16 ANÁLISE DESCRITIVA PARA TCC                                        │ #
+# │ 1.14 ANÁLISE DESCRITIVA PARA TCC                                        │ #
 # └─────────────────────────────────────────────────────────────────────────┘ #
 #' descriptive_analysis(): Gera análise descritiva completa para TCC
 #'
@@ -2874,6 +2084,7 @@ plot_parallel_trends <- function(df, outcome = "log_pib_agro",
 #' @param df DataFrame com dados limpos
 #' @return Lista com tabelas e gráficos
 #' ---------------------------------------------------------------------------
+# TODO: Atualizar para nova versão do dataset
 descriptive_analysis <- function(df) {
   cli::cli_h2("Gerando Análise Descritiva Completa para TCC")
 
@@ -2962,7 +2173,9 @@ descriptive_analysis <- function(df) {
   # Salvar tabela
   gtsave(desc_table, file.path(output_dir, "estatisticas_descritivas.html"))
 
-  # Salvar como PNG se webshot2 estiver disponível (pode falhar por problemas de porta)
+  # Salvar como PNG se webshot2 estiver disponível
+  # Essa parte pode falhar por problemas com firewall, tive esse problema quando rodei no meu PC Windows
+  # Caso falhe, existe um fallback para resolver o problema
   if (requireNamespace("webshot2", quietly = TRUE)) {
     tryCatch({
       gtsave(desc_table, file.path(output_dir, "estatisticas_descritivas.png"))
@@ -3795,7 +3008,7 @@ create_parallel_trends_test_table <- function(df,
     cohort_info = cohort_info_export
   ))
 }
-
+# TODO: Revisar toda a seção 1.20 no futuro. Impacto: Baixíssimo. Tudo tem failsafe.
 # ┌─────────────────────────────────────────────────────────────────────────┐ #
 # │ 1.20 GERAÇÃO AUTOMATIZADA DE RELATÓRIOS E VISUALIZAÇÕES PROFISSIONAIS   │ #
 # └─────────────────────────────────────────────────────────────────────────┘ #
@@ -3873,6 +3086,7 @@ create_parallel_trends_test_table <- function(df,
 #' NOTA: Esta função é o culminar do pipeline analítico, transformando
 #' resultados estatísticos brutos em comunicação científica efetiva.
 #' ---------------------------------------------------------------------------
+# TODO: Remover código inutilizado
 generate_presentation <- function(df, results, output_dir = NULL) {
   cli::cli_h1("Gerando Apresentação Profissional dos Resultados")
 
@@ -4711,7 +3925,7 @@ if (interactive() || sys.nframe() == 0) {
   # └─────────────────────────────────────────────────────────────────────── #
   # Carrega funções de ajuste de balanceamento
   balance_file <- here::here("rscripts", "balance_adjustments.r")
-  apply_balance_adjustments <- TRUE # Definir como FALSE para desativar
+  apply_balance_adjustments <- TRUE
 
   if (apply_balance_adjustments && file.exists(balance_file)) {
     cli::cli_h2("Aplicando Ajustes de Balanceamento")
@@ -4727,11 +3941,6 @@ if (interactive() || sys.nframe() == 0) {
     cli::cli_h3("Aplicando Winsorização de Outliers")
     df_clean <- winsorize_outliers(df_clean, percentile = 0.02)
     cli::cli_alert_success("Winsorização aplicada (2% nas caudas)")
-
-    # Opcional: Aplicar trimming por propensity score
-    # Descomente as linhas abaixo para ativar
-    # cli::cli_h3("Aplicando Trimming por Propensity Score")
-    # df_clean <- trim_by_propensity_score(df_clean, lower_threshold = 0.05, upper_threshold = 0.95)
 
     # Registrar estado final
     n_obs_final <- nrow(df_clean)
@@ -4812,9 +4021,6 @@ if (interactive() || sys.nframe() == 0) {
   # ┌─────────────────────────────────────────────────────────────────────── #
   # │ ANÁLISE DE PESOS: DIAGNÓSTICO DE COMPOSIÇÃO DO ESTIMADOR              │
   # └─────────────────────────────────────────────────────────────────────── #
-  # MOTIVAÇÃO: Em DiD escalonado, grupos tratados precocemente (com mais
-  # períodos pós) podem dominar o ATT agregado, potencialmente mascarando
-  # heterogeneidade temporal nos efeitos do tratamento.
   cli::cli_h2("Análise de Pesos de Adoção Escalonada (Outcome Principal: Valor Cana)")
   weights_analysis <- analyze_weights(res_main_valor$att)
   readr::write_csv(weights_analysis, here::here("data", "outputs", "weights_analysis.csv"))
@@ -4859,10 +4065,10 @@ if (interactive() || sys.nframe() == 0) {
   cli::cli_h2("Teste Placebo Aleatório (Outcome: Valor Cana)")
   cli::cli_alert_info("Placebo executado no dataset filtrado (produtores de cana)")
   placebo_random <- random_placebo_test(
-    df_main,  # IMPORTANTE: usar dataset filtrado igual ao da análise principal
+    df_main,
     n_sims = CONFIG_N_SIMS,  # Usa configuração (pode ser sobrescrito via --nsims)
     method = "dr",
-    outcome = "log_valor_producao_cana",  # Usar outcome principal
+    outcome = "log_valor_producao_cana",
     parallel = TRUE, # Ativar paralelização
     n_cores = NULL # Auto-detectar cores
   )
@@ -4951,6 +4157,8 @@ if (interactive() || sys.nframe() == 0) {
   # ┌─────────────────────────────────────────────────────────────────────── #
   # │ NOVA ANÁLISE: VISUALIZAÇÕES E TABELAS COMPLEMENTARES                  │
   # └─────────────────────────────────────────────────────────────────────── #
+  # NOTA: Automatizei a criação de tudo e as figuras principais estão flageadas para geração.
+  # Caso não sejam geradas, os logs irão alertar. 
   cli::cli_h2("Gerando Visualizações e Tabelas Complementares")
 
   # Verificar se os arquivos de funções complementares existem
@@ -5307,34 +4515,25 @@ if (interactive() || sys.nframe() == 0) {
   generate_presentation(df_clean, all_results)
 
   # ════════════════════════════════════════════════════════════════════════ #
-  # SÍNTESE DOS RESULTADOS E IMPLICAÇÕES PARA POLÍTICA PÚBLICA              #
+  # COMENTÁRIOS DO AUTOR                                                     #
   # ════════════════════════════════════════════════════════════════════════ #
-  # Este estudo demonstra que a instalação de estações meteorológicas       #
-  # automáticas gera impacto causal positivo e economicamente significativo #
-  # no VALOR DE PRODUÇÃO DE CANA-DE-AÇÚCAR (48,5%). O efeito é substancial #
-  # e reflete ganhos nas margens extensiva (área) e intensiva (produtiv.)   #
-  # Cana é altamente sensível a informação climática para irrigação.        #
-  #                                                                         #
-  # OUTCOME PRINCIPAL: Valor de produção de cana-de-açúcar (R$, log)       #
-  #   - Captura impacto econômico completo (área × produtividade)          #
-  #   - Detecta resposta comportamental dos produtores                      #
-  #   - Alta sensibilidade via irrigação de salvamento (>90% da área)      #
-  #                                                                         #
-  # OUTCOMES SECUNDÁRIOS validam e decompõem:                               #
-  #   - Área cana: decomposição da margem extensiva (26,5%)                #
-  #   - Outras culturas: testam especificidade (placebos não significativos)#
-  #   - Valores soja/arroz: confirmam especificidade à cana                #
-  #                                                                         #
-  # A robustez dos resultados a múltiplas especificações, combinada com    #
-  # testes placebo (Monte Carlo, culturas alternativas) e validação        #
-  # através de outcomes alternativos, fortalece a interpretação causal.    #
-  #                                                                         #
-  # Contribuições acadêmicas:                                              #
-  # 1. Primeira evidência causal rigorosa do impacto de infraestrutura    #
-  #    meteorológica no valor de produção agrícola no Brasil              #
-  # 2. Aplicação do estado da arte em métodos de DiD escalonado           #
-  # 3. Framework replicável para avaliação de políticas similares         #
-  # 4. Decomposição margens: informação → decisões → área + produtividade #
+  # Este código foi feito por um Senior Machine Learning Engineer (por
+  # incrível que pareça). Muito da complexidade desse código vem do fato de
+  # eu ter automatizado a geração dos artefatos usados na tese.
+  #
+  # Exemplo: todos os valores apresentados no documento são salvos como
+  # funções TEX que podem ser usadas no arquivo principal na compilação
+  # para PDF.
+  #
+  # Toda essa complexidade advém da minha necessidade de realizar diversos
+  # testes e conseguir visualizá-los de forma estruturada. Tanto para
+  # validar a narrativa da tese quanto para confirmar os priors que montei
+  # na minha cabeça.
+  #
+  # Se você pretende continuar esse trabalho, vale revisar esse código com
+  # carinho e atenção: muita coisa não é usada e, ao final de tudo, só o
+  # que é importante para tese seguiu tendo atenção ao longo do
+  # desenvolvimento.
   # ════════════════════════════════════════════════════════════════════════ #
 
   cli::cli_alert_success("Pipeline de análise concluído com sucesso!")
