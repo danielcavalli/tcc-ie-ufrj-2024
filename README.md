@@ -35,22 +35,21 @@ Este repositório contém os códigos, dados e documentação do TCC desenvolvid
 
 **Período:** 2003-2021 (19 anos)
 
-**Unidades:** 490 microrregiões produtoras de cana-de-açúcar
+**Unidades:** 558 microrregiões brasileiras (com subamostras específicas por cultura para análises crop-specific)
 
 **Outcomes Analisados:**
-- Área plantada de cana-de-açúcar (outcome principal)
-- Valor de produção de cana-de-açúcar
-- PIB agropecuário (medida agregada)
-- Culturas alternativas: soja e arroz (testes de especificidade)
+- Valor de produção de cana-de-açúcar (outcome principal)
+- Área plantada de cana-de-açúcar (outcome secundário para decomposição de efeitos)
+- Culturas alternativas: soja e arroz (testes placebo de especificidade)
 
 ## 🎯 Resultados Principais
 
 Os resultados reportados abaixo são obtidos através do pipeline automatizado implementado em [rscripts/did_v2.r](rscripts/did_v2.r). Todos os valores numéricos são extraídos automaticamente e incorporados no documento LaTeX através do script [rscripts/generate_latex_values.r](rscripts/generate_latex_values.r).
 
 ### Efeito Principal (Cana-de-Açúcar)
+- **Valor de Produção (Outcome Principal):** Aumento substancial e significativo no valor de produção da cultura
 - **Área Plantada:** ATT agregado significativo na expansão da área de cana-de-açúcar
-- **Valor de Produção:** Aumento substancial no valor de produção da cultura
-- **Interpretação:** As estações meteorológicas facilitam decisões sobre expansão de área e práticas de manejo
+- **Interpretação:** As estações meteorológicas facilitam decisões sobre expansão de área e práticas de manejo. O efeito no valor captura tanto a margem extensiva (expansão de área) quanto a margem intensiva (ganhos de produtividade)
 
 ### Validação e Robustez
 - **Tendências Paralelas:** Confirmadas através de múltiplos testes formais e inspeção visual por coorte
@@ -95,10 +94,10 @@ Empregamos o modelo de Diferenças em Diferenças (DiD) com adoção escalonada 
 
 | Tipo | Variável | Descrição |
 |------|----------|-----------|
-| **Outcome principal** | `log_area_cana` | Log da área plantada de cana-de-açúcar (hectares) |
-| **Outcomes secundários** | `log_valor_producao_cana` | Log do valor de produção de cana (R$ mil, valores constantes) |
-|  | `log_pib_agro` | Log do PIB agropecuário (R$ constantes) |
+| **Outcome principal** | `log_valor_producao_cana` | Log do valor de produção de cana (R$ mil, valores constantes) |
+| **Outcome secundário** | `log_area_cana` | Log da área plantada de cana-de-açúcar (hectares) |
 | **Outcomes placebo** | `log_area_soja`, `log_area_arroz` | Log da área plantada de soja e arroz (testes de especificidade) |
+|  | `log_valor_producao_soja`, `log_valor_producao_arroz` | Log do valor de produção de soja e arroz (testes de especificidade) |
 | **Tratamento** | `gname` | Ano da primeira estação meteorológica na microrregião |
 | **Identificação** | `id_microrregiao` | Código IBGE da microrregião |
 | **Tempo** | `ano` | Ano da observação (2003-2021) |
@@ -107,17 +106,18 @@ Empregamos o modelo de Diferenças em Diferenças (DiD) com adoção escalonada 
 
 | Variável | Descrição |
 |----------|-----------|
-| `log_area_plantada_total` | Log da área plantada agregada (hectares) |
-| `log_populacao` | Log da população municipal |
-| `log_pib_per_capita` | Log do PIB per capita |
-| `log_densidade_estacoes_uf` | Log da densidade de estações na UF (controle de spillovers) |
+| `log_area_total` | Log da área total da microrregião (disponibilidade de terras para expansão) |
+| `log_populacao` | Log da população (proxy para disponibilidade de mão de obra) |
+| `log_pib_per_capita` | Log do PIB per capita (nível de desenvolvimento econômico) |
+| `log_densidade_estacoes_uf` | Log da densidade de estações na UF (controle de spillovers regionais) |
+| Variáveis climáticas | Precipitação total anual, média mensal e máxima mensal (em log, derivadas de dados ERA5) |
 
 ### Estrutura dos Dados:
 - **Unidade de análise**: Microrregião (agregação de municípios segundo IBGE)
 - **Período**: 2003-2021 (19 anos)
-- **Painel**: Balanceado com 490 microrregiões produtoras de cana × 19 anos = 9.310 observações
+- **Painel**: Balanceado com 558 microrregiões × 19 anos = 10.602 observações totais
 - **Grupo de controle**: "Not yet treated" (dinâmico, muda ao longo do tempo)
-- **Filtro de amostra**: Microrregiões com produção de cana-de-açúcar em pelo menos um ano
+- **Filtro crop-specific**: Para cada cultura, a análise usa apenas microrregiões que produziram aquela cultura em pelo menos um ano (e.g., 225 microrregiões para cana, produzindo 4.275 observações)
 
 ## Estrutura de Análise e Pipeline
 
@@ -399,19 +399,21 @@ Dataset em painel balanceado com múltiplas culturas (cana, soja, arroz) agregad
 | `ano` | int | Ano da observação (2003-2021) |
 | `id_microrregiao` | int | Código IBGE da microrregião |
 | `sigla_uf` | str | Sigla do estado |
-| `primeiro_ano_tratamento` | int | Ano da primeira estação (variável de tratamento) |
+| `primeiro_ano_tratamento` | int | Ano da primeira estação (variável de tratamento, gname) |
 | `area_cana`, `area_soja`, `area_arroz` | float | Área plantada por cultura (hectares) |
 | `valor_producao_cana`, `_soja`, `_arroz` | float | Valor de produção por cultura (R$ mil, valores constantes) |
-| `pib_agropecuario` | float | PIB agropecuário (R$ constantes) |
+| `area_total` | float | Área territorial da microrregião |
 | `populacao_total` | int | População municipal agregada |
+| `pib_per_capita` | float | PIB per capita (R$ constantes) |
 | `densidade_estacoes_uf` | float | Densidade de estações por km² no estado |
+| Variáveis climáticas | float | Precipitação total anual, média mensal, máxima mensal (ERA5) |
 
 ##### Características:
 - **Unidade**: Microrregião-ano
 - **Período**: 2003-2021 (19 anos)
-- **Observações**: ~9.310 (490 microrregiões produtoras × 19 anos)
+- **Observações**: 10.602 (558 microrregiões × 19 anos)
 - **Formato**: CSV, UTF-8, separador vírgula
-- **Filtro**: Microrregiões com pelo menos um ano de produção da cultura relevante
+- **Filtro crop-specific**: Aplicado durante análise para cada cultura (e.g., 225 microrregiões produtoras de cana)
 
 ## Pré-requisitos
 

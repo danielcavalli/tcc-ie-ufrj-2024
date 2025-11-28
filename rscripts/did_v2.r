@@ -193,7 +193,7 @@ CONFIG_N_SIMS <- if (!is.null(parsed_args$nsims)) {
 # └─────────────────────────────────────────────────────────────────────────┘ #
 # Centraliza todos os caminhos de arquivos para facilitar manutenção.
 # --------------------------------------------------------------------------- #
-CONFIG_PATH_INPUT_DATA <- here::here("data", "csv", "microrregions_Cana-de-açúcar_2003-2023.csv")
+CONFIG_PATH_INPUT_DATA <- here::here("data", "csv", "microrregions_Cana-de-açúcar-Soja-Arroz_2003-2021_mapbiomas.csv")
 CONFIG_PATH_OUTPUT_DIR <- here::here("data", "outputs")
 
 # Criar diretório de saída se não existir
@@ -335,6 +335,7 @@ prep_data <- function(path_csv) {
       log_area_cana = log1p(area_plantada_cana),
       log_area_soja = log1p(area_plantada_soja),
       log_area_arroz = log1p(area_plantada_arroz),
+      log_area_outras = log1p(area_plantada_outras),
       # Log de variáveis climáticas
       log_precip_anual = log1p(precip_total_anual_mm),
       log_precip_media_mm = log1p(precip_media_mensal_mm),
@@ -365,6 +366,12 @@ prep_data <- function(path_csv) {
     df <- df %>% mutate(log_valor_producao_arroz = log1p(valor_producao_arroz))
     cli::cli_alert_success("Adicionada variável: log_valor_producao_arroz")
   }
+
+  if ("valor_producao_outras" %in% names(df)) {
+    df <- df %>% mutate(log_valor_producao_outras = log1p(valor_producao_outras))
+    cli::cli_alert_success("Adicionada variável: log_valor_producao_outras")
+  }
+
 
   df <- df
 
@@ -692,6 +699,89 @@ visualize_results <- function(att_event, output_prefix = "event_study") {
   dir_out <- here::here("data", "outputs")
   ggsave(file.path(dir_out, paste0(output_prefix, ".png")), p_event, width = 12, height = 6)
   ggsave(file.path(dir_out, paste0(output_prefix, ".pdf")), p_event, width = 12, height = 6)
+}
+
+
+# 1.5.1 Visualização Aprimorada (Estilo Apresentação) ------------------------ #
+#' visualize_results_enhanced()
+#' ---------------------------------------------------------------------------
+#' Cria gráfico Event Study aprimorado com estilo de apresentação.
+#' Inclui: significância estatística colorida, eixo Y em porcentagem,
+#' anotações em português, legenda de significância.
+#' Salva PNG em data/outputs/presentation.
+#' ---------------------------------------------------------------------------
+visualize_results_enhanced <- function(att_event, output_prefix, outcome_label, y_axis_label, output_dir = NULL) {
+  if (is.null(output_dir)) {
+    output_dir <- here::here("data", "outputs", "presentation")
+  }
+  
+  if (!dir.exists(output_dir)) {
+    dir.create(output_dir, recursive = TRUE)
+  }
+  
+  cli::cli_alert_info("Gerando gráfico aprimorado: {output_prefix}...")
+  
+  # Tema customizado para apresentação
+dplyr::mutate(tibble::tibble(
+    time_relative = att_event$egt,
+    att = att_event$att.egt,
+    se = att_event$se.egt
+  ),
+      ci_lower = att - 1.96 * se,
+      ci_upper = att + 1.96 * se,
+      significant = abs(att) > 1.96 * se
+    ) -> event_data
+
+  p_event_enhanced <- ggplot(event_data, aes(x = time_relative, y = att)) +
+    # Ribbon do IC
+    geom_ribbon(aes(ymin = ci_lower, ymax = ci_upper),
+      fill = "steelblue", alpha = 0.2
+    ) +
+    # Linha do efeito
+    geom_line(linewidth = 1.2, color = "steelblue") +
+    # Pontos
+    geom_point(aes(color = significant, size = significant)) +
+    scale_color_manual(
+      values = c("FALSE" = "gray60", "TRUE" = "steelblue"),
+      labels = c("Não significativo", "Significativo (5%)"),
+      name = "Significância estatística"
+    ) +
+    scale_size_manual(values = c("FALSE" = 3, "TRUE" = 5), guide = "none") +
+    # Linhas de referência
+    geom_hline(yintercept = 0, linetype = "solid", color = "black", linewidth = 0.8) +
+    geom_vline(xintercept = -0.5, linetype = "dashed", color = "red", linewidth = 0.8) +
+    # Anotações
+    annotate("text",
+      x = -0.5, y = max(event_data$ci_upper, na.rm = TRUE) * 0.9,
+      label = "Início do\ntratamento", hjust = 1.1, color = "red"
+    ) +
+    # Formatação
+    scale_x_continuous(breaks = seq(-15, 20, 5)) +
+    scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +
+    labs(
+      title = paste0("Event Study: Impacto das Estações Meteorológicas no ", outcome_label),
+      subtitle = "Efeito ao longo do tempo relativo à instalação",
+      x = "Anos relativos ao tratamento",
+      y = y_axis_label,
+      caption = "Notas: Intervalos de confiança de 95%. Período base = t-1."
+    ) +
+    theme_minimal(base_size = 14) +
+    theme(
+      plot.title = element_text(size = 18, face = "bold", hjust = 0.5),
+      plot.subtitle = element_text(size = 14, hjust = 0.5, color = "gray40"),
+      plot.caption = element_text(size = 10, color = "gray50", hjust = 1),
+      panel.grid.minor = element_blank(),
+      legend.position = "top",
+      legend.title = element_text(face = "bold"),
+      axis.title = element_text(face = "bold", size = 12)
+    )
+
+  ggsave(file.path(output_dir, paste0(output_prefix, ".png")),
+    p_event_enhanced,
+    width = 12, height = 8, dpi = 300
+  )
+  
+  cli::cli_alert_success("Gráfico salvo: {output_prefix}.png")
 }
 
 # 1.6 Diagnóstico de Covariáveis ------------------------------------------- #
@@ -2194,6 +2284,31 @@ alternative_outcomes_analysis <- function(df, method = "dr") {
     )
     cli::cli_alert_info("Adicionado outcome: Valor Produção Arroz")
   }
+
+  if ("log_area_outras" %in% names(df)) {
+    outcomes$area_outras <- list(
+      var = "log_area_outras",
+      label = "Área Outras Lavouras Temporárias",
+      type = "Área plantada alternativa",
+      unit = "km² (log)",
+      filter_crop = "Outras",
+      filter_var = "area_plantada_outras"
+    )
+    cli::cli_alert_info("Adicionado outcome: Área Outras Lavouras")
+  }
+
+  if ("log_valor_producao_outras" %in% names(df)) {
+    outcomes$valor_outras <- list(
+      var = "log_valor_producao_outras",
+      label = "Valor Produção Outras Lavouras",
+      type = "Valor de produção por cultura",
+      unit = "R$ (log)",
+      filter_crop = "Outras",
+      filter_var = "area_plantada_outras"
+    )
+    cli::cli_alert_info("Adicionado outcome: Valor Produção Outras Lavouras")
+  }
+
   
   # Iterar sobre cada outcome e estimar
   results <- purrr::map(names(outcomes), function(outcome_name) {
@@ -2238,10 +2353,55 @@ alternative_outcomes_analysis <- function(df, method = "dr") {
         cli::cli_alert_warning("Erro ao estimar {outcome_info$label}: {e$message}")
         list(
           att_global = NA, se_global = NA, p = NA,
-          ci_low = NA, ci_high = NA, z = NA
+          ci_low = NA, ci_high = NA, z = NA, event = NULL
         )
       }
     )
+
+    # Gerar event study chart para este outcome (se estimacao foi bem sucedida)
+    if (!is.null(res$event)) {
+      outcome_suffix <- gsub("log_", "", outcome_info$var)
+      
+      # Definir labels para visualização aprimorada
+      enhanced_labels <- list(
+        "area_cana" = list(label = "Área Plantada de Cana", y_label = "Efeito na Área Plantada (%)"),
+        "area_soja" = list(label = "Área Plantada de Soja", y_label = "Efeito na Área Plantada (%)"),
+        "area_arroz" = list(label = "Área Plantada de Arroz", y_label = "Efeito na Área Plantada (%)"),
+        "valor_producao_cana" = list(label = "Valor de Produção de Cana", y_label = "Efeito no Valor de Produção (%)"),
+        "valor_producao_soja" = list(label = "Valor de Produção de Soja", y_label = "Efeito no Valor de Produção (%)"),
+        "valor_producao_arroz" = list(label = "Valor de Produção de Arroz", y_label = "Efeito no Valor de Produção (%)"),
+        "area_outras" = list(label = "Área Outras Lavouras Temporárias", y_label = "Efeito na Área Plantada (%)"),
+        "valor_producao_outras" = list(label = "Valor de Produção Outras Lavouras", y_label = "Efeito no Valor de Produção (%)")
+      )
+      
+      tryCatch(
+        {
+          # Gerar versão básica
+          visualize_results(res$event, output_prefix = paste0("event_study_", outcome_suffix))
+          cli::cli_alert_success("Event study básico salvo: event_study_{outcome_suffix}.png/pdf")
+          
+          # Gerar versão aprimorada (estilo apresentação)
+          if (outcome_suffix %in% names(enhanced_labels)) {
+            enhanced_prefix <- if (outcome_suffix == "valor_producao_cana") {
+              "event_study_enhanced"  # Nome especial para outcome principal
+            } else {
+              paste0("event_study_", outcome_suffix, "_enhanced")
+            }
+            visualize_results_enhanced(
+              res$event,
+              output_prefix = enhanced_prefix,
+              outcome_label = enhanced_labels[[outcome_suffix]]$label,
+              y_axis_label = enhanced_labels[[outcome_suffix]]$y_label
+            )
+          }
+        },
+        error = function(e) {
+          cli::cli_alert_warning("Erro ao gerar event study para {outcome_info$label}: {e$message}")
+        }
+      )
+    }
+
+
 
     # Retornar resultados estruturados (incluindo info de filtro)
     tibble::tibble(
@@ -3873,6 +4033,234 @@ create_parallel_trends_test_table <- function(df,
 #' NOTA: Esta função é o culminar do pipeline analítico, transformando
 #' resultados estatísticos brutos em comunicação científica efetiva.
 #' ---------------------------------------------------------------------------
+
+# ---------------------------------------------------------------------------
+#' generate_did_effects_summary
+#' ---------------------------------------------------------------------------
+#' Gera tabela resumo dos efeitos DiD usando a estrutura nativa do pacote did
+#'
+#' Esta função extrai e organiza os efeitos estimados pelo pacote did de
+#' Callaway & Sant'Anna (2021) em formato tabular para apresentação na tese.
+#' Inclui:
+#'   - Efeito Médio Global (Overall ATT)
+#'   - Efeitos por Grupo/Coorte (Group Effects)
+#'   - Efeitos Dinâmicos selecionados (Event Effects)
+#'
+#' @param att_results Objeto MP retornado por att_gt()
+#' @param agg_overall Objeto AGGTEobj retornado por aggte(..., type="group")
+#' @param agg_event Objeto AGGTEobj retornado por aggte(..., type="dynamic")
+#' @param outcome_label String - Nome do outcome para identificação
+#' @param output_path String - Caminho para salvar o CSV (opcional)
+#'
+#' @return tibble com a tabela de efeitos formatada
+#' ---------------------------------------------------------------------------
+generate_did_effects_summary <- function(att_results, agg_overall, agg_event,
+                                          outcome_label = "Outcome",
+                                          output_path = NULL) {
+  cli::cli_h2(paste0("Gerando Tabela de Efeitos DiD: ", outcome_label))
+
+  # Função auxiliar para calcular p-valor
+  calc_pvalue <- function(att, se) {
+    z <- att / se
+    2 * (1 - pnorm(abs(z)))
+  }
+
+  # Função auxiliar para formatar significância
+  format_signif <- function(pval) {
+    dplyr::case_when(
+      pval < 0.01 ~ "***",
+      pval < 0.05 ~ "**",
+      pval < 0.1 ~ "*",
+      TRUE ~ ""
+    )
+  }
+
+  # ═══════════════════════════════════════════════════════════════════════
+
+  # 1. EFEITO MÉDIO GLOBAL (Overall ATT)
+  # ═══════════════════════════════════════════════════════════════════════
+  overall_att <- agg_overall$overall.att
+  overall_se <- agg_overall$overall.se
+  overall_pval <- calc_pvalue(overall_att, overall_se)
+  crit_val <- agg_overall$crit.val.egt
+
+  overall_row <- tibble::tibble(
+    Tipo = "Efeito Global",
+    Grupo_Evento = "ATT Medio",
+    ATT = overall_att,
+    `Erro Padrao` = overall_se,
+    `IC Inferior` = overall_att - crit_val * overall_se,
+    `IC Superior` = overall_att + crit_val * overall_se,
+    `p-valor` = overall_pval,
+    Signif = format_signif(overall_pval)
+  )
+
+  # ═══════════════════════════════════════════════════════════════════════
+  # 2. EFEITOS POR GRUPO/COORTE (Group Effects)
+  # ═══════════════════════════════════════════════════════════════════════
+  groups <- agg_overall$egt
+  group_atts <- agg_overall$att.egt
+  group_ses <- agg_overall$se.egt
+  group_pvals <- calc_pvalue(group_atts, group_ses)
+
+  group_rows <- tibble::tibble(
+    Tipo = "Efeito por Coorte",
+    Grupo_Evento = paste0("Coorte ", groups),
+    ATT = group_atts,
+    `Erro Padrao` = group_ses,
+    `IC Inferior` = group_atts - crit_val * group_ses,
+    `IC Superior` = group_atts + crit_val * group_ses,
+    `p-valor` = group_pvals,
+    Signif = format_signif(group_pvals)
+  )
+
+  # ═══════════════════════════════════════════════════════════════════════
+  # 3. EFEITOS DINÂMICOS SELECIONADOS (Event Effects)
+  # ═══════════════════════════════════════════════════════════════════════
+  # Selecionar apenas os eventos mais relevantes:
+  # - Pre-tratamento: -5, -3, -1 (validacao tendencias paralelas)
+  # - Pos-tratamento: 0, 1, 2, 3, 5, 10 (efeitos imediatos e persistencia)
+
+  event_times <- agg_event$egt
+  event_atts <- agg_event$att.egt
+  event_ses <- agg_event$se.egt
+  event_crit <- agg_event$crit.val.egt
+
+  # Eventos de interesse
+  selected_events <- c(-5, -3, -1, 0, 1, 2, 3, 5, 10)
+  selected_idx <- which(event_times %in% selected_events)
+
+  if (length(selected_idx) > 0) {
+    event_rows <- tibble::tibble(
+      Tipo = "Efeito Dinamico",
+      Grupo_Evento = paste0("t", ifelse(event_times[selected_idx] >= 0, "+", ""),
+                            event_times[selected_idx]),
+      ATT = event_atts[selected_idx],
+      `Erro Padrao` = event_ses[selected_idx],
+      `IC Inferior` = event_atts[selected_idx] - event_crit * event_ses[selected_idx],
+      `IC Superior` = event_atts[selected_idx] + event_crit * event_ses[selected_idx],
+      `p-valor` = calc_pvalue(event_atts[selected_idx], event_ses[selected_idx]),
+      Signif = format_signif(calc_pvalue(event_atts[selected_idx], event_ses[selected_idx]))
+    )
+  } else {
+    event_rows <- tibble::tibble()
+  }
+
+  # ═══════════════════════════════════════════════════════════════════════
+  # CONSOLIDAR TABELA FINAL
+  # ═══════════════════════════════════════════════════════════════════════
+  effects_table <- dplyr::bind_rows(overall_row, group_rows, event_rows) %>%
+    dplyr::mutate(
+      Outcome = outcome_label,
+      ATT = round(ATT, 4),
+      `Erro Padrao` = round(`Erro Padrao`, 4),
+      `IC Inferior` = round(`IC Inferior`, 4),
+      `IC Superior` = round(`IC Superior`, 4),
+      `p-valor` = round(`p-valor`, 4)
+    ) %>%
+    dplyr::select(Outcome, Tipo, Grupo_Evento, ATT, `Erro Padrao`,
+           `IC Inferior`, `IC Superior`, `p-valor`, Signif)
+
+  # Salvar se caminho especificado
+  if (!is.null(output_path)) {
+    readr::write_csv(effects_table, output_path)
+    cli::cli_alert_success(paste0("Tabela salva em: ", output_path))
+  }
+
+  # Exibir resumo
+  cli::cli_alert_info(paste0("Total de efeitos na tabela: ", nrow(effects_table)))
+  cli::cli_alert_info(paste0("  - Efeito Global: 1"))
+  cli::cli_alert_info(paste0("  - Efeitos por Coorte: ", nrow(group_rows)))
+  cli::cli_alert_info(paste0("  - Efeitos Dinamicos: ", nrow(event_rows)))
+
+  return(effects_table)
+}
+
+# ---------------------------------------------------------------------------
+#' generate_all_did_effects_tables
+#' ---------------------------------------------------------------------------
+#' Gera tabelas de efeitos DiD para os outcomes principais
+#'
+#' Carrega os resultados salvos e gera tabelas para:
+#'   - Valor de Producao de Cana (outcome principal)
+#'   - Area Plantada de Cana (outcome secundario)
+#'
+#' @param output_dir String - Diretorio para salvar os CSVs
+#'
+#' @return Lista com as tabelas geradas
+#' ---------------------------------------------------------------------------
+generate_all_did_effects_tables <- function(output_dir = NULL) {
+  cli::cli_h1("Gerando Tabelas de Efeitos DiD para Outcomes Principais")
+
+  if (is.null(output_dir)) {
+    output_dir <- here::here("data", "outputs")
+  }
+
+  results_list <- list()
+
+  # ═══════════════════════════════════════════════════════════════════════
+  # 1. VALOR DE PRODUCAO DE CANA (Outcome Principal)
+  # ═══════════════════════════════════════════════════════════════════════
+  cli::cli_h2("Processando: Valor de Producao de Cana")
+
+  tryCatch({
+    att_valor <- readRDS(file.path(output_dir, "att_results_dr_valor_producao_cana.rds"))
+    agg_overall_valor <- readRDS(file.path(output_dir, "agg_overall_dr_valor_producao_cana.rds"))
+    agg_event_valor <- readRDS(file.path(output_dir, "agg_event_dr_valor_producao_cana.rds"))
+
+    table_valor <- generate_did_effects_summary(
+      att_results = att_valor,
+      agg_overall = agg_overall_valor,
+      agg_event = agg_event_valor,
+      outcome_label = "Valor Producao Cana (log)",
+      output_path = file.path(output_dir, "did_effects_summary_valor_producao_cana.csv")
+    )
+
+    results_list$valor_cana <- table_valor
+    cli::cli_alert_success("Tabela de Valor de Producao de Cana gerada com sucesso")
+  }, error = function(e) {
+    cli::cli_alert_danger(paste0("Erro ao processar Valor Cana: ", e$message))
+  })
+
+  # ═══════════════════════════════════════════════════════════════════════
+  # 2. AREA PLANTADA DE CANA (Outcome Secundario)
+  # ═══════════════════════════════════════════════════════════════════════
+  cli::cli_h2("Processando: Area Plantada de Cana")
+
+  tryCatch({
+    att_area <- readRDS(file.path(output_dir, "att_results_dr_area_cana.rds"))
+    agg_overall_area <- readRDS(file.path(output_dir, "agg_overall_dr_area_cana.rds"))
+    agg_event_area <- readRDS(file.path(output_dir, "agg_event_dr_area_cana.rds"))
+
+    table_area <- generate_did_effects_summary(
+      att_results = att_area,
+      agg_overall = agg_overall_area,
+      agg_event = agg_event_area,
+      outcome_label = "Area Plantada Cana (log)",
+      output_path = file.path(output_dir, "did_effects_summary_area_cana.csv")
+    )
+
+    results_list$area_cana <- table_area
+    cli::cli_alert_success("Tabela de Area Plantada de Cana gerada com sucesso")
+  }, error = function(e) {
+    cli::cli_alert_danger(paste0("Erro ao processar Area Cana: ", e$message))
+  })
+
+  # ═══════════════════════════════════════════════════════════════════════
+  # 3. TABELA CONSOLIDADA (Ambos outcomes)
+  # ═══════════════════════════════════════════════════════════════════════
+  if (length(results_list) == 2) {
+    combined_table <- dplyr::bind_rows(results_list$valor_cana, results_list$area_cana)
+    readr::write_csv(combined_table,
+                     file.path(output_dir, "did_effects_summary_combined.csv"))
+    cli::cli_alert_success("Tabela consolidada salva: did_effects_summary_combined.csv")
+    results_list$combined <- combined_table
+  }
+
+  cli::cli_alert_success("Geracao de tabelas de efeitos DiD concluida!")
+  return(results_list)
+}
+
 generate_presentation <- function(df, results, output_dir = NULL) {
   cli::cli_h1("Gerando Apresentação Profissional dos Resultados")
 

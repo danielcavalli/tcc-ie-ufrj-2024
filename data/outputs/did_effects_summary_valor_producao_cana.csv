@@ -1,0 +1,19 @@
+Outcome,Tipo,Grupo_Evento,ATT,Erro Padrao,IC Inferior,IC Superior,p-valor,Signif
+Valor Producao Cana (log),Efeito Global,ATT Medio,0.5015,0.2286,-0.0366,1.0395,0.0283,**
+Valor Producao Cana (log),Efeito por Coorte,Coorte 2004,1.0218,0.5955,-0.3799,2.4234,0.0862,*
+Valor Producao Cana (log),Efeito por Coorte,Coorte 2006,0.7654,0.4675,-0.335,1.8658,0.1016,
+Valor Producao Cana (log),Efeito por Coorte,Coorte 2007,0.1463,0.4331,-0.8732,1.1658,0.7356,
+Valor Producao Cana (log),Efeito por Coorte,Coorte 2008,0.5559,0.332,-0.2254,1.3373,0.094,*
+Valor Producao Cana (log),Efeito por Coorte,Coorte 2010,0.4733,0.2337,-0.0768,1.0233,0.0429,**
+Valor Producao Cana (log),Efeito por Coorte,Coorte 2015,-0.0104,0.0761,-0.1896,0.1688,0.8916,
+Valor Producao Cana (log),Efeito por Coorte,Coorte 2016,0.1015,0.2402,-0.4639,0.6669,0.6727,
+Valor Producao Cana (log),Efeito por Coorte,Coorte 2017,-0.005,0.2896,-0.6867,0.6766,0.9861,
+Valor Producao Cana (log),Efeito Dinamico,t-5,-0.1081,0.0921,-0.3596,0.1434,0.2405,
+Valor Producao Cana (log),Efeito Dinamico,t-3,0.0343,0.0495,-0.1009,0.1695,0.4889,
+Valor Producao Cana (log),Efeito Dinamico,t-1,0.0577,0.0875,-0.1813,0.2966,0.5101,
+Valor Producao Cana (log),Efeito Dinamico,t+0,0.0963,0.1352,-0.2729,0.4654,0.4766,
+Valor Producao Cana (log),Efeito Dinamico,t+1,0.1242,0.1421,-0.2636,0.512,0.382,
+Valor Producao Cana (log),Efeito Dinamico,t+2,0.1485,0.2052,-0.4116,0.7086,0.4692,
+Valor Producao Cana (log),Efeito Dinamico,t+3,0.2547,0.2268,-0.3644,0.8739,0.2614,
+Valor Producao Cana (log),Efeito Dinamico,t+5,0.531,0.2303,-0.0976,1.1596,0.0211,**
+Valor Producao Cana (log),Efeito Dinamico,t+10,0.8571,0.3231,-0.025,1.7392,0.008,***

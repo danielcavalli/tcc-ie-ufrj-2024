@@ -186,6 +186,62 @@ if (file.exists(alternative_outcomes_path)) {
             ""
         )
     }
+
+    # Área Outras Lavouras
+    area_outras_row <- alt_outcomes[grepl("Área Outras Lavouras", alt_outcomes$outcome_label), ]
+    if (nrow(area_outras_row) > 0) {
+        latex_content <- c(
+            latex_content,
+            "% Valores de área outras lavouras temporárias",
+            paste0("\\newcommand{\\areaoutrasatt}{", format_number(area_outras_row$att[1]), "}"),
+            paste0("\\newcommand{\\areaoutrasse}{", format_number(area_outras_row$se[1]), "}"),
+            paste0("\\newcommand{\\areaoutrasp}{", format_number(area_outras_row$p_value[1], digits = 4), "}"),
+            paste0("\\newcommand{\\areaoutraslower}{", format_number(area_outras_row$ci_lower[1]), "}"),
+            paste0("\\newcommand{\\areaoutrasupper}{", format_number(area_outras_row$ci_upper[1]), "}"),
+            ""
+        )
+    }
+
+    # Valor Outras Lavouras
+    valor_outras_row <- alt_outcomes[grepl("Valor Produção Outras", alt_outcomes$outcome_label), ]
+    if (nrow(valor_outras_row) > 0) {
+        latex_content <- c(
+            latex_content,
+            "% Valores de valor de produção outras lavouras",
+            paste0("\\newcommand{\\valoroutrasatt}{", format_number(valor_outras_row$att[1]), "}"),
+            paste0("\\newcommand{\\valoroutrasse}{", format_number(valor_outras_row$se[1]), "}"),
+            paste0("\\newcommand{\\valoroutrasp}{", format_number(valor_outras_row$p_value[1], digits = 4), "}"),
+            paste0("\\newcommand{\\valoroutraslower}{", format_number(valor_outras_row$ci_lower[1]), "}"),
+            paste0("\\newcommand{\\valoroutrasupper}{", format_number(valor_outras_row$ci_upper[1]), "}"),
+            ""
+        )
+    }
+
+    # Se não existirem dados de outras lavouras, criar placeholders
+    if (nrow(area_outras_row) == 0) {
+        latex_content <- c(
+            latex_content,
+            "% Valores de área outras lavouras (placeholder - executar análise completa)",
+            "\\newcommand{\\areaoutrasatt}{--}",
+            "\\newcommand{\\areaoutrasse}{--}",
+            "\\newcommand{\\areaoutrasp}{--}",
+            "\\newcommand{\\areaoutraslower}{--}",
+            "\\newcommand{\\areaoutrasupper}{--}",
+            ""
+        )
+    }
+    if (nrow(valor_outras_row) == 0) {
+        latex_content <- c(
+            latex_content,
+            "% Valores de valor outras lavouras (placeholder - executar análise completa)",
+            "\\newcommand{\\valoroutrasatt}{--}",
+            "\\newcommand{\\valoroutrasse}{--}",
+            "\\newcommand{\\valoroutrasp}{--}",
+            "\\newcommand{\\valoroutraslower}{--}",
+            "\\newcommand{\\valoroutrasupper}{--}",
+            ""
+        )
+    }
 }
 
 # Se existirem resultados de robustez, adicionar
