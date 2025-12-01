@@ -989,7 +989,7 @@ A intuição é direta: se o tratamento não tivesse efeito, o ATT observado nã
 A implementação do teste incorpora algumas escolhas práticas relevantes:
 
 \begin{itemize}
-  \item \textbf{Margem temporal:} Restringimos $t_i^* \in [2005, 2021]$ para assegurar janelas mínimas de observação antes e depois do tratamento.
+  \item \textbf{Margem temporal:} Restringimos $t_i^* \in [2005, 2019]$ para assegurar janelas mínimas de observação antes e depois do tratamento.
   \item \textbf{Paralelização:} Utilizamos computação paralela via \texttt{foreach} e \texttt{doParallel} em R, distribuindo as $S$ simulações entre múltiplos núcleos.
   \item \textbf{Validação:} Apenas simulações com convergência bem-sucedida entram no cálculo de $\hat{p}$.
   \item \textbf{Reprodutibilidade:} Cada simulação utiliza uma semente aleatória única ($\text{seed} \times 1000 + s$), o que garante reprodutibilidade mesmo em ambiente paralelo.
@@ -1370,35 +1370,17 @@ A Figura \ref{fig:dist_temporal} apresenta a evolução temporal da instalação
 
 \begin{table}[h]
 \centering
-\caption{Número de microrregiões tratadas por ano}
+\caption{Numero de microrregioes tratadas por ano}
 \label{tab:tratamento_temporal}
 \begin{tabular}{lcc}
 \toprule
-Ano & Microrregiões com Primeira Estação & N Obs \\
+Ano & Microrregioes com Primeira Estacao & N Obs \\
 \midrule
-2000 & 5 & 105 \\
-2001 & 10 & 210 \\
-2002 & 14 & 294 \\
-2003 & 19 & 399 \\
-2004 & 6 & 126 \\
-2005 & 2 & 42 \\
-2006 & 76 & 1596 \\
-2007 & 70 & 1470 \\
-2008 & 82 & 1722 \\
-2009 & 11 & 231 \\
-2010 & 6 & 126 \\
-2011 & 3 & 63 \\
-2012 & 6 & 126 \\
-2013 & 2 & 42 \\
-2015 & 2 & 42 \\
-2016 & 15 & 315 \\
-2017 & 16 & 336 \\
-2018 & 5 & 105 \\
-2019 & 1 & 21 \\
+\treatmenttablerows
 \bottomrule
 \end{tabular}
 
-\textit{Fonte:} Elaboração própria a partir dos dados do estudo.
+\textit{Fonte:} Elaboracao propria a partir dos dados do estudo. Periodo: 2003-2021 (\treatmentnanos{} anos).
 \end{table}
 
 \section{Estatísticas por Região}
@@ -1531,7 +1513,7 @@ As figuras a seguir apresentam os estudos de evento para outras culturas (soja e
 \centering
 \caption{Event Study: Impacto das Estacoes Meteorologicas no Valor de Producao de Soja}
 \label{fig:event_valor_soja}
-\includegraphics[width=0.85\textwidth]{../../../data/outputs/presentation/event_study_valor_soja_enhanced.png}
+\includegraphics[width=0.85\textwidth]{../../../data/outputs/presentation/event_study_valor_producao_soja_enhanced.png}
 
 \textit{Nota:} A figura apresenta as estimativas pontuais e intervalos de confianca de 95\% dos efeitos do tratamento em funcao do tempo relativo a instalacao da estacao. Pontos azuis indicam efeitos estatisticamente significativos ao nivel de 5\%.
 
@@ -1544,7 +1526,7 @@ As figuras a seguir apresentam os estudos de evento para outras culturas (soja e
 \centering
 \caption{Event Study: Impacto das Estacoes Meteorologicas no Valor de Producao de Arroz}
 \label{fig:event_valor_arroz}
-\includegraphics[width=0.85\textwidth]{../../../data/outputs/presentation/event_study_valor_arroz_enhanced.png}
+\includegraphics[width=0.85\textwidth]{../../../data/outputs/presentation/event_study_valor_producao_arroz_enhanced.png}
 
 \textit{Nota:} A figura apresenta as estimativas pontuais e intervalos de confianca de 95\% dos efeitos do tratamento em funcao do tempo relativo a instalacao da estacao. Pontos azuis indicam efeitos estatisticamente significativos ao nivel de 5\%.
 
@@ -1572,28 +1554,28 @@ A Tabela \ref{tab:did_effects_valor} apresenta os efeitos estimados para o outco
 \textbf{Tipo} & \textbf{Grupo/Evento} & \textbf{ATT} & \textbf{EP} & \textbf{IC 95\%} & \textbf{p-valor} & \textbf{Sig.} \\
 \midrule
 \multicolumn{7}{l}{\textit{Efeito Global}} \\
-& ATT Medio & 0.5015 & 0.2286 & [-0.04, 1.04] & 0.028 & ** \\
+& ATT Medio & \didvalorglobalatt & \didvalorglobalse & [\didvalorgloballower; \didvalorglobalupper] & \didvalorglobalp & \didvalorglobalsig \\
 \midrule
 \multicolumn{7}{l}{\textit{Efeitos por Coorte}} \\
-& Coorte 2004 & 1.0218 & 0.5955 & [-0.38, 2.42] & 0.086 & * \\
-& Coorte 2006 & 0.7654 & 0.4675 & [-0.34, 1.87] & 0.102 & \\
-& Coorte 2007 & 0.1463 & 0.4331 & [-0.87, 1.17] & 0.736 & \\
-& Coorte 2008 & 0.5559 & 0.3320 & [-0.23, 1.34] & 0.094 & * \\
-& Coorte 2010 & 0.4733 & 0.2337 & [-0.08, 1.02] & 0.043 & ** \\
-& Coorte 2015 & -0.0104 & 0.0761 & [-0.19, 0.17] & 0.892 & \\
-& Coorte 2016 & 0.1015 & 0.2402 & [-0.46, 0.67] & 0.673 & \\
-& Coorte 2017 & -0.0050 & 0.2896 & [-0.69, 0.68] & 0.986 & \\
+& Coorte \didvalorcoorteayear & \didvalorcoorteaatt & \didvalorcoortease & [\didvalorcoortealower; \didvalorcoorteaupper] & \didvalorcoorteap & \didvalorcoorteasig \\
+& Coorte \didvalorcoortebyear & \didvalorcoortebatt & \didvalorcoortebse & [\didvalorcoorteblower; \didvalorcoortebupper] & \didvalorcoortebp & \didvalorcoortebsig \\
+& Coorte \didvalorcoortecyear & \didvalorcoortecatt & \didvalorcoortecse & [\didvalorcoorteclower; \didvalorcoortecupper] & \didvalorcoortecp & \didvalorcoortecsig \\
+& Coorte \didvalorcoortedyear & \didvalorcoortedatt & \didvalorcoortedse & [\didvalorcoortedlower; \didvalorcoortedupper] & \didvalorcoortedp & \didvalorcoortedsig \\
+& Coorte \didvalorcoorteeyear & \didvalorcoorteeatt & \didvalorcoorteese & [\didvalorcoorteelower; \didvalorcoorteeupper] & \didvalorcoorteep & \didvalorcoorteesig \\
+& Coorte \didvalorcoortefyear & \didvalorcoortefatt & \didvalorcoortefse & [\didvalorcoorteflower; \didvalorcoortefupper] & \didvalorcoortefp & \didvalorcoortefsig \\
+& Coorte \didvalorcoortegyear & \didvalorcoortegatt & \didvalorcoortegse & [\didvalorcoorteglower; \didvalorcoortegupper] & \didvalorcoortegp & \didvalorcoortegsig \\
+& Coorte \didvalorcoortehyear & \didvalorcoortehatt & \didvalorcoortehse & [\didvalorcoortehlower; \didvalorcoortehupper] & \didvalorcoortehp & \didvalorcoortehsig \\
 \midrule
 \multicolumn{7}{l}{\textit{Efeitos Dinamicos}} \\
-& t-5 & -0.1081 & 0.0921 & [-0.36, 0.14] & 0.241 & \\
-& t-3 & 0.0343 & 0.0495 & [-0.10, 0.17] & 0.489 & \\
-& t-1 & 0.0577 & 0.0875 & [-0.18, 0.30] & 0.510 & \\
-& t+0 & 0.0963 & 0.1352 & [-0.27, 0.47] & 0.477 & \\
-& t+1 & 0.1242 & 0.1421 & [-0.26, 0.51] & 0.382 & \\
-& t+2 & 0.1485 & 0.2052 & [-0.41, 0.71] & 0.469 & \\
-& t+3 & 0.2547 & 0.2268 & [-0.36, 0.87] & 0.261 & \\
-& t+5 & 0.5310 & 0.2303 & [-0.10, 1.16] & 0.021 & ** \\
-& t+10 & 0.8571 & 0.3231 & [-0.03, 1.74] & 0.008 & *** \\
+& t-5 & \didvalortminusfiveatt & \didvalortminusfivese & [\didvalortminusfivelower; \didvalortminusfiveupper] & \didvalortminusfivep & \didvalortminusfivesig \\
+& t-3 & \didvalortminusthreeatt & \didvalortminusthreese & [\didvalortminusthreelower; \didvalortminusthreeupper] & \didvalortminusthreep & \didvalortminusthreesig \\
+& t-1 & \didvalortminusoneatt & \didvalortminusonese & [\didvalortminusonelower; \didvalortminusoneupper] & \didvalortminusonep & \didvalortminusonesig \\
+& t+0 & \didvalortpluszeroatt & \didvalortpluszerose & [\didvalortpluszerolower; \didvalortpluszeroupper] & \didvalortpluszerop & \didvalortpluszerosig \\
+& t+1 & \didvalortplusoneatt & \didvalortplusonese & [\didvalortplusonelower; \didvalortplusoneupper] & \didvalortplusonep & \didvalortplusonesig \\
+& t+2 & \didvalortplustwoatt & \didvalortplustwose & [\didvalortplustwolower; \didvalortplustwoupper] & \didvalortplustwop & \didvalortplustwosig \\
+& t+3 & \didvalortplusthreeatt & \didvalortplusthreese & [\didvalortplusthreelower; \didvalortplusthreeupper] & \didvalortplusthreep & \didvalortplusthreesig \\
+& t+5 & \didvalortplusfiveatt & \didvalortplusfivese & [\didvalortplusfivelower; \didvalortplusfiveupper] & \didvalortplusfivep & \didvalortplusfivesig \\
+& t+10 & \didvalortplusonezeroatt & \didvalortplusonezerose & [\didvalortplusonezerolower; \didvalortplusonezeroupper] & \didvalortplusonezerop & \didvalortplusonezerosig \\
 \bottomrule
 \end{tabular}
 
@@ -1616,28 +1598,28 @@ A Tabela \ref{tab:did_effects_area} apresenta os efeitos estimados para o outcom
 \textbf{Tipo} & \textbf{Grupo/Evento} & \textbf{ATT} & \textbf{EP} & \textbf{IC 95\%} & \textbf{p-valor} & \textbf{Sig.} \\
 \midrule
 \multicolumn{7}{l}{\textit{Efeito Global}} \\
-& ATT Medio & 0.2644 & 0.1119 & [-0.00, 0.53] & 0.018 & ** \\
+& ATT Medio & \didareaglobalatt & \didareaglobalse & [\didareagloballower; \didareaglobalupper] & \didareaglobalp & \didareaglobalsig \\
 \midrule
 \multicolumn{7}{l}{\textit{Efeitos por Coorte}} \\
-& Coorte 2004 & 0.3428 & 0.6026 & [-1.10, 1.79] & 0.569 & \\
-& Coorte 2006 & 0.3805 & 0.2045 & [-0.11, 0.87] & 0.063 & * \\
-& Coorte 2007 & 0.1605 & 0.1662 & [-0.24, 0.56] & 0.334 & \\
-& Coorte 2008 & 0.2908 & 0.1940 & [-0.17, 0.76] & 0.134 & \\
-& Coorte 2010 & -0.0397 & 0.1109 & [-0.31, 0.23] & 0.721 & \\
-& Coorte 2015 & -0.0394 & 0.0285 & [-0.11, 0.03] & 0.167 & \\
-& Coorte 2016 & 0.0832 & 0.0586 & [-0.06, 0.22] & 0.156 & \\
-& Coorte 2017 & 0.0528 & 0.0890 & [-0.16, 0.27] & 0.553 & \\
+& Coorte \didareacoorteayear & \didareacoorteaatt & \didareacoortease & [\didareacoortealower; \didareacoorteaupper] & \didareacoorteap & \didareacoorteasig \\
+& Coorte \didareacoortebyear & \didareacoortebatt & \didareacoortebse & [\didareacoorteblower; \didareacoortebupper] & \didareacoortebp & \didareacoortebsig \\
+& Coorte \didareacoortecyear & \didareacoortecatt & \didareacoortecse & [\didareacoorteclower; \didareacoortecupper] & \didareacoortecp & \didareacoortecsig \\
+& Coorte \didareacoortedyear & \didareacoortedatt & \didareacoortedse & [\didareacoortedlower; \didareacoortedupper] & \didareacoortedp & \didareacoortedsig \\
+& Coorte \didareacoorteeyear & \didareacoorteeatt & \didareacoorteese & [\didareacoorteelower; \didareacoorteeupper] & \didareacoorteep & \didareacoorteesig \\
+& Coorte \didareacoortefyear & \didareacoortefatt & \didareacoortefse & [\didareacoorteflower; \didareacoortefupper] & \didareacoortefp & \didareacoortefsig \\
+& Coorte \didareacoortegyear & \didareacoortegatt & \didareacoortegse & [\didareacoorteglower; \didareacoortegupper] & \didareacoortegp & \didareacoortegsig \\
+& Coorte \didareacoortehyear & \didareacoortehatt & \didareacoortehse & [\didareacoortehlower; \didareacoortehupper] & \didareacoortehp & \didareacoortehsig \\
 \midrule
 \multicolumn{7}{l}{\textit{Efeitos Dinamicos}} \\
-& t-5 & 0.0522 & 0.0224 & [-0.01, 0.11] & 0.020 & ** \\
-& t-3 & -0.0058 & 0.0303 & [-0.09, 0.08] & 0.847 & \\
-& t-1 & 0.0242 & 0.0265 & [-0.05, 0.10] & 0.361 & \\
-& t+0 & 0.0273 & 0.0224 & [-0.03, 0.09] & 0.224 & \\
-& t+1 & 0.1130 & 0.0512 & [-0.03, 0.25] & 0.027 & ** \\
-& t+2 & 0.1165 & 0.0774 & [-0.10, 0.33] & 0.132 & \\
-& t+3 & 0.0953 & 0.0895 & [-0.15, 0.34] & 0.287 & \\
-& t+5 & 0.0914 & 0.1436 & [-0.30, 0.49] & 0.525 & \\
-& t+10 & 0.4939 & 0.1526 & [0.07, 0.91] & 0.001 & *** \\
+& t-5 & \didareatminusfiveatt & \didareatminusfivese & [\didareatminusfivelower; \didareatminusfiveupper] & \didareatminusfivep & \didareatminusfivesig \\
+& t-3 & \didareatminusthreeatt & \didareatminusthreese & [\didareatminusthreelower; \didareatminusthreeupper] & \didareatminusthreep & \didareatminusthreesig \\
+& t-1 & \didareatminusoneatt & \didareatminusonese & [\didareatminusonelower; \didareatminusoneupper] & \didareatminusonep & \didareatminusonesig \\
+& t+0 & \didareatpluszeroatt & \didareatpluszerose & [\didareatpluszerolower; \didareatpluszeroupper] & \didareatpluszerop & \didareatpluszerosig \\
+& t+1 & \didareatplusoneatt & \didareatplusonese & [\didareatplusonelower; \didareatplusoneupper] & \didareatplusonep & \didareatplusonesig \\
+& t+2 & \didareatplustwoatt & \didareatplustwose & [\didareatplustwolower; \didareatplustwoupper] & \didareatplustwop & \didareatplustwosig \\
+& t+3 & \didareatplusthreeatt & \didareatplusthreese & [\didareatplusthreelower; \didareatplusthreeupper] & \didareatplusthreep & \didareatplusthreesig \\
+& t+5 & \didareatplusfiveatt & \didareatplusfivese & [\didareatplusfivelower; \didareatplusfiveupper] & \didareatplusfivep & \didareatplusfivesig \\
+& t+10 & \didareatplusonezeroatt & \didareatplusonezerose & [\didareatplusonezerolower; \didareatplusonezeroupper] & \didareatplusonezerop & \didareatplusonezerosig \\
 \bottomrule
 \end{tabular}
 

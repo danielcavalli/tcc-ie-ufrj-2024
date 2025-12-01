@@ -749,12 +749,6 @@ dplyr::mutate(tibble::tibble(
     scale_size_manual(values = c("FALSE" = 3, "TRUE" = 5), guide = "none") +
     # Linhas de referência
     geom_hline(yintercept = 0, linetype = "solid", color = "black", linewidth = 0.8) +
-    geom_vline(xintercept = -0.5, linetype = "dashed", color = "red", linewidth = 0.8) +
-    # Anotações
-    annotate("text",
-      x = -0.5, y = max(event_data$ci_upper, na.rm = TRUE) * 0.9,
-      label = "Início do\ntratamento", hjust = 1.1, color = "red"
-    ) +
     # Formatação
     scale_x_continuous(breaks = seq(-15, 20, 5)) +
     scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +

@@ -2,6 +2,7 @@
 # Script para gerar comandos LaTeX com valores atualizados dos resultados
 
 library(readr)
+library(dplyr)
 library(glue)
 
 # Função para formatar números para LaTeX
@@ -61,7 +62,7 @@ if (file.exists(valor_filtered_path)) {
 # Criar conteúdo do arquivo LaTeX
 latex_content <- c(
     "% Arquivo gerado automaticamente por generate_latex_values.r",
-    paste0("% Última atualização: ", Sys.Date()),
+    paste0("% Ultima atualizacao: ", Sys.Date()),
     "",
     "% Valores do teste placebo aleatório",
     paste0("\\newcommand{\\placebotruatt}{", format_number(placebo_data$true_att[1]), "}"),
@@ -401,12 +402,288 @@ if (file.exists(sensitivity_path)) {
     }
 }
 
-# Escrever arquivo para ambos os locais (para compatibilidade)
-# Local principal usado pelo LaTeX
-writeLines(latex_content, "data/outputs/latex_values.tex", useBytes = TRUE)
-# Local secundário (histórico)
-writeLines(latex_content, "documents/drafts/latex_output/auto_values.tex", useBytes = TRUE)
+# ============================================================================
+# TABELA DE EFEITOS DiD DETALHADOS (Apendice D)
+# Lendo diretamente dos arquivos RDS gerados pelo did_v2.r
+# ============================================================================
+
+# Helper function: number to word for LaTeX compatibility
+num_to_word <- function(num_str) {
+    num_str <- gsub("0", "zero", num_str)
+    num_str <- gsub("1", "one", num_str)
+    num_str <- gsub("2", "two", num_str)
+    num_str <- gsub("3", "three", num_str)
+    num_str <- gsub("4", "four", num_str)
+    num_str <- gsub("5", "five", num_str)
+    num_str <- gsub("6", "six", num_str)
+    num_str <- gsub("7", "seven", num_str)
+    num_str <- gsub("8", "eight", num_str)
+    num_str <- gsub("9", "nine", num_str)
+    return(num_str)
+}
+
+# Helper function: compute p-value from z-score
+compute_pvalue <- function(att, se) {
+    z <- att / se
+    2 * pnorm(-abs(z))
+}
+
+# Helper function: compute significance stars
+get_sig_stars <- function(p) {
+    if (is.na(p)) return("")
+    if (p < 0.01) return("***")
+    if (p < 0.05) return("**")
+    if (p < 0.10) return("*")
+    return("")
+}
+
+generate_did_macros_from_rds <- function(att_rds_path, agg_overall_rds_path, agg_event_rds_path, prefix) {
+    # Check if files exist
+    if (!file.exists(agg_overall_rds_path) || !file.exists(agg_event_rds_path)) {
+        cat(paste0("Aviso: RDS files para ", prefix, " nao encontrados\n"))
+        return(character(0))
+    }
+
+    # Read RDS files
+    agg_overall <- readRDS(agg_overall_rds_path)
+    agg_event <- readRDS(agg_event_rds_path)
+
+    macros <- c()
+
+    # -------------------------------------------------------------------------
+    # 1. EFEITO GLOBAL (Overall ATT)
+    # -------------------------------------------------------------------------
+    overall_att <- agg_overall$overall.att
+    overall_se <- agg_overall$overall.se
+    crit_val <- agg_overall$crit.val.egt
+    if (is.null(crit_val)) crit_val <- 1.96
+    overall_lower <- overall_att - crit_val * overall_se
+    overall_upper <- overall_att + crit_val * overall_se
+    overall_p <- compute_pvalue(overall_att, overall_se)
+    overall_sig <- get_sig_stars(overall_p)
+
+    macros <- c(macros,
+        paste0("% Efeito Global - ", prefix),
+        paste0("\\newcommand{\\", prefix, "globalatt}{", format_number(overall_att), "}"),
+        paste0("\\newcommand{\\", prefix, "globalse}{", format_number(overall_se), "}"),
+        paste0("\\newcommand{\\", prefix, "globallower}{", format_number(overall_lower), "}"),
+        paste0("\\newcommand{\\", prefix, "globalupper}{", format_number(overall_upper), "}"),
+        paste0("\\newcommand{\\", prefix, "globalp}{", format_number(overall_p), "}"),
+        paste0("\\newcommand{\\", prefix, "globalsig}{", overall_sig, "}"),
+        ""
+    )
+
+    # -------------------------------------------------------------------------
+    # 2. EFEITOS POR COORTE (Group ATT)
+    # Para isso precisamos agregar por grupo usando att_results
+    # att_results e um objeto de classe MP (did package), nao um data.frame
+    # -------------------------------------------------------------------------
+    if (file.exists(att_rds_path)) {
+        att_results <- readRDS(att_rds_path)
+
+        # Get unique cohorts (excluding 0 = never-treated)
+        cohorts <- unique(att_results$group)
+        cohorts <- cohorts[cohorts != 0]
+        cohorts <- sort(cohorts)
+
+        # Limit to first 8 cohorts for letters a-h
+        cohorts <- head(cohorts, 8)
+        letters_map <- c("a", "b", "c", "d", "e", "f", "g", "h")
+
+        macros <- c(macros, paste0("% Efeitos por Coorte - ", prefix))
+
+        for (i in seq_along(cohorts)) {
+            cohort <- cohorts[i]
+            letter <- letters_map[i]
+
+            # Filter indices for this cohort and post-treatment periods
+            # att_results$group, $t, $att, $se are vectors of the same length
+            idx <- which(att_results$group == cohort & att_results$t >= cohort)
+
+            if (length(idx) > 0) {
+                cohort_att_vals <- att_results$att[idx]
+                cohort_se_vals <- att_results$se[idx]
+
+                # Compute cohort ATT as simple mean
+                cohort_att <- mean(cohort_att_vals, na.rm = TRUE)
+                # Use pooled SE (approximate)
+                cohort_se <- sqrt(mean(cohort_se_vals^2, na.rm = TRUE))
+                cohort_lower <- cohort_att - crit_val * cohort_se
+                cohort_upper <- cohort_att + crit_val * cohort_se
+                cohort_p <- compute_pvalue(cohort_att, cohort_se)
+                cohort_sig <- get_sig_stars(cohort_p)
+            } else {
+                cohort_att <- NA
+                cohort_se <- NA
+                cohort_lower <- NA
+                cohort_upper <- NA
+                cohort_p <- NA
+                cohort_sig <- ""
+            }
+
+            macros <- c(macros,
+                paste0("\\newcommand{\\", prefix, "coorte", letter, "att}{", format_number(cohort_att), "}"),
+                paste0("\\newcommand{\\", prefix, "coorte", letter, "se}{", format_number(cohort_se), "}"),
+                paste0("\\newcommand{\\", prefix, "coorte", letter, "lower}{", format_number(cohort_lower), "}"),
+                paste0("\\newcommand{\\", prefix, "coorte", letter, "upper}{", format_number(cohort_upper), "}"),
+                paste0("\\newcommand{\\", prefix, "coorte", letter, "p}{", format_number(cohort_p), "}"),
+                paste0("\\newcommand{\\", prefix, "coorte", letter, "sig}{", cohort_sig, "}"),
+                paste0("\\newcommand{\\", prefix, "coorte", letter, "year}{", cohort, "}")
+            )
+        }
+        macros <- c(macros, "")
+    }
+
+    # -------------------------------------------------------------------------
+    # 3. EFEITOS DINAMICOS (Event-time effects)
+    # -------------------------------------------------------------------------
+    event_times <- agg_event$egt
+    att_egt <- agg_event$att.egt
+    se_egt <- agg_event$se.egt
+    crit_val_event <- agg_event$crit.val.egt
+    if (is.null(crit_val_event)) crit_val_event <- 1.96
+
+    # Specific event times expected by thesis: -5, -3, -1, 0, 1, 2, 3, 5, 10
+    target_events <- c(-5, -3, -1, 0, 1, 2, 3, 5, 10)
+
+    macros <- c(macros, paste0("% Efeitos Dinamicos - ", prefix))
+
+    for (t_event in target_events) {
+        idx <- which(event_times == t_event)
+
+        if (length(idx) > 0) {
+            att_t <- att_egt[idx]
+            se_t <- se_egt[idx]
+            lower_t <- att_t - crit_val_event * se_t
+            upper_t <- att_t + crit_val_event * se_t
+            p_t <- compute_pvalue(att_t, se_t)
+            sig_t <- get_sig_stars(p_t)
+        } else {
+            att_t <- NA
+            se_t <- NA
+            lower_t <- NA
+            upper_t <- NA
+            p_t <- NA
+            sig_t <- ""
+        }
+
+        # Convert event time to LaTeX-compatible name
+        if (t_event < 0) {
+            nome <- paste0("tminus", num_to_word(as.character(abs(t_event))))
+        } else {
+            nome <- paste0("tplus", num_to_word(as.character(t_event)))
+        }
+
+        macros <- c(macros,
+            paste0("\\newcommand{\\", prefix, nome, "att}{", format_number(att_t), "}"),
+            paste0("\\newcommand{\\", prefix, nome, "se}{", format_number(se_t), "}"),
+            paste0("\\newcommand{\\", prefix, nome, "lower}{", format_number(lower_t), "}"),
+            paste0("\\newcommand{\\", prefix, nome, "upper}{", format_number(upper_t), "}"),
+            paste0("\\newcommand{\\", prefix, nome, "p}{", format_number(p_t), "}"),
+            paste0("\\newcommand{\\", prefix, nome, "sig}{", sig_t, "}")
+        )
+    }
+    macros <- c(macros, "")
+
+    return(macros)
+}
+
+# Generate macros for Valor de Producao de Cana
+valor_macros <- generate_did_macros_from_rds(
+    att_rds_path = "data/outputs/att_results_dr_valor_producao_cana.rds",
+    agg_overall_rds_path = "data/outputs/agg_overall_dr_valor_producao_cana.rds",
+    agg_event_rds_path = "data/outputs/agg_event_dr_valor_producao_cana.rds",
+    prefix = "didvalor"
+)
+
+# Generate macros for Area Plantada de Cana
+area_macros <- generate_did_macros_from_rds(
+    att_rds_path = "data/outputs/att_results_dr_area_cana.rds",
+    agg_overall_rds_path = "data/outputs/agg_overall_dr_area_cana.rds",
+    agg_event_rds_path = "data/outputs/agg_event_dr_area_cana.rds",
+    prefix = "didarea"
+)
+
+if (length(valor_macros) > 0 || length(area_macros) > 0) {
+    latex_content <- c(latex_content,
+        "",
+        "% ============================================================================",
+        "% TABELA DE EFEITOS DiD DETALHADOS (Apendice D)",
+        "% ============================================================================",
+        ""
+    )
+    if (length(valor_macros) > 0) {
+        latex_content <- c(latex_content, valor_macros)
+    }
+    if (length(area_macros) > 0) {
+        latex_content <- c(latex_content, area_macros)
+    }
+}
+
+# ============================================================================
+# TABELA DE MICRORREGIOES TRATADAS POR ANO (Apendice B - Tabela 6)
+# ============================================================================
+
+# Ler dados principais para gerar tabela de tratamento temporal
+data_path <- "data/csv/microrregions_Cana-de-açúcar-Soja-Arroz_2003-2021_mapbiomas.csv"
+if (file.exists(data_path)) {
+    df_main <- read_csv(data_path, show_col_types = FALSE)
+
+    # Calcular microrregioes tratadas por ano
+    treatment_by_year <- df_main %>%
+        filter(primeiro_ano_tratamento > 0) %>%
+        group_by(primeiro_ano_tratamento) %>%
+        summarise(
+            n_microregioes = n_distinct(id_microrregiao),
+            .groups = "drop"
+        ) %>%
+        rename(ano = primeiro_ano_tratamento) %>%
+        filter(ano >= 2003, ano <= 2021) %>%
+        arrange(ano)
+
+    # Calcular N Obs (microrregioes x anos no painel)
+    n_anos <- n_distinct(df_main$ano)
+    treatment_by_year <- treatment_by_year %>%
+        mutate(n_obs = n_microregioes * n_anos)
+
+    # Gerar macros LaTeX para cada linha da tabela
+    latex_content <- c(latex_content,
+        "",
+        "% ============================================================================",
+        "% TABELA DE MICRORREGIOES TRATADAS POR ANO (Apendice B - Tabela 6)",
+        "% ============================================================================",
+        ""
+    )
+
+    # Gerar macro para numero de anos no painel
+    latex_content <- c(latex_content,
+        paste0("\\newcommand{\\treatmentnanos}{", n_anos, "}")
+    )
+
+    # Gerar tabela LaTeX completa como macro unico
+    # Isso evita problemas com numeros em nomes de comandos
+    table_rows <- paste(
+        sapply(1:nrow(treatment_by_year), function(i) {
+            paste0(treatment_by_year$ano[i], " & ",
+                   treatment_by_year$n_microregioes[i], " & ",
+                   treatment_by_year$n_obs[i], " \\\\")
+        }),
+        collapse = "\n"
+    )
+
+    latex_content <- c(latex_content,
+        "\\newcommand{\\treatmenttablerows}{%",
+        table_rows,
+        "}"
+    )
+
+    # Salvar CSV com dados da tabela
+    write_csv(treatment_by_year, "data/outputs/treatment_by_year.csv")
+    cat("Tabela de tratamento temporal salva em data/outputs/treatment_by_year.csv\n")
+}
+
+writeLines(latex_content, "data/outputs/latex_values.tex")
+writeLines(latex_content, "documents/drafts/latex_output/auto_values.tex")
 
 cat("Arquivo latex_values.tex gerado com sucesso!\n")
-cat("  - data/outputs/latex_values.tex (usado pelo LaTeX)\n")
-cat("  - documents/drafts/latex_output/auto_values.tex (backup)\n")
+cat("Macros de efeitos DiD adicionados!\n")

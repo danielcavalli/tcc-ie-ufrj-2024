@@ -1,2 +1,2 @@
 test_type,f_statistic,df1,df2,p_value,significance,conclusion_short,n_cohorts,n_treated_units,interpretation
-Tendências Paralelas Pré-Tratamento,1.136,-17,4275,NA,N/A,P-valor não disponível,18,158,P-valor não disponível - forneça graus de liberdade
+Tendências Paralelas Pré-Tratamento,1.136,-17,4725,NA,N/A,P-valor não disponível,18,158,P-valor não disponível - forneça graus de liberdade
